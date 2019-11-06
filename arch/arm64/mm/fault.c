@@ -56,7 +56,7 @@ struct fault_info {
 	const char *name;
 };
 
-static const struct fault_info fault_info[];
+static struct fault_info fault_info[] __ro_after_init;
 
 static inline const struct fault_info *esr_to_fault_info(unsigned int esr)
 {
@@ -691,7 +691,7 @@ static int do_sea(unsigned long addr, unsigned int esr, struct pt_regs *regs)
 	return 0;
 }
 
-static const struct fault_info fault_info[] = {
+static struct fault_info fault_info[] __ro_after_init = {
 	{ do_bad,		SIGKILL, SI_KERNEL,	"ttbr address size fault"	},
 	{ do_bad,		SIGKILL, SI_KERNEL,	"level 1 address size fault"	},
 	{ do_bad,		SIGKILL, SI_KERNEL,	"level 2 address size fault"	},
@@ -757,6 +757,18 @@ static const struct fault_info fault_info[] = {
 	{ do_bad,		SIGKILL, SI_KERNEL,	"page domain fault"		},
 	{ do_bad,		SIGKILL, SI_KERNEL,	"unknown 63"			},
 };
+
+void __init hook_fault_code(int nr,
+                       int (*fn)(unsigned long, unsigned int, struct pt_regs *),
+                       int sig, int code, const char *name)
+{
+       BUG_ON(nr < 0 || nr >= ARRAY_SIZE(fault_info));
+
+       fault_info[nr].fn       = fn;
+       fault_info[nr].sig      = sig;
+       fault_info[nr].code     = code;
+       fault_info[nr].name     = name;
+}
 
 int handle_guest_sea(phys_addr_t addr, unsigned int esr)
 {
@@ -945,3 +957,34 @@ void cpu_enable_pan(const struct arm64_cpu_capabilities *__unused)
 	asm(SET_PSTATE_PAN(1));
 }
 #endif /* CONFIG_ARM64_PAN */
+
+static int (*serror_handler)(unsigned long, unsigned int,
+                            struct pt_regs *) __ro_after_init;
+
+void *__init hook_serror_handler(int (*fn)(unsigned long, unsigned int,
+                                struct pt_regs *))
+{
+       void *ret = serror_handler;
+
+       serror_handler = fn;
+       return ret;
+}
+
+asmlinkage void __exception do_serr_abort(unsigned long addr, unsigned int esr,
+                                        struct pt_regs *regs)
+{
+       struct siginfo info;
+
+       if (serror_handler)
+               if (!serror_handler(addr, esr, regs))
+                       return;
+
+       pr_alert("Unhandled SError: (0x%08x) at 0x%016lx\n", esr, addr);
+       __show_regs(regs);
+
+       info.si_signo = SIGILL;
+       info.si_errno = 0;
+       info.si_code  = ILL_ILLOPC;
+       info.si_addr  = (void __user *)addr;
+       arm64_notify_die("", regs, &info, esr);
+}

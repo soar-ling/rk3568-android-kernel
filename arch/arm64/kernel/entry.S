@@ -454,7 +454,7 @@ ENTRY(vectors)
 	kernel_ventry	1, sync_invalid			// Synchronous EL1t
 	kernel_ventry	1, irq_invalid			// IRQ EL1t
 	kernel_ventry	1, fiq_invalid			// FIQ EL1t
-	kernel_ventry	1, error_invalid		// Error EL1t
+	kernel_ventry   1, error                // Error EL1h
 
 	kernel_ventry	1, sync				// Synchronous EL1h
 	kernel_ventry	1, irq				// IRQ EL1h
@@ -470,7 +470,7 @@ ENTRY(vectors)
 	kernel_ventry	0, sync_compat, 32		// Synchronous 32-bit EL0
 	kernel_ventry	0, irq_compat, 32		// IRQ 32-bit EL0
 	kernel_ventry	0, fiq_invalid_compat, 32	// FIQ 32-bit EL0
-	kernel_ventry	0, error_compat, 32		// Error 32-bit EL0
+	kernel_ventry   0, error_compat, 32     // Error 32-bit EL0
 #else
 	kernel_ventry	0, sync_invalid, 32		// Synchronous 32-bit EL0
 	kernel_ventry	0, irq_invalid, 32		// IRQ 32-bit EL0
@@ -544,6 +544,35 @@ ENDPROC(el0_fiq_invalid_compat)
 el1_sync_invalid:
 	inv_entry 1, BAD_SYNC
 ENDPROC(el1_sync_invalid)
+
+       .align  6
+el1_error:
+       kernel_entry 1
+       mrs     x1, esr_el1                     // read the syndrome register
+       lsr     x24, x1, #ESR_ELx_EC_SHIFT      // exception class
+       cmp     x24, #ESR_ELx_EC_SERROR         // SError exception in EL1
+       b.ne    el1_error_inv
+el1_serr:
+       mrs     x0, far_el1
+       enable_dbg
+       // re-enable interrupts if they were enabled in the aborted context
+       tbnz    x23, #7, 1f                     // PSR_I_BIT
+       enable_irq
+1:
+       mov     x2, sp                          // struct pt_regs
+       bl      do_serr_abort
+
+       // disable interrupts before pulling preserved data off the stack
+       disable_irq
+       kernel_exit 1
+el1_error_inv:
+       enable_dbg
+       mov     x0, sp
+       mov     x2, x1
+       mov     x1, #BAD_ERROR
+       b       bad_mode
+ENDPROC(el1_error)
+
 
 el1_irq_invalid:
 	inv_entry 1, BAD_IRQ
@@ -742,9 +771,10 @@ el0_irq_compat:
 	kernel_entry 0, 32
 	b	el0_irq_naked
 
+       .align  6
 el0_error_compat:
-	kernel_entry 0, 32
-	b	el0_error_naked
+       kernel_entry 0, 32
+       b       el0_error_naked
 #endif
 
 el0_da:
@@ -882,27 +912,6 @@ el0_irq_naked:
 #endif
 	b	ret_to_user
 ENDPROC(el0_irq)
-
-el1_error:
-	kernel_entry 1
-	mrs	x1, esr_el1
-	enable_dbg
-	mov	x0, sp
-	bl	do_serror
-	kernel_exit 1
-ENDPROC(el1_error)
-
-el0_error:
-	kernel_entry 0
-el0_error_naked:
-	mrs	x1, esr_el1
-	enable_dbg
-	mov	x0, sp
-	bl	do_serror
-	enable_da_f
-	ct_user_exit
-	b	ret_to_user
-ENDPROC(el0_error)
 
 /*
  * Ok, we need to do extra processing, enter the slow path.
@@ -1054,6 +1063,32 @@ __entry_tramp_data_start:
 	.popsection				// .rodata
 #endif /* CONFIG_RANDOMIZE_BASE */
 #endif /* CONFIG_UNMAP_KERNEL_AT_EL0 */
+
+       .align  6
+el0_error:
+       kernel_entry 0
+el0_error_naked:
+       mrs     x25, esr_el1                    // read the syndrome register
+       lsr     x24, x25, #ESR_ELx_EC_SHIFT     // exception class
+       cmp     x24, #ESR_ELx_EC_SERROR         // SError exception in EL0
+       b.ne    el0_error_inv
+el0_serr:
+       mrs     x26, far_el1
+       // enable interrupts before calling the main handler
+       msr     daifclr, #(8 | 2)
+       ct_user_exit
+       bic     x0, x26, #(0xff << 56)
+       mov     x1, x25
+       mov     x2, sp
+       bl      do_serr_abort
+       b       ret_to_user
+el0_error_inv:
+       enable_dbg
+       mov     x0, sp
+       mov     x1, #BAD_ERROR
+       mov     x2, x25
+       b       bad_mode
+ENDPROC(el0_error)
 
 /*
  * Register switch for AArch64. The callee-saved registers need to be saved
