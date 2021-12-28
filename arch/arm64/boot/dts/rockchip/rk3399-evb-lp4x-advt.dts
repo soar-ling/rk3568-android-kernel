@@ -590,6 +590,7 @@
 
 &tcphy0 {
 	/delete-property/ extcon;
+	status = "disabled";
 };
 
 &u2phy0 {
@@ -608,7 +609,11 @@
 };
 
 &usbdrd_dwc3_0 {
-	/delete-property/ extcon;
+	extcon = <&u2phy0>;
+	maximum-speed = "high-speed";
+	phys = <&u2phy0_otg>;
+	phy-names = "usb2-phy";
+	status = "okay";
 };
 
 &pwm0 {
