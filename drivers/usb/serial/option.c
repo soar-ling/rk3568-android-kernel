@@ -83,6 +83,15 @@ static void option_instat_callback(struct urb *urb);
 #define HUAWEI_PRODUCT_K4605			0x14C6
 #define HUAWEI_PRODUCT_E173S6			0x1C07
 
+/*[MEIG-zhaopf-2019-11-04]add for meig modem supported {*/
+#define MEIG_VENDOR_ID							0x2DEE
+#define MEIG_PRODUCT_SRM815						0x4D22
+#define MEIG_PRODUCT_SRM815_ECM					0x4D23
+#define MEIG_PRODUCT_SLM790						0x4D20
+#define MEIG_QCM_VENDOR_ID						0x05C6
+#define MEIG_QCM_PRODUCT_SLM750_SRM815_SLM868	0xF601
+/*[MEIG-zhaopf-2019-11-04]add for meig modem supported }*/
+
 #define QUANTA_VENDOR_ID			0x0408
 #define QUANTA_PRODUCT_Q101			0xEA02
 #define QUANTA_PRODUCT_Q111			0xEA03
@@ -608,6 +617,16 @@ static const struct usb_device_id option_ids[] = {
 	{ USB_DEVICE(0x2C7C, 0x6000) }, /* Quectel EC200/UC200 */
 	{ .match_flags = USB_DEVICE_ID_MATCH_VENDOR, .idVendor = 0x2C7C }, /* Match All Quectel Modules */
 #endif
+	/*[MEIG-zhaopf-2019-11-04]add for meig modem supported {*/
+	{ USB_DEVICE(MEIG_VENDOR_ID, MEIG_PRODUCT_SRM815),
+	.driver_info = RSVD(4) | RSVD(5) | RSVD(6) | RSVD(7) },
+	{ USB_DEVICE(MEIG_VENDOR_ID, MEIG_PRODUCT_SRM815_ECM),
+	.driver_info = RSVD(4) | RSVD(5) | RSVD(6) | RSVD(7)},
+	{ USB_DEVICE(MEIG_QCM_VENDOR_ID, MEIG_QCM_PRODUCT_SLM750_SRM815_SLM868),
+	.driver_info = RSVD(4) | RSVD(5) | RSVD(6) | RSVD(7)},
+	{ USB_DEVICE(MEIG_VENDOR_ID, MEIG_PRODUCT_SLM790),
+	.driver_info = RSVD(0) | RSVD(5) | RSVD(6) | RSVD(7)},
+	/*[MEIG-zhaopf-2019-11-04]add for meig modem supported }*/
 	{ USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_COLT) },
 	{ USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_RICOLA) },
 	{ USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_RICOLA_LIGHT) },
