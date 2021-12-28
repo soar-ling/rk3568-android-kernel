@@ -1,0 +1,13 @@
+
+menu "Meig GobiNet drivers"
+	depends on USB_USBNET
+
+config MEIG_GOBINET
+	tristate "Meig GobiNet driver"
+	default y
+	help
+	  meig gobinet driver.
+          This driver is required if you want to setup network connection by meig modem.
+
+
+endmenu

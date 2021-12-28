@@ -1,0 +1,17 @@
+#
+# Amlogic driver configuration
+#
+config MEIG_DRIVER
+	bool "Meig Peripheral drivers"
+	default y
+	help
+		this option is provided for control meig
+		drivers, if you want to use meig driver
+		please open it
+
+
+if MEIG_DRIVER
+menu "Meig Device Drivers"
+source "drivers/meigdrv/GobiNet/Kconfig"
+endmenu
+endif
