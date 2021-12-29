@@ -319,11 +319,11 @@
 };
 
 &dfi {
-	status = "disabled";
+	status = "okay";
 };
 
 &dmc {
-	status = "disabled";
+	status = "okay";
 	center-supply = <&vdd_center>;
 	upthreshold = <40>;
 	downdifferential = <20>;
@@ -527,11 +527,15 @@
 		pinctrl-0 = <&i2s_8ch_mclk>;
 		spk-con-gpios = <&gpio1 RK_PA2 GPIO_ACTIVE_HIGH>;
 	};
+
+	/delete-node/ rt5651;
 };
 
 &i2c4 {
 	status = "okay";
 	/delete-node/ fusb30x;
+	/delete-node/ mpu6500_acc;
+	/delete-node/ mpu6500_gyro;
 };
 
 &i2s2 {
