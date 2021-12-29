@@ -162,6 +162,18 @@
 		};
 	};
 
+	gpio_keys: gpio-keys {
+		back {
+			debounce-interval = <100>;
+			gpios = <&gpio1 RK_PB1 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&back_key>;
+			label = "back";
+			linux,code = <KEY_BACK>;
+			wakeup-source;
+		};
+	};
+
 	adc_keys {
 		/delete-node/ menu-key;
 		/delete-node/ home-key;
@@ -687,6 +699,12 @@
 
 		vcc_lcd_io_slp: vcc-lcd-io-slp {
 			rockchip,pins = <1 RK_PC6 RK_FUNC_GPIO &pcfg_output_low>;
+		};
+	};
+
+	keys {
+		back_key: back-key {
+			rockchip,pins = <1 RK_PB1 RK_FUNC_GPIO &pcfg_pull_up>;
 		};
 	};
 };
