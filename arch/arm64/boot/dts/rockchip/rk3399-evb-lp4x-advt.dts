@@ -761,7 +761,15 @@
 	status = "okay";
 };
 
+&mpp_srv {
+	status = "okay";
+};
+
 &vdpu {
+	status = "okay";
+};
+
+&vepu {
 	status = "okay";
 };
 
