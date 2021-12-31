@@ -814,6 +814,7 @@ static int rockchip_spi_probe(struct platform_device *pdev)
 		goto err_put_ctlr;
 	}
 
+	clk_set_rate(rs->spiclk, 48000000);
 	ret = clk_prepare_enable(rs->apb_pclk);
 	if (ret < 0) {
 		dev_err(&pdev->dev, "Failed to enable apb_pclk\n");

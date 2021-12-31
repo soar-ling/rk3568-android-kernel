@@ -761,15 +761,7 @@
 	status = "okay";
 };
 
-&mpp_srv {
-	status = "okay";
-};
-
 &vdpu {
-	status = "okay";
-};
-
-&vepu {
 	status = "okay";
 };
 
@@ -808,4 +800,19 @@
 &route_hdmi {
 	status = "okay";
 	connect = <&vopl_out_hdmi>;
+};
+
+&spi2 {
+	status = "okay";
+	max-freq = <48000000>;
+
+	wk2xxx: wk2xxx {
+		compatible = "wkmic,wk2124spi_cs0";
+		reg = <0>;
+		spi-max-frequency = <24000000>;
+		poll_mode = <0>;
+		type = <0>;
+		enable_dma = <0>;
+		irq_gpio = <&gpio4 RK_PD0 IRQ_TYPE_LEVEL_LOW>;
+	};
 };

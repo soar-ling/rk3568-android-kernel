@@ -767,6 +767,14 @@ config SPI_SPIDEV
 	  Note that this application programming interface is EXPERIMENTAL
 	  and hence SUBJECT TO CHANGE WITHOUT NOTICE while it stabilizes.
 
+config SPI_WK2124
+    tristate "WK2124 DRIVER"
+    help
+      This supports user mode SPI protocol drivers.
+
+      Note that this application programming interface is EXPERIMENTAL
+      and he
+
 config SPI_LOOPBACK_TEST
 	tristate "spi loopback test framework support"
 	depends on m
