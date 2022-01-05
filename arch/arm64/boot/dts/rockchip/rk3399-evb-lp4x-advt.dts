@@ -34,7 +34,7 @@
 		vin-supply = <&dc_12v>;
 	};
 
-    vcc5v0_host: vcc5v0-host-regulator {
+	vcc5v0_host: vcc5v0-host-regulator {
 		gpio = <&gpio1 RK_PA3 GPIO_ACTIVE_HIGH>;
 	};
 
@@ -636,6 +636,10 @@
 
 &uart2 {
 	status = "disabled";
+};
+
+&uart4 {
+	status = "okay";
 };
 
 &usbdrd_dwc3_0 {
