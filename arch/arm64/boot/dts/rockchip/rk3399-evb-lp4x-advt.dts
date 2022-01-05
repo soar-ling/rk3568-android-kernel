@@ -185,6 +185,17 @@
 	test-power {
 		status = "okay";
 	};
+
+	rga: rga@ff680000 {
+		compatible = "rockchip,rga2";
+		dev_mode = <1>;
+		reg = <0x0 0xff680000 0x0 0x1000>;
+		interrupts = <GIC_SPI 55 IRQ_TYPE_LEVEL_HIGH 0>;
+		clocks = <&cru ACLK_RGA>, <&cru HCLK_RGA>, <&cru SCLK_RGA_CORE>;
+		clock-names = "aclk_rga", "hclk_rga", "clk_rga";
+		power-domains = <&power RK3399_PD_RGA>;
+		status = "okay";
+	};
 };
 
 &dsi_in_vopb {
@@ -816,4 +827,24 @@
 		enable_dma = <0>;
 		irq_gpio = <&gpio4 RK_PD0 IRQ_TYPE_LEVEL_LOW>;
 	};
+};
+
+&iep {
+	status = "okay";
+};
+
+&iep_mmu {
+	status = "okay";
+};
+
+&mpp_srv {
+	status = "okay";
+};
+
+&vepu {
+	status = "okay";
+};
+
+&rng {
+	status = "okay";
 };
