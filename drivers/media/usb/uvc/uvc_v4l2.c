@@ -627,6 +627,18 @@ static int uvc_ioctl_querycap(struct file *file, void *fh,
 	cap->capabilities = V4L2_CAP_DEVICE_CAPS | V4L2_CAP_STREAMING
 			  | chain->caps;
 
+	if(le16_to_cpu(stream->dev->udev->descriptor.idVendor) == 0x0bda) {
+		if(le16_to_cpu(stream->dev->udev->descriptor.idProduct) == 0x9122) {
+			memset(cap->facing, 0, sizeof(cap->facing));
+			strlcpy(cap->facing, "back", sizeof(cap->facing));
+		}
+
+		if(le16_to_cpu(stream->dev->udev->descriptor.idProduct) == 0x9123) {
+			memset(cap->facing, 0, sizeof(cap->facing));
+			strlcpy(cap->facing, "front", sizeof(cap->facing));
+		}
+	}
+
 	return 0;
 }
 
