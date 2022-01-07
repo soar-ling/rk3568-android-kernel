@@ -554,9 +554,15 @@
 
 &i2c4 {
 	status = "okay";
-	/delete-node/ fusb30x;
-	/delete-node/ mpu6500_acc;
-	/delete-node/ mpu6500_gyro;
+	fusb0: fusb30x@22 {
+		status = "disabled";
+	};
+	mpu6500_acc: mpu_acc@68 {
+		status = "disabled";
+	};
+	mpu6500_gyro: mpu_gyro@68 {
+		status = "disabled";
+	};
 };
 
 &i2s2 {
