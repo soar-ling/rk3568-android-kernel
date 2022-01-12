@@ -573,18 +573,17 @@
 &gmac {
 	phy-supply = <&vcc3v3_sys>;
 	phy-mode = "rgmii";
-	clock_in_out = "output";
+	clock_in_out = "input";
 	snps,reset-gpio = <&gpio3 RK_PB7 GPIO_ACTIVE_LOW>;
 	snps,reset-active-low;
 	snps,reset-delays-us = <0 10000 50000>;
-	assigned-clocks = <&cru SCLK_MAC>, <&cru SCLK_RMII_SRC>;
-	assigned-clock-rates = <0>, <125000000>;
-	assigned-clock-parents = <&cru PLL_NPLL>, <&cru SCLK_MAC>;
+	assigned-clocks = <&cru SCLK_RMII_SRC>;
+	assigned-clock-parents = <&clkin_gmac>;
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&rgmii_pins>;
 	pinctrl-1 = <&rgmii_sleep_pins>;
 	tx_delay = <0x29>;
-	rx_delay = <0x12>;
+	rx_delay = <0xc>;
 	status = "okay";
 };
 

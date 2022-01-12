@@ -97,7 +97,7 @@ struct dwmac_rk_lb_priv {
 #define DMA_CHAN_STATUS_ERI	BIT(11)
 #define DMA_CHAN_STATUS_ETI	BIT(10)
 
-#define	STMMAC_ALIGN(x) __ALIGN_KERNEL(x, SMP_CACHE_BYTES)
+#define STMMAC_ALIGN(x) __ALIGN_KERNEL(x, SMP_CACHE_BYTES)
 #define MAX_DELAYLINE 0x7f
 #define SCAN_STEP 0x5
 #define SCAN_VALID_RANGE 0xA
@@ -106,6 +106,9 @@ struct dwmac_rk_lb_priv {
 				sizeof(struct dwmac_rk_hdr))
 #define DWMAC_RK_TEST_PKT_MAGIC 0xdeadcafecafedeadULL
 #define DWMAC_RK_TEST_PKT_MAX_SIZE 1500
+
+#define PHY_ID_YT8511	0x0000010a
+#define PHY_ID_YT8531   0x4f51e91b
 
 static __maybe_unused struct dwmac_rk_packet_attrs dwmac_rk_udp_attr = {
 	.dst = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
@@ -118,6 +121,120 @@ static __maybe_unused struct dwmac_rk_packet_attrs dwmac_rk_tcp_attr = {
 	.tcp = 1,
 	.size = 1024,
 };
+
+static int ytphy_read_ext(struct mii_bus *bus, int phy_id, u32 regnum)
+{
+	int ret;
+
+	ret = mdiobus_write(bus, phy_id, 0x1E, regnum);
+	if (ret < 0)
+		return ret;
+
+	return mdiobus_read(bus, phy_id, 0x1F);
+}
+
+static int ytphy_write_ext(struct mii_bus *bus, int phy_id, u32 regnum, u16 val)
+{
+	int ret;
+
+	ret = mdiobus_write(bus, phy_id, 0x1E, regnum);
+	if (ret < 0)
+		return ret;
+
+	return mdiobus_write(bus, phy_id, 0x1F, val);
+}
+
+static int yt8511_config_delay(struct mii_bus *bus, int phy_id, bool tx, bool rx)
+{
+	int ret, val;
+
+	/* disable auto sleep */
+	val = ytphy_read_ext(bus, phy_id, 0x27);
+	if (val < 0)
+		return val;
+
+	val &= (~BIT(15));
+	ret = ytphy_write_ext(bus, phy_id, 0x27, val);
+	if (ret < 0)
+		return ret;
+
+	val = ytphy_read_ext(bus, phy_id, 0xc);
+	if (val < 0)
+		return val;
+
+	if (!tx) {
+		/* disable tx delay */
+		val &= ~(0xf << 4);
+		ret = ytphy_write_ext(bus, phy_id, 0xc, val);
+		if (ret < 0)
+			return ret;
+	}
+
+	/* disable rx delay */
+	val = ytphy_read_ext(bus, phy_id, 0xc);
+	if (val < 0)
+		return val;
+
+	/* disable rx delay */
+	if (!rx)
+		val &= ~BIT(0);
+	else
+		val |= BIT(0);
+
+	ret = ytphy_write_ext(bus, phy_id, 0xc, val);
+	if (ret < 0)
+		return ret;
+
+	return ret;
+}
+
+static int yt8531_config_out_125m(struct mii_bus *bus, int phy_id)
+{
+	int ret, val;
+
+	/* disable auto sleep */
+	val = ytphy_read_ext(bus, phy_id, 0x27);
+	if (val < 0)
+		return val;
+
+	val &= (~BIT(15));
+	ret = ytphy_write_ext(bus, phy_id, 0x27, val);
+	if (ret < 0)
+		return ret;
+
+	val = ytphy_read_ext(bus, phy_id, 0xa012);
+	if (val < 0)
+		return val;
+
+	val |= BIT(4);
+	val &= ~GENMASK(3, 1);
+	ret = ytphy_write_ext(bus, phy_id, 0xa012, val);
+
+	return ret;
+}
+
+static int dwmac_rk_phy_config_init(struct stmmac_priv *priv)
+{
+	u32 val, phyID;
+
+	val = mdiobus_read(priv->mii, 0, MII_PHYSID1);
+	phyID = (val & 0xffff) << 16;
+
+	val = mdiobus_read(priv->mii, 0, MII_PHYSID2);
+	phyID |= (val & 0xffff);
+
+	switch(phyID & 0xffffffff) {
+	case PHY_ID_YT8511:
+		yt8511_config_delay(priv->mii, 0, false, false);
+		break;
+	case PHY_ID_YT8531:
+		yt8531_config_out_125m(priv->mii, 0);
+	default:
+		break;
+	}
+
+	return 0;
+}
 
 static int dwmac_rk_enable_mac_loopback(struct stmmac_priv *priv, int speed)
 {
@@ -254,10 +371,12 @@ static int dwmac_rk_disable_phy_loopback(struct stmmac_priv *priv)
 static int dwmac_rk_set_phy_loopback(struct stmmac_priv *priv,
 				     int speed, bool enable)
 {
-	if (enable)
+	if (enable) {
+		dwmac_rk_phy_config_init(priv);
 		return dwmac_rk_enable_phy_loopback(priv, speed);
-	else
+	} else {
 		return dwmac_rk_disable_phy_loopback(priv);
+	}
 }
 
 static int dwmac_rk_set_loopback(struct stmmac_priv *priv,
