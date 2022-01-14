@@ -37,6 +37,8 @@ static const unsigned int supported_mclk_lrck_ratios[] = {
 	256, 384, 400, 512, 768, 1024
 };
 
+static struct snd_soc_component *es8316_component;
+
 struct es8316_priv {
 	unsigned int sysclk;
 	unsigned int allowed_rates[NR_SUPPORTED_MCLK_LRCK_RATIOS];
@@ -68,8 +70,13 @@ static const SNDRV_CTL_TLVD_DECLARE_DB_RANGE(adc_pga_gain_tlv,
 	1, 1, TLV_DB_SCALE_ITEM(0, 0, 0),
 	2, 2, TLV_DB_SCALE_ITEM(250, 0, 0),
 	3, 3, TLV_DB_SCALE_ITEM(450, 0, 0),
-	4, 7, TLV_DB_SCALE_ITEM(700, 300, 0),
-	8, 10, TLV_DB_SCALE_ITEM(1800, 300, 0),
+	4, 4, TLV_DB_SCALE_ITEM(700, 0, 0),
+	5, 5, TLV_DB_SCALE_ITEM(1000, 0, 0),
+	6, 6, TLV_DB_SCALE_ITEM(1300, 0, 0),
+	7, 7, TLV_DB_SCALE_ITEM(1600, 0, 0),
+	8, 8, TLV_DB_SCALE_ITEM(1800, 0, 0),
+	9, 9, TLV_DB_SCALE_ITEM(2100, 0, 0),
+	10, 10, TLV_DB_SCALE_ITEM(2400, 0, 0),
 );
 
 static const SNDRV_CTL_TLVD_DECLARE_DB_RANGE(hpout_vol_tlv,
@@ -210,9 +217,9 @@ static const struct snd_kcontrol_new es8316_dacsrc_mux_controls =
 	SOC_DAPM_ENUM("Route", es8316_dacsrc_mux_enum);
 
 static const struct snd_soc_dapm_widget es8316_dapm_widgets[] = {
-	SND_SOC_DAPM_SUPPLY("Bias", ES8316_SYS_PDN, 3, 1, NULL, 0),
-	SND_SOC_DAPM_SUPPLY("Analog power", ES8316_SYS_PDN, 4, 1, NULL, 0),
-	SND_SOC_DAPM_SUPPLY("Mic Bias", ES8316_SYS_PDN, 5, 1, NULL, 0),
+	SND_SOC_DAPM_SUPPLY("Bias", SND_SOC_NOPM, 3, 1, NULL, 0),
+	SND_SOC_DAPM_SUPPLY("Analog power", SND_SOC_NOPM, 4, 1, NULL, 0),
+	SND_SOC_DAPM_SUPPLY("Mic Bias", SND_SOC_NOPM, 5, 1, NULL, 0),
 
 	SND_SOC_DAPM_INPUT("DMIC"),
 	SND_SOC_DAPM_INPUT("MIC1"),
@@ -222,9 +229,9 @@ static const struct snd_soc_dapm_widget es8316_dapm_widgets[] = {
 	SND_SOC_DAPM_MUX("Differential Mux", SND_SOC_NOPM, 0, 0,
 			 &es8316_analog_in_mux_controls),
 
-	SND_SOC_DAPM_SUPPLY("ADC Vref", ES8316_SYS_PDN, 1, 1, NULL, 0),
-	SND_SOC_DAPM_SUPPLY("ADC bias", ES8316_SYS_PDN, 2, 1, NULL, 0),
-	SND_SOC_DAPM_SUPPLY("ADC Clock", ES8316_CLKMGR_CLKSW, 3, 0, NULL, 0),
+	SND_SOC_DAPM_SUPPLY("ADC Vref", SND_SOC_NOPM, 1, 1, NULL, 0),
+	SND_SOC_DAPM_SUPPLY("ADC bias", SND_SOC_NOPM, 2, 1, NULL, 0),
+	SND_SOC_DAPM_SUPPLY("ADC Clock", SND_SOC_NOPM, 3, 0, NULL, 0),
 	SND_SOC_DAPM_PGA("Line input PGA", ES8316_ADC_PDN_LINSEL,
 			 7, 1, NULL, 0),
 	SND_SOC_DAPM_ADC("Mono ADC", NULL, ES8316_ADC_PDN_LINSEL, 6, 1),
@@ -233,15 +240,15 @@ static const struct snd_soc_dapm_widget es8316_dapm_widgets[] = {
 
 	/* Digital Interface */
 	SND_SOC_DAPM_AIF_OUT("I2S OUT", "I2S1 Capture",  1,
-			     ES8316_SERDATA_ADC, 6, 1),
+			     SND_SOC_NOPM, 6, 1),
 	SND_SOC_DAPM_AIF_IN("I2S IN", "I2S1 Playback", 0,
 			    SND_SOC_NOPM, 0, 0),
 
 	SND_SOC_DAPM_MUX("DAC Source Mux", SND_SOC_NOPM, 0, 0,
 			 &es8316_dacsrc_mux_controls),
 
-	SND_SOC_DAPM_SUPPLY("DAC Vref", ES8316_SYS_PDN, 0, 1, NULL, 0),
-	SND_SOC_DAPM_SUPPLY("DAC Clock", ES8316_CLKMGR_CLKSW, 2, 0, NULL, 0),
+	SND_SOC_DAPM_SUPPLY("DAC Vref", SND_SOC_NOPM, 0, 1, NULL, 0),
+	SND_SOC_DAPM_SUPPLY("DAC Clock", SND_SOC_NOPM, 2, 0, NULL, 0),
 	SND_SOC_DAPM_DAC("Right DAC", NULL, ES8316_DAC_PDN, 0, 1),
 	SND_SOC_DAPM_DAC("Left DAC", NULL, ES8316_DAC_PDN, 4, 1),
 
@@ -536,8 +543,10 @@ static int es8316_mute(struct snd_soc_dai *dai, int mute)
 	} else {
 		snd_soc_component_update_bits(dai->component, ES8316_DAC_SET1, 0x20, val);
 		msleep(130);
-		if (!es8316->hp_inserted)
+		if (!es8316->hp_inserted){
 			es8316_enable_spk(es8316, true);
+			printk("jx:es8316_enable_spk!\n");
+		}
 	}
 	return 0;
 }
@@ -595,8 +604,8 @@ static struct snd_soc_dai_driver es8316_dai = {
 	},
 	.capture = {
 		.stream_name = "Capture",
-		.channels_min = 1,
-		.channels_max = 2,
+		.channels_min = 2,
+		.channels_max = 4,
 		.rates = SNDRV_PCM_RATE_8000_48000,
 		.formats = ES8316_FORMATS,
 	},
@@ -604,10 +613,45 @@ static struct snd_soc_dai_driver es8316_dai = {
 	.symmetric_rates = 1,
 };
 
+/*
++ * Call from rk_headset_irq_hook_adc.c
++ *
++ * Enable micbias for HOOK detection and disable external Amplifier
++ * when jack insertion.
++ */
+int es8316_headset_detect(int jack_insert)
+{
+   struct es8316_priv *es8316;
+
+   if (!es8316_component)
+       return -1;
+
+   es8316 = snd_soc_component_get_drvdata(es8316_component);
+
+   es8316->hp_inserted = jack_insert;
+
+    printk("%s: jack_insert = %d\n", __func__, jack_insert);
+   /*enable micbias and disable PA*/
+   if (jack_insert) {
+        //snd_soc_component_write(es8316_component, ES8316_SYS_PDN, 0x00);
+        //snd_soc_component_write(es8316_component, ES8316_ADC_PDN_LINSEL, 0x30); // bit[7]: Power down PGA; bit[6]: Power down ADC modulator; bit[5:4]:Lin2 DF2SE(Board)
+        es8316_enable_spk(es8316, false);
+		printk("jx:es8316_disable_spk!\n");
+   }
+   else{
+	    es8316_enable_spk(es8316, true);
+		printk("jx:es8316_enable_spk!\n");
+   }
+
+   return 0;
+}
+EXPORT_SYMBOL(es8316_headset_detect);
+
 static int es8316_probe(struct snd_soc_component *component)
 {
 	struct es8316_priv *es8316 = snd_soc_component_get_drvdata(component);
 	int ret = 0;
+    es8316_component = component;
 
 	es8316->mclk = devm_clk_get(component->dev, "mclk");
 	if (PTR_ERR(es8316->mclk) == -EPROBE_DEFER)
@@ -634,8 +678,18 @@ static int es8316_probe(struct snd_soc_component *component)
 	 * but here is a vendor-provided value that improves volume
 	 * and quality for Intel CHT platforms.
 	 */
-	snd_soc_component_write(component, ES8316_CLKMGR_ADCOSR, 0x32);
+	snd_soc_component_write(component, ES8316_CLKMGR_ADCOSR, 0x20);
+	snd_soc_component_write(component, ES8316_SYS_PDN, 0x00);
+	snd_soc_component_write(component, ES8316_SERDATA_ADC, 0x00); // bit[6]: ADC SDP unmute
 
+	snd_soc_component_write(component, 0x22, 0x30);
+	snd_soc_component_write(component, 0x01, 0x7F);
+	snd_soc_component_write(component, 0x23, 0x70);
+	snd_soc_component_write(component, 0x24, 0x01);
+	snd_soc_component_write(component, 0x29, 0xcd);
+	snd_soc_component_write(component, 0x2a, 0x08);
+	snd_soc_component_write(component, 0x2b, 0xa0);
+	snd_soc_component_write(component, 0x2e, 0x68);
 	return 0;
 }
 
@@ -689,7 +743,7 @@ static int es8316_i2c_probe(struct i2c_client *i2c_client,
 		return PTR_ERR(regmap);
 	es8316->gpiod_spk_ctl = devm_gpiod_get_optional(&i2c_client->dev,
 							"spk-con",
-							GPIOD_OUT_LOW);
+							GPIOD_OUT_HIGH);
 	if (IS_ERR(es8316->gpiod_spk_ctl)) {
 		ret = IS_ERR(es8316->gpiod_spk_ctl);
 		es8316->gpiod_spk_ctl = NULL;
