@@ -87,6 +87,36 @@
  */
 #define YT8521_PHY_MODE_CURR	YT8521_PHY_MODE_POLL
 
+#define YT8531_EXTREG_LED0		0xA00C
+#define YT8531_EXTREG_LED1		0xA00D
+#define YT8531_EXTREG_LED2		0xA00E
+#define YT8531_EXTREG_LED_CFG	0xA00F
+
+#define YT8531_LED_ACT_BLK_IND		(1<<13)
+#define YT8531_LED_FDX_ON_EN		(1<<12)
+#define YT8531_LED_HDX_ON_EN		(1<<11)
+#define YT8531_LED_TXACT_BLK_EN		(1<<10)
+#define YT8531_LED_RXACT_BLK_EN		(1<<9)
+#define YT8531_LED_TXACT_ON_EN		(1<<8)
+#define YT8531_LED_RXACT_ON_EN		(1<<7)
+#define YT8531_LED_GT_ON_EN			(1<<6)
+#define YT8531_LED_HT_ON_EN			(1<<5)
+#define YT8531_LED_BT_ON_EN			(1<<4)
+#define YT8531_LED_COL_BLK_EN		(1<<3)
+#define YT8531_LED_GT_BLK_EN		(1<<2)
+#define YT8531_LED_HT_BLK_EN		(1<<1)
+#define YT8531_LED_BT_BLK_EN		(1<<0)
+
+#define YT8531_LED_BLINK_MODE1		(3<<2)
+#define YT8531_LED_BLINK_MODE2		(3<<0)
+
+enum BLINK_MODE {
+	_2Hz = 0,
+	_4Hz,
+	_8Hz,
+	_16Hz,
+};
+
 static int ytphy_read_ext(struct phy_device *phydev, u32 regnum)
 {
 	int ret;
@@ -565,6 +595,61 @@ int yt8521_resume(struct phy_device *phydev)
 	return 0;
 }
 
+static int yt8531_led_init(struct phy_device *phydev)
+{
+	int ret;
+	int val;
+	int mask;
+
+	val = ytphy_read_ext(phydev, YT8531_EXTREG_LED0);
+	if (val < 0)
+		return val;
+
+	val |= YT8531_LED_ACT_BLK_IND;
+	mask = YT8531_LED_BT_BLK_EN | YT8531_LED_HT_BLK_EN |
+		YT8531_LED_COL_BLK_EN | YT8531_LED_BT_ON_EN;
+	val &= ~mask;
+
+	ret = ytphy_write_ext(phydev, YT8531_EXTREG_LED0, val);
+	if (ret < 0)
+		return ret;
+
+	val = ytphy_read_ext(phydev, YT8531_EXTREG_LED1);
+	if (val < 0)
+		return val;
+
+	val |= YT8531_LED_ACT_BLK_IND;
+	mask = YT8531_LED_GT_BLK_EN | YT8531_LED_COL_BLK_EN |
+		YT8531_LED_BT_ON_EN;
+	val &= ~mask;
+
+	ret = ytphy_write_ext(phydev, YT8531_EXTREG_LED1, val);
+	if (val < 0)
+		return val;
+
+	val = ytphy_read_ext(phydev, YT8531_EXTREG_LED2);
+	if (val < 0)
+		return val;
+
+	val |= YT8531_LED_ACT_BLK_IND;
+	mask = YT8531_LED_RXACT_BLK_EN | YT8531_LED_TXACT_BLK_EN;
+	val &= ~mask;
+
+	ret = ytphy_write_ext(phydev, YT8531_EXTREG_LED2, val);
+	if (val < 0)
+		return val;
+
+    val = ytphy_read_ext(phydev, YT8531_EXTREG_LED_CFG);
+	if (val < 0)
+		return val;
+
+	val |= _2Hz;
+	mask = (_8Hz & YT8531_LED_BLINK_MODE1) | ((_8Hz<<2) & YT8531_LED_BLINK_MODE2);
+	val &= ~mask;
+	ret = ytphy_write_ext(phydev, YT8531_EXTREG_LED_CFG, val);
+	return ret;
+}
+
 static int yt8531_config_out_125m(struct mii_bus *bus, int phy_id)
 {
 	int ret, val;
@@ -595,6 +680,10 @@ static int yt8531_config_init(struct phy_device *phydev)
 	int ret;
 
 	ret = genphy_config_init(phydev);
+	if (ret < 0)
+		return ret;
+
+	ret = yt8531_led_init(phydev);
 	if (ret < 0)
 		return ret;
 
