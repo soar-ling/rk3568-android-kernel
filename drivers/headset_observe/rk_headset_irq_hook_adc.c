@@ -107,6 +107,8 @@ struct headset_priv {
 	unsigned int hook_time;
 };
 
+extern int es8316_headset_detect(int jack_insert);
+
 static struct headset_priv *headset_info;
 
 static irqreturn_t headset_interrupt(int irq, void *dev_id)
@@ -169,6 +171,7 @@ static irqreturn_t headset_interrupt(int irq, void *dev_id)
 		headset_info->headset_status ? "in" : "out");
 
 	if (headset_info->headset_status == HEADSET_IN) {
+		es8316_headset_detect(1);
 		if (pdata->chan != 0) {
 			/* detect Hook key */
 			schedule_delayed_work(
@@ -189,6 +192,7 @@ static irqreturn_t headset_interrupt(int irq, void *dev_id)
 			irq_set_irq_type(headset_info->irq[HEADSET],
 					 IRQF_TRIGGER_RISING);
 	} else if (headset_info->headset_status == HEADSET_OUT) {
+		es8316_headset_detect(0);
 		headset_info->cur_headset_status = HEADSET_OUT;
 		cancel_delayed_work(&headset_info->hook_work);
 		if (headset_info->isMic) {

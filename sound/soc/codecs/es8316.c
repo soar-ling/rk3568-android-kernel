@@ -743,7 +743,7 @@ static int es8316_i2c_probe(struct i2c_client *i2c_client,
 		return PTR_ERR(regmap);
 	es8316->gpiod_spk_ctl = devm_gpiod_get_optional(&i2c_client->dev,
 							"spk-con",
-							GPIOD_OUT_HIGH);
+							GPIOD_OUT_LOW);
 	if (IS_ERR(es8316->gpiod_spk_ctl)) {
 		ret = IS_ERR(es8316->gpiod_spk_ctl);
 		es8316->gpiod_spk_ctl = NULL;
