@@ -605,9 +605,9 @@ static int yt8531_led_init(struct phy_device *phydev)
 	if (val < 0)
 		return val;
 
-	val |= YT8531_LED_ACT_BLK_IND;
-	mask = YT8531_LED_BT_BLK_EN | YT8531_LED_HT_BLK_EN |
-		YT8531_LED_COL_BLK_EN | YT8531_LED_BT_ON_EN;
+	val |= YT8531_LED_ACT_BLK_IND | YT8531_LED_RXACT_BLK_EN |
+		YT8531_LED_TXACT_BLK_EN;
+	mask = YT8531_LED_FDX_ON_EN | YT8531_LED_HDX_ON_EN;
 	val &= ~mask;
 
 	ret = ytphy_write_ext(phydev, YT8531_EXTREG_LED0, val);
@@ -618,9 +618,10 @@ static int yt8531_led_init(struct phy_device *phydev)
 	if (val < 0)
 		return val;
 
-	val |= YT8531_LED_ACT_BLK_IND;
-	mask = YT8531_LED_GT_BLK_EN | YT8531_LED_COL_BLK_EN |
-		YT8531_LED_BT_ON_EN;
+	val |= YT8531_LED_BT_ON_EN | YT8531_LED_HT_ON_EN;
+	mask = YT8531_LED_RXACT_BLK_EN | YT8531_LED_TXACT_BLK_EN |
+		YT8531_LED_BT_BLK_EN | YT8531_LED_HT_BLK_EN |
+		YT8531_LED_GT_BLK_EN | YT8531_LED_COL_BLK_EN;
 	val &= ~mask;
 
 	ret = ytphy_write_ext(phydev, YT8531_EXTREG_LED1, val);
@@ -631,8 +632,10 @@ static int yt8531_led_init(struct phy_device *phydev)
 	if (val < 0)
 		return val;
 
-	val |= YT8531_LED_ACT_BLK_IND;
-	mask = YT8531_LED_RXACT_BLK_EN | YT8531_LED_TXACT_BLK_EN;
+	val |= YT8531_LED_GT_ON_EN;
+	mask = YT8531_LED_RXACT_BLK_EN | YT8531_LED_TXACT_BLK_EN |
+		YT8531_LED_BT_BLK_EN | YT8531_LED_HT_BLK_EN |
+		YT8531_LED_BT_ON_EN | YT8531_LED_HT_ON_EN;
 	val &= ~mask;
 
 	ret = ytphy_write_ext(phydev, YT8531_EXTREG_LED2, val);
