@@ -30,6 +30,18 @@
 		vin-supply = <&dc_12v>;
 	};
 
+	vcc3v3_pcie: vcc3v3-pcie-regulator {
+		compatible = "regulator-fixed";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		enable-active-high;
+		gpio = <&gpio0 RK_PB5 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pcie_pwr_en>;
+		regulator-name = "vcc3v3_pcie";
+		vin-supply = <&vcc3v3_sys>;
+	};
+
 	vcc5v0_host: vcc5v0-host-regulator {
 		gpio = <&gpio1 RK_PA3 GPIO_ACTIVE_HIGH>;
 	};
@@ -190,6 +202,21 @@
 		clocks = <&cru ACLK_RGA>, <&cru HCLK_RGA>, <&cru SCLK_RGA_CORE>;
 		clock-names = "aclk_rga", "hclk_rga", "clk_rga";
 		power-domains = <&power RK3399_PD_RGA>;
+		status = "okay";
+	};
+
+	wireless-wlan {
+		compatible = "wlan-platdata";
+		rockchip,grf = <&grf>;
+		wifi_chip_type = "ap6354";
+		sdio_vref = <1800>;
+		WIFI,reset_gpio    = <&gpio0 RK_PB2 GPIO_ACTIVE_LOW>;
+		WIFI,host_wake_irq = <&gpio0 RK_PA3 GPIO_ACTIVE_HIGH>;
+		status = "okay";
+	};
+
+	wireless-bluetooth {
+		BT,wake_gpio     = <&gpio2 RK_PD3 GPIO_ACTIVE_HIGH>;
 		status = "okay";
 	};
 };
@@ -433,6 +460,14 @@
 		};
 };
 
+&sdio_pwrseq {
+	status = "disabled";
+};
+
+&sdio0 {
+	status = "disabled";
+};
+
 &emmc_phy {
 	status = "okay";
 };
@@ -631,6 +666,23 @@
 	status = "disabled";
 };
 
+&pcie_phy {
+	status = "okay";
+};
+
+&pcie0 {
+	assigned-clocks = <&cru SCLK_PCIEPHY_REF>;
+	assigned-clock-parents = <&cru SCLK_PCIEPHY_REF100M>;
+	assigned-clock-rates = <100000000>;
+	ep-gpios = <&gpio2 RK_PD4 GPIO_ACTIVE_HIGH>;
+	num-lanes = <1>;
+	max-link-speed = <2>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pcie_clkreqn_cpm>;
+	vpcie3v3-supply = <&vcc3v3_pcie>;
+	status = "okay";
+};
+
 &tcphy0 {
 	/delete-property/ extcon;
 	status = "disabled";
@@ -678,6 +730,13 @@
 		rgmii_sleep_pins: rgmii-sleep-pins {
 			rockchip,pins =
 				<3 RK_PB7 RK_FUNC_GPIO &pcfg_output_low>;
+		};
+	};
+
+	pcie {
+		pcie_pwr_en: pcie-pwr-en {
+			rockchip,pins =
+				<0 RK_PB5 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
 
