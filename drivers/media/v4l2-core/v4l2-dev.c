@@ -33,6 +33,8 @@
 #include <media/v4l2-device.h>
 #include <media/v4l2-ioctl.h>
 
+#include "../usb/uvc/uvcvideo.h"
+
 #define VIDEO_NUM_DEVICES	256
 #define VIDEO_NAME              "video4linux"
 
@@ -840,6 +842,7 @@ int __video_register_device(struct video_device *vdev,
 	int minor_offset = 0;
 	int minor_cnt = VIDEO_NUM_DEVICES;
 	const char *name_base;
+	struct uvc_streaming *stream = video_get_drvdata(vdev);
 
 	/* A minor value of -1 marks this video device as never
 	   having been registered */
@@ -923,7 +926,18 @@ int __video_register_device(struct video_device *vdev,
 
 	/* Pick a device node number */
 	mutex_lock(&videodev_lock);
-	nr = devnode_find(vdev, nr == -1 ? 0 : nr, minor_cnt);
+	//nr = devnode_find(vdev, nr == -1 ? 0 : nr, minor_cnt);
+
+	if(le16_to_cpu(stream->dev->udev->descriptor.idVendor) == 0x0bda) {
+		if(le16_to_cpu(stream->dev->udev->descriptor.idProduct) == 0x9122) {
+			nr = devnode_find(vdev, 0, minor_cnt);
+		} else if(le16_to_cpu(stream->dev->udev->descriptor.idProduct) == 0x9123) {
+			nr = devnode_find(vdev, 2, minor_cnt);
+		}
+	} else {
+	    nr = devnode_find(vdev, 4, minor_cnt);
+	}
+
 	if (nr == minor_cnt)
 		nr = devnode_find(vdev, 0, minor_cnt);
 	if (nr == minor_cnt) {
