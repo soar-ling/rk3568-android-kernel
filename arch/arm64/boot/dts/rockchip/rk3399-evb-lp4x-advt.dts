@@ -696,7 +696,7 @@
 &uart0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart0_xfer &uart0_cts>;
-	status = "disabled";
+	status = "okay";
 };
 
 &uart2 {
@@ -726,6 +726,13 @@
 };
 
 &pinctrl {
+	wireless-bluetooth {
+		bt_wake_gpio: bt-wake-gpio {
+			rockchip,pins =
+				<2 RK_PD3 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
 	gmac {
 		rgmii_sleep_pins: rgmii-sleep-pins {
 			rockchip,pins =
