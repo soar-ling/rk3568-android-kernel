@@ -92,8 +92,16 @@ static int allocate_minors(struct usb_serial *serial, int num_ports)
 	mutex_lock(&table_lock);
 	for (i = 0; i < num_ports; ++i) {
 		port = serial->port[i];
-		minor = idr_alloc(&serial_minors, port, 0,
-					USB_SERIAL_TTY_MINORS, GFP_KERNEL);
+
+		if ((le16_to_cpu(serial->dev->descriptor.idVendor) == 0x1a86) &&
+			(le16_to_cpu(serial->dev->descriptor.idProduct) == 0x7523)) {
+			minor = idr_alloc(&serial_minors, port, 100,
+							  USB_SERIAL_TTY_MINORS, GFP_KERNEL);
+		} else {
+			minor = idr_alloc(&serial_minors, port, 0,
+							  USB_SERIAL_TTY_MINORS, GFP_KERNEL);
+		}
+
 		if (minor < 0)
 			goto error;
 		port->minor = minor;
