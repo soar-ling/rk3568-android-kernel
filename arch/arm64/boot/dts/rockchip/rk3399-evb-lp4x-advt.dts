@@ -938,3 +938,7 @@
 &rng {
 	status = "okay";
 };
+
+&fiq_debugger {
+	rockchip,baudrate = <115200>;
+};
