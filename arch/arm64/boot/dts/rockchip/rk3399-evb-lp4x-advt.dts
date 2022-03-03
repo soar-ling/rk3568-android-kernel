@@ -44,6 +44,7 @@
 
 	vcc5v0_host: vcc5v0-host-regulator {
 		gpio = <&gpio1 RK_PA3 GPIO_ACTIVE_HIGH>;
+		vin-supply = <&vcc5v0_sys>;
 	};
 
 	vcc5v0_host12: vcc5v0-host-12-regulator {
@@ -54,6 +55,7 @@
 		pinctrl-0 = <&host_vbus_drv_12>;
 		regulator-name = "vcc5v0_host12";
 		regulator-always-on;
+		vin-supply = <&vcc5v0_sys>;
 	};
 
 	vcc5v0_host23: vcc5v0-host-23-regulator {
@@ -64,6 +66,7 @@
 		pinctrl-0 = <&host_vbus_drv_23>;
 		regulator-name = "vcc5v0_host23";
 		regulator-always-on;
+		vin-supply = <&vcc5v0_sys>;
 	};
 
 	vcc5v0_host34: vcc5v0-host-34-regulator {
@@ -74,6 +77,7 @@
 		pinctrl-0 = <&host_vbus_drv_34>;
 		regulator-name = "vcc5v0_host34";
 		regulator-always-on;
+		vin-supply = <&vcc5v0_sys>;
 	};
 
 	hub_rst: hub-rst-regulator {
@@ -88,6 +92,19 @@
 		regulator-state-mem {
 			regulator-off-in-suspend;
 		};
+	};
+
+	vcc3v3_gps: vcc3v3-gps-regulator {
+		compatible = "regulator-fixed";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		enable-active-high;
+		gpio = <&gpio1 RK_PA0 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&gps_pwr_en>;
+		regulator-name = "vcc3v3_gps";
+		regulator-always-on;
+		vin-supply = <&vcc5v0_sys>;
 	};
 
 	vcc_lcd: vcc-lcd {
@@ -744,6 +761,13 @@
 		pcie_pwr_en: pcie-pwr-en {
 			rockchip,pins =
 				<0 RK_PB5 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	gps {
+		gps_pwr_en: gps-pwr-en {
+			rockchip,pins =
+				<1 RK_PA0 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
 
