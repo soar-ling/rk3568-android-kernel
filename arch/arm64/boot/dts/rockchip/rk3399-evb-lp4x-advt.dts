@@ -935,7 +935,7 @@
 	wk2xxx: wk2xxx {
 		compatible = "wkmic,wk2124spi_cs0";
 		reg = <0>;
-		spi-max-frequency = <24000000>;
+		spi-max-frequency = <10000000>;
 		poll_mode = <0>;
 		type = <0>;
 		enable_dma = <0>;

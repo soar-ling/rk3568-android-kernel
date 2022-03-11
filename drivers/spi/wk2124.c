@@ -1197,7 +1197,7 @@ static int wk2xxx_startup(struct uart_port *port)//i
 	wk2xxx_write_slave_reg(s->spi_wk, s->port.iobase, WK2XXX_FCR, 0xfc);
 	//set rx/tx interrupt
 	wk2xxx_write_slave_reg(s->spi_wk, s->port.iobase, WK2XXX_SPAGE, 1);
-	wk2xxx_write_slave_reg(s->spi_wk, s->port.iobase, WK2XXX_RFTL, 0x40);
+	wk2xxx_write_slave_reg(s->spi_wk, s->port.iobase, WK2XXX_RFTL, 0x78);
 	wk2xxx_write_slave_reg(s->spi_wk, s->port.iobase, WK2XXX_TFTL, 0X20);
 	wk2xxx_write_slave_reg(s->spi_wk, s->port.iobase, WK2XXX_SPAGE, 0);
 	/*enable rs485*/
