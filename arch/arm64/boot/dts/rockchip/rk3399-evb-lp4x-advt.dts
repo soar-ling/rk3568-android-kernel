@@ -707,6 +707,7 @@
 
 &u2phy0 {
 	status = "okay";
+	reset-gpios = <&gpio4 RK_PD6 GPIO_ACTIVE_HIGH>;
 	/delete-property/ extcon;
 };
 
