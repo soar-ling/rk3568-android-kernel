@@ -380,7 +380,8 @@ static int rockchip_pcie_host_init_port(struct rockchip_pcie *rockchip)
 				 timeouts * USEC_PER_MSEC);
 	if (err) {
 		dev_err(dev, "PCIe link training gen1 timeout!\n");
-		goto err_power_off_phy;
+		//goto err_power_off_phy;
+		return -1;
 	}
 
 	err = readl_poll_timeout(rockchip->apb_base + PCIE_CLIENT_DEBUG_OUT_0,
@@ -446,7 +447,7 @@ static int rockchip_pcie_host_init_port(struct rockchip_pcie *rockchip)
 	}
 
 	return 0;
-err_power_off_phy:
+//err_power_off_phy:
 	while (i--)
 		phy_power_off(rockchip->phys[i]);
 	i = MAX_LANE_NUM;
@@ -1008,7 +1009,7 @@ static int rockchip_pcie_resume_for_user(struct device *dev)
 
 	err = rockchip_pcie_host_init_port(rockchip);
 	if (err)
-		return err;
+		return 0;
 
 	err = rockchip_pcie_cfg_atu(rockchip);
 	if (err)
