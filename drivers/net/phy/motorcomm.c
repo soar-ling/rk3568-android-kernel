@@ -653,6 +653,25 @@ static int yt8531_led_init(struct phy_device *phydev)
 	return ret;
 }
 
+static int yt8531_100m_bttest_init(struct phy_device *phydev)
+{
+	int ret;
+	int val;
+
+	val = ytphy_read_ext(phydev, 0x57);
+	if (val < 0)
+		return val;
+
+	printk("chen debug 0x57 : 0x%x\n", val);
+
+	ret = ytphy_write_ext(phydev, 0x57, 0x274c);
+
+	if (ret < 0)
+		return ret;
+
+	return ret;
+}
+
 static int yt8531_config_out_125m(struct mii_bus *bus, int phy_id)
 {
 	int ret, val;
@@ -687,6 +706,10 @@ static int yt8531_config_init(struct phy_device *phydev)
 		return ret;
 
 	ret = yt8531_led_init(phydev);
+	if (ret < 0)
+		return ret;
+
+	ret = yt8531_100m_bttest_init(phydev);
 	if (ret < 0)
 		return ret;
 
