@@ -525,6 +525,7 @@ static int fan53555_device_setup(struct fan53555_device_info *di,
 				struct fan53555_platform_data *pdata)
 {
 	int ret = 0;
+	unsigned int val;
 
 	/* Setup voltage control register */
 	switch (pdata->sleep_vsel_id) {
@@ -556,6 +557,12 @@ static int fan53555_device_setup(struct fan53555_device_info *di,
 		break;
 	case FAN53555_VENDOR_TCS:
 		ret = fan53555_voltages_setup_tcs(di);
+
+		ret = regmap_read(di->regmap, 0x16, &val);
+		/* 0:5.0A    1:5.5A    2:6.0A    3:8.0A */
+		val = (val & 0x3f) | (2 << 6);
+		ret = regmap_update_bits(di->regmap, 0x16, 0xff, val);
+
 		break;
 	default:
 		dev_err(di->dev, "vendor %d not supported!\n", di->vendor);

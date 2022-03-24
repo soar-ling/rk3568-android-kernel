@@ -60,6 +60,7 @@ static bool rk808_is_volatile_reg(struct device *dev, unsigned int reg)
 	case RK808_DEVCTRL_REG:
 	case RK808_INT_STS_REG1:
 	case RK808_INT_STS_REG2:
+	case RK818_DCDC_ILMAX:
 		return true;
 	}
 
@@ -145,7 +146,7 @@ static const struct regmap_config rk805_regmap_config = {
 static const struct regmap_config rk808_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_register = RK808_IO_POL_REG,
+	.max_register = RK818_DCDC_ILMAX,
 	.cache_type = REGCACHE_RBTREE,
 	.volatile_reg = rk808_is_volatile_reg,
 };
@@ -1185,7 +1186,7 @@ static int rk808_probe(struct i2c_client *client,
 	const struct mfd_cell *cells;
 	unsigned char pmic_id_msb, pmic_id_lsb;
 	u8 on_source = 0, off_source = 0;
-	unsigned int on, off;
+	unsigned int on, off, val = 0;
 	int pm_off = 0, msb, lsb;
 	int nr_pre_init_regs;
 	int nr_cells;
@@ -1409,6 +1410,14 @@ static int rk808_probe(struct i2c_client *client,
 
 	if (!pm_power_off)
 		pm_power_off = rk808_pm_power_off_dummy;
+
+	val = 1;
+	val = val + (val << 2) + (val << 4) + (val << 6);
+	ret = regmap_update_bits(rk808->regmap, 0x90, 0xff, val);
+	printk("skysi ----ret : %d---------line %d,  val : 0x%x\n", ret,  __LINE__, val);
+
+	ret = regmap_read(rk808->regmap, 0x90, &val);
+	printk("skysi test ---------ret : %d, line : %d-------- 0x90 read : 0x%x\n", ret, __LINE__, val);
 
 	return 0;
 
