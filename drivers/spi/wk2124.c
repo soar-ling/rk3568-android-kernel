@@ -54,12 +54,15 @@ MODULE_LICENSE("Dual BSD/GPL");
 #define WK2XXX_STATUS_BRK   4
 #define WK2XXX_STATUS_OE    8
 
-#define SPI_LEN_LIMIT       255    //MAX <= 255
+//#define SPI_LEN_LIMIT       255    //MAX <= 255
+#define SPI_LEN_LIMIT       15    //MAX <= 255
 
 static DEFINE_MUTEX(wk2xxxs_lock);                /* race on probe */
 static DEFINE_MUTEX(wk2xxxs_reg_lock);
 static DEFINE_MUTEX(wk2xxs_work_lock);                /* work on probe */
 static DEFINE_MUTEX(wk2xxxs_global_lock);
+
+static struct gpio_desc *rs485_enable_gpio;
 
 struct wk2xxx_port
 {
@@ -958,6 +961,10 @@ static void wk2xxx_stop_tx(struct uart_port *port)//
 #endif
 
 	mutex_lock(&wk2xxxs_lock);
+
+	if (s->port.iobase == 3)
+		gpiod_direction_output(rs485_enable_gpio, 1);
+
 	if(!(s->stop_tx_flag || s->stop_tx_fail))
 	{
 		wk2xxx_read_slave_reg(s->spi_wk, s->port.iobase, WK2XXX_SIER, dat);
@@ -1000,6 +1007,10 @@ static void wk2xxx_start_tx(struct uart_port *port)
 #ifdef _DEBUG_WK_FUNCTION
 	printk(KERN_ALERT "%s!!-port:%ld;--in--\n", __func__, s->port.iobase);
 #endif
+
+	if (s->port.iobase == 3)
+		gpiod_direction_output(rs485_enable_gpio, 0);
+
 	if(!(s->start_tx_flag || s->start_tx_fail))
 	{
 		s->start_tx_flag = 1;
@@ -1720,6 +1731,12 @@ static int wk2xxx_probe(struct spi_device *spi)
 	{
 		return 1;
 	}
+
+	rs485_enable_gpio = devm_gpiod_get_optional(&spi->dev, "rs485_en", GPIOD_ASIS);
+	if (IS_ERR(rs485_enable_gpio)) {
+		printk("rs485 enable gpios\n");
+	}
+	gpiod_direction_output(rs485_enable_gpio, 1);
 
 	wk2xxx_read_global_reg(spi, WK2XXX_GENA, dat);
 	if((dat[0] & 0xf0) != 0x30)

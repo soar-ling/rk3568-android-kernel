@@ -80,20 +80,6 @@
 		vin-supply = <&vcc5v0_sys>;
 	};
 
-	hub_rst: hub-rst-regulator {
-		compatible = "regulator-fixed";
-		gpio = <&gpio4 RK_PD6 GPIO_ACTIVE_HIGH>;
-		startup-delay-us = <20000>;
-		enable-active-high;
-		pinctrl-names = "default";
-		pinctrl-0 = <&hub_rst_h>;
-		regulator-name = "hub_rst";
-		regulator-always-on;
-		regulator-state-mem {
-			regulator-off-in-suspend;
-		};
-	};
-
 	vcc3v3_gps: vcc3v3-gps-regulator {
 		compatible = "regulator-fixed";
 		regulator-min-microvolt = <3300000>;
@@ -836,6 +822,13 @@
 				<1 RK_PA4 RK_FUNC_GPIO &pcfg_pull_up>;
 		};
 	};
+
+	rs485 {
+		rs485_enable: rs485-enable {
+			rockchip,pins =
+				<4 RK_PC5 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
 };
 
 &pvtm {
@@ -932,6 +925,7 @@
 &spi2 {
 	status = "okay";
 	max-freq = <48000000>;
+	pinctrl-0 = <&spi2_clk &spi2_tx &spi2_rx &spi2_cs0 &rs485_enable>;
 
 	wk2xxx: wk2xxx {
 		compatible = "wkmic,wk2124spi_cs0";
@@ -941,6 +935,7 @@
 		type = <0>;
 		enable_dma = <0>;
 		irq_gpio = <&gpio4 RK_PD0 IRQ_TYPE_LEVEL_LOW>;
+		rs485_en-gpios = <&gpio4 RK_PC5 GPIO_ACTIVE_LOW>;
 	};
 };
 
