@@ -550,14 +550,14 @@ static int panel_simple_unprepare(struct drm_panel *panel)
 			dev_err(panel->dev, "failed to send exit cmds seq\n");
 	}
 
-	gpiod_direction_output(p->reset_gpio, 1);
+	if (p->desc->delay.unprepare)
+		panel_simple_sleep(p->desc->delay.unprepare);
+
+	gpiod_direction_output(p->reset_gpio, 0);
 
 	gpiod_direction_output(p->enable_gpio, 0);
 
 	panel_simple_regulator_disable(p);
-
-	if (p->desc->delay.unprepare)
-		panel_simple_sleep(p->desc->delay.unprepare);
 
 	p->prepared = false;
 
@@ -588,7 +588,7 @@ static int panel_simple_prepare(struct drm_panel *panel)
 	if (p->desc->delay.reset)
 		panel_simple_sleep(p->desc->delay.reset);
 
-	gpiod_direction_output(p->reset_gpio, 0);
+	//gpiod_direction_output(p->reset_gpio, 0);
 
 	if (p->desc->delay.init)
 		panel_simple_sleep(p->desc->delay.init);
@@ -847,7 +847,7 @@ static void panel_simple_shutdown(struct device *dev)
 	panel_simple_disable(&panel->base);
 
 	if (panel->prepared) {
-		gpiod_direction_output(panel->reset_gpio, 1);
+		gpiod_direction_output(panel->reset_gpio, 0);
 		gpiod_direction_output(panel->enable_gpio, 0);
 		panel_simple_regulator_disable(panel);
 	}
