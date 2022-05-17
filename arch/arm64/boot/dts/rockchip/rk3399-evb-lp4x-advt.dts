@@ -339,7 +339,7 @@
 };
 
 &route_dsi {
-	status = "okay";
+	status = "disabled";
 	connect = <&vopb_out_dsi>;
 };
 
@@ -933,7 +933,7 @@
 };
 
 &route_hdmi {
-	status = "okay";
+	status = "disabled";
 	connect = <&vopl_out_hdmi>;
 };
 
