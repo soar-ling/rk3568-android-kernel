@@ -677,6 +677,11 @@
 	status = "okay";
 };
 
+&sdmmc {
+	clock-frequency = <100000000>;
+	max-frequency = <100000000>;
+};
+
 &spdif {
 	status = "disabled";
 };
