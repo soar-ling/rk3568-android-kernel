@@ -628,18 +628,18 @@ int es8316_headset_detect(int jack_insert)
 
    es8316 = snd_soc_component_get_drvdata(es8316_component);
 
-   es8316->hp_inserted = jack_insert;
+   //es8316->hp_inserted = jack_insert;
 
     printk("%s: jack_insert = %d\n", __func__, jack_insert);
    /*enable micbias and disable PA*/
    if (jack_insert) {
         //snd_soc_component_write(es8316_component, ES8316_SYS_PDN, 0x00);
         //snd_soc_component_write(es8316_component, ES8316_ADC_PDN_LINSEL, 0x30); // bit[7]: Power down PGA; bit[6]: Power down ADC modulator; bit[5:4]:Lin2 DF2SE(Board)
-        es8316_enable_spk(es8316, false);
+        //es8316_enable_spk(es8316, false);
 		printk("jx:es8316_disable_spk!\n");
    }
    else{
-	    es8316_enable_spk(es8316, true);
+	    //es8316_enable_spk(es8316, true);
 		printk("jx:es8316_enable_spk!\n");
    }
 
