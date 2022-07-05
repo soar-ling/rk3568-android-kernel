@@ -145,6 +145,24 @@ struct ieee80211_supported_band cfg80211_band_5ghz = {
 	.n_bitrates = ARRAY_SIZE(cfg80211_rates) - 4,
 };
 
+/** Channel definitions for 2 GHz to be advertised to cfg80211 */
+static struct ieee80211_channel macl_cfg80211_channels_2ghz[] = {
+	{.center_freq = 2412, .hw_value = 1, .max_power = 20},
+	{.center_freq = 2417, .hw_value = 2, .max_power = 20},
+	{.center_freq = 2422, .hw_value = 3, .max_power = 20},
+	{.center_freq = 2427, .hw_value = 4, .max_power = 20},
+	{.center_freq = 2432, .hw_value = 5, .max_power = 20},
+	{.center_freq = 2437, .hw_value = 6, .max_power = 20},
+	{.center_freq = 2442, .hw_value = 7, .max_power = 20},
+	{.center_freq = 2447, .hw_value = 8, .max_power = 20},
+	{.center_freq = 2452, .hw_value = 9, .max_power = 20},
+	{.center_freq = 2457, .hw_value = 10, .max_power = 20},
+	{.center_freq = 2462, .hw_value = 11, .max_power = 20},
+	{.center_freq = 2467, .hw_value = 12, .max_power = 20},
+	{.center_freq = 2472, .hw_value = 13, .max_power = 20},
+	{.center_freq = 2484, .hw_value = 14, .max_power = 20},
+};
+
 /** Channel definitions for 5 GHz to be advertised to cfg80211 */
 static struct ieee80211_channel mac1_cfg80211_channels_5ghz[] = {
 	{.center_freq = 5180, .hw_value = 36, .max_power = 20},
@@ -175,9 +193,9 @@ static struct ieee80211_channel mac1_cfg80211_channels_5ghz[] = {
 };
 
 struct ieee80211_supported_band mac1_cfg80211_band_2ghz = {
-	.channels = cfg80211_channels_2ghz,
+	.channels = macl_cfg80211_channels_2ghz,
 	.band = IEEE80211_BAND_2GHZ,
-	.n_channels = ARRAY_SIZE(cfg80211_channels_2ghz),
+	.n_channels = ARRAY_SIZE(macl_cfg80211_channels_2ghz),
 	.bitrates = cfg80211_rates,
 	.n_bitrates = ARRAY_SIZE(cfg80211_rates),
 };
@@ -412,6 +430,7 @@ mlan_status woal_cfg80211_set_key(moal_private *priv, t_u8 is_enable_wep,
 		    cipher != WLAN_CIPHER_SUITE_GCMP &&
 #endif
 #if KERNEL_VERSION(4, 0, 0) <= CFG80211_VERSION_CODE
+		    cipher != WLAN_CIPHER_SUITE_BIP_GMAC_128 &&
 		    cipher != WLAN_CIPHER_SUITE_BIP_GMAC_256 &&
 		    cipher != WLAN_CIPHER_SUITE_GCMP_256 &&
 #endif
@@ -480,11 +499,21 @@ mlan_status woal_cfg80211_set_key(moal_private *priv, t_u8 is_enable_wep,
 
 		if (cipher == WLAN_CIPHER_SUITE_AES_CMAC
 #if KERNEL_VERSION(4, 0, 0) <= CFG80211_VERSION_CODE
-		    || cipher == WLAN_CIPHER_SUITE_BIP_GMAC_256
+		    || cipher == WLAN_CIPHER_SUITE_BIP_GMAC_128 ||
+		    cipher == WLAN_CIPHER_SUITE_BIP_GMAC_256
 #endif
 		) {
 			sec->param.encrypt_key.key_flags |=
 				KEY_FLAG_AES_MCAST_IGTK;
+
+#if KERNEL_VERSION(4, 0, 0) <= CFG80211_VERSION_CODE
+			if (cipher == WLAN_CIPHER_SUITE_BIP_GMAC_128)
+				sec->param.encrypt_key.key_flags |=
+					KEY_FLAG_GMAC_128;
+			else if (cipher == WLAN_CIPHER_SUITE_BIP_GMAC_256)
+				sec->param.encrypt_key.key_flags |=
+					KEY_FLAG_GMAC_256;
+#endif
 		}
 	} else {
 		if (key_index == KEY_INDEX_CLEAR_ALL)
@@ -1506,6 +1535,17 @@ int woal_cfg80211_set_default_mgmt_key(struct wiphy *wiphy,
 				       t_u8 key_index)
 {
 	PRINTM(MINFO, "set default mgmt key, key index=%d\n", key_index);
+
+	return 0;
+}
+#endif
+
+#if KERNEL_VERSION(5, 10, 0) <= CFG80211_VERSION_CODE
+int woal_cfg80211_set_default_beacon_key(struct wiphy *wiphy,
+					 struct net_device *netdev,
+					 t_u8 key_index)
+{
+	PRINTM(MINFO, "set default beacon key, key index=%d\n", key_index);
 
 	return 0;
 }
@@ -2639,11 +2679,19 @@ int woal_cfg80211_mgmt_tx(struct wiphy *wiphy,
 				break;
 			case IEEE80211_STYPE_DEAUTH:
 			case IEEE80211_STYPE_DISASSOC:
+				/* Need cancel the CAC when stop hostapd during
+				 * CAC*/
+				if (priv->phandle->is_cac_timer_set)
+					woal_cancel_chanrpt_event(priv);
+
+				if (!priv->bss_started) {
+					PRINTM(MCMND,
+					       "Drop deauth packet before AP started\n");
+					goto done;
+				}
 				PRINTM(MMSG,
 				       "wlan: HostMlme %s send deauth/disassoc\n",
 				       priv->netdev->name);
-				if (priv->phandle->is_cac_timer_set)
-					woal_cancel_chanrpt_event(priv);
 
 				break;
 			case IEEE80211_STYPE_ASSOC_RESP:
@@ -2714,7 +2762,7 @@ int woal_cfg80211_mgmt_tx(struct wiphy *wiphy,
 		woal_cancel_scan(priv, MOAL_IOCTL_WAIT);
 #endif
 
-		if (chan) {
+		if (chan && priv->bss_type != MLAN_BSS_ROLE_UAP) {
 			duration = (wait > MGMT_TX_DEFAULT_WAIT_TIME) ?
 					   wait :
 					   MGMT_TX_DEFAULT_WAIT_TIME;
@@ -4512,7 +4560,7 @@ void woal_cfg80211_free_iftype_data(struct wiphy *wiphy)
 {
 	enum nl80211_band band;
 
-	for (band = NL80211_BAND_2GHZ; band < NUM_NL80211_BANDS; ++band) {
+	for (band = NL80211_BAND_2GHZ; band < IEEE80211_NUM_BANDS; ++band) {
 		if (!wiphy->bands[band])
 			continue;
 		if (!wiphy->bands[band]->iftype_data)
@@ -4599,7 +4647,47 @@ void woal_cfg80211_notify_sched_scan_stop(moal_private *priv)
 #endif
 	);
 	priv->sched_scanning = MFALSE;
-	PRINTM(MEVENT, "Sched_Scan stopped\n");
+	PRINTM(MEVENT, "Notify sched scan stopped\n");
+}
+
+/**
+ * @brief sched_scan work handler
+ *
+ * @param work            a pointer to work_struct
+ *
+ * @return                0 -- success, otherwise fail
+ */
+void woal_sched_scan_work_queue(struct work_struct *work)
+{
+	struct delayed_work *delayed_work =
+		container_of(work, struct delayed_work, work);
+	moal_private *priv =
+		container_of(delayed_work, moal_private, sched_scan_work);
+	ENTER();
+
+	if (priv->sched_scanning)
+		woal_cfg80211_notify_sched_scan_stop(priv);
+
+	LEAVE();
+}
+
+/**
+ * @brief report sched_scan result to kernel
+ *
+ * @param priv          A pointer moal_private structure
+ *
+ * @return          N/A
+ */
+void woal_report_sched_scan_result(moal_private *priv)
+{
+	cfg80211_sched_scan_results(priv->wdev->wiphy
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+				    ,
+				    priv->bg_scan_reqid
+#endif
+	);
+	queue_delayed_work(priv->sched_scan_workqueue, &priv->sched_scan_work,
+			   msecs_to_jiffies(2000));
 }
 #endif
 #endif
@@ -4776,7 +4864,6 @@ void woal_cfg80211_notify_antcfg(moal_private *priv, struct wiphy *wiphy,
 				}
 #endif
 			}
-			bands->ht_cap.mcs.rx_mask[4] = 0;
 		}
 
 		if (wiphy->bands[IEEE80211_BAND_5GHZ]) {

@@ -869,7 +869,7 @@ mlan_status wlan_cmd_802_11_associate(mlan_private *pmpriv,
 	MrvlIEtypes_PhyParamSet_t *pphy_tlv;
 	MrvlIEtypes_SsParamSet_t *pss_tlv;
 	MrvlIEtypes_RatesParamSet_t *prates_tlv;
-	MrvlIEtypes_AuthType_t *pauth_tlv;
+	MrvlIEtypes_AuthType_t *pauth_tlv = MNULL;
 	MrvlIEtypes_RsnParamSet_t *prsn_ie_tlv = MNULL;
 	MrvlIEtypes_SecurityCfg_t *psecurity_cfg_ie = MNULL;
 	MrvlIEtypes_ChanListParamSet_t *pchan_tlv;
@@ -898,6 +898,7 @@ mlan_status wlan_cmd_802_11_associate(mlan_private *pmpriv,
 	pmpriv->pattempted_bss_desc = pbss_desc;
 	/* clear assoc_rsp_size */
 	pmpriv->assoc_rsp_size = 0;
+	pmpriv->assoc_req_size = 0;
 
 	memcpy_ext(pmadapter, passo->peer_sta_addr, pbss_desc->mac_address,
 		   sizeof(pbss_desc->mac_address),
@@ -981,6 +982,27 @@ mlan_status wlan_cmd_802_11_associate(mlan_private *pmpriv,
 				wlan_cpu_to_le16(MLAN_AUTH_MODE_OPEN);
 		pos += sizeof(pauth_tlv->header) + pauth_tlv->header.len;
 		pauth_tlv->header.len = wlan_cpu_to_le16(pauth_tlv->header.len);
+	}
+
+	if ((pauth_tlv != MNULL) &&
+	    (pauth_tlv->auth_type ==
+	     wlan_cpu_to_le16(AssocAgentAuth_Wpa3Sae))) {
+		if (pbss_desc->prsnx_ie && pbss_desc->prsnx_ie->ieee_hdr.len &&
+		    (pbss_desc->prsnx_ie->data[0] & (0x1 << SAE_H2E_BIT))) {
+			MrvlIEtypes_SAE_PWE_Mode_t *psae_pwe_mode_tlv;
+
+			/* Setup the sae pwe derivation mode TLV in the
+			 * association command */
+			psae_pwe_mode_tlv = (MrvlIEtypes_SAE_PWE_Mode_t *)pos;
+			psae_pwe_mode_tlv->header.type = wlan_cpu_to_le16(
+				TLV_TYPE_WPA3_SAE_PWE_DERIVATION_MODE);
+			psae_pwe_mode_tlv->header.len =
+				sizeof(psae_pwe_mode_tlv->pwe);
+			psae_pwe_mode_tlv->pwe[0] =
+				pbss_desc->prsnx_ie->data[0];
+			pos += sizeof(psae_pwe_mode_tlv->header) +
+			       sizeof(psae_pwe_mode_tlv->pwe);
+		}
 	}
 
 	if (IS_SUPPORT_MULTI_BANDS(pmadapter) &&
@@ -1360,14 +1382,21 @@ mlan_status wlan_ret_802_11_associate(mlan_private *pmpriv,
 	mlan_adapter *pmadapter = pmpriv->adapter;
 	assoc_logger_data *assoc_succ;
 	mlan_ds_bss *bss;
+	IEEEtypes_MgmtHdr_t *hdr;
 
 	ENTER();
 
-	if (pmpriv->curr_bss_params.host_mlme)
-		passoc_rsp =
-			(IEEEtypes_AssocRsp_t *)((t_u8 *)(&resp->params) +
+	if (pmpriv->curr_bss_params.host_mlme) {
+		hdr = (IEEEtypes_MgmtHdr_t *)&resp->params;
+		if (!memcmp(pmpriv->adapter, hdr->BssId,
+			    pmpriv->pattempted_bss_desc->mac_address,
+			    MLAN_MAC_ADDR_LENGTH))
+			passoc_rsp = (IEEEtypes_AssocRsp_t
+					      *)((t_u8 *)(&resp->params) +
 						 sizeof(IEEEtypes_MgmtHdr_t));
-	else
+		else
+			passoc_rsp = (IEEEtypes_AssocRsp_t *)&resp->params;
+	} else
 
 		passoc_rsp = (IEEEtypes_AssocRsp_t *)&resp->params;
 	passoc_rsp->status_code = wlan_le16_to_cpu(passoc_rsp->status_code);
@@ -1432,7 +1461,6 @@ mlan_status wlan_ret_802_11_associate(mlan_private *pmpriv,
 
 	/* Send a Media Connected event, according to the Spec */
 	pmpriv->media_connected = MTRUE;
-
 	pmpriv->adapter->pps_uapsd_mode = MFALSE;
 	pmpriv->adapter->tx_lock_flag = MFALSE;
 	pmpriv->adapter->delay_null_pkt = MFALSE;

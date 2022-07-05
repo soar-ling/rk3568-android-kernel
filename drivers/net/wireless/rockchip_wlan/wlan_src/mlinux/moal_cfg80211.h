@@ -48,6 +48,9 @@
 #define WLAN_CIPHER_SUITE_AES_CMAC 0x000FAC06
 #endif
 #if KERNEL_VERSION(4, 0, 0) <= CFG80211_VERSION_CODE
+#ifndef WLAN_CIPHER_SUITE_BIP_GMAC_128
+#define WLAN_CIPHER_SUITE_BIP_GMAC_128 0x000FAC0B
+#endif
 #ifndef WLAN_CIPHER_SUITE_BIP_GMAC_256
 #define WLAN_CIPHER_SUITE_BIP_GMAC_256 0x000FAC0C
 #endif
@@ -73,6 +76,8 @@ mlan_status woal_cfg80211_set_key(moal_private *priv, t_u8 is_enable_wep,
 mlan_status woal_cfg80211_set_wep_keys(moal_private *priv, const t_u8 *key,
 				       int key_len, t_u8 index,
 				       t_u8 wait_option);
+
+t_u8 is_cfg80211_special_region_code(t_u8 *region_string);
 
 /**
  * If multiple wiphys are registered e.g. a regular netdev with
@@ -101,8 +106,12 @@ pmoal_private woal_get_scan_interface(pmoal_handle handle);
 void woal_host_mlme_disconnect(pmoal_private priv, u16 reason_code, u8 *sa);
 void woal_host_mlme_work_queue(struct work_struct *work);
 void woal_host_mlme_process_assoc_resp(moal_private *priv,
-				       mlan_ds_misc_assoc_rsp *assoc_rsp);
+				       mlan_ds_assoc_info *assoc_info);
 #endif
+#endif
+
+#if CFG80211_VERSION_CODE >= KERNEL_VERSION(4, 0, 0)
+void woal_regulatory_work_queue(struct work_struct *work);
 #endif
 
 t_u8 woal_band_cfg_to_ieee_band(t_u32 band);
@@ -204,6 +213,12 @@ int woal_cfg80211_set_default_key(struct wiphy *wiphy, struct net_device *dev,
 int woal_cfg80211_set_default_mgmt_key(struct wiphy *wiphy,
 				       struct net_device *netdev,
 				       t_u8 key_index);
+#endif
+
+#if KERNEL_VERSION(5, 10, 0) <= CFG80211_VERSION_CODE
+int woal_cfg80211_set_default_beacon_key(struct wiphy *wiphy,
+					 struct net_device *netdev,
+					 t_u8 key_index);
 #endif
 
 #if KERNEL_VERSION(3, 1, 0) <= CFG80211_VERSION_CODE
@@ -356,7 +371,7 @@ int woal_cfg80211_deinit_p2p(moal_private *priv);
 #endif /* WIFI_DIRECT_SUPPORT */
 
 /** Define for remain on channel duration timer */
-#define MAX_REMAIN_ON_CHANNEL_DURATION (1000)
+#define MAX_REMAIN_ON_CHANNEL_DURATION (5000)
 
 int woal_cfg80211_remain_on_channel_cfg(moal_private *priv, t_u8 wait_option,
 					t_u8 remove, t_u8 *status,
@@ -453,6 +468,8 @@ void woal_channel_switch_event(moal_private *priv, chan_band_info *pchan_info);
 #if KERNEL_VERSION(3, 2, 0) <= CFG80211_VERSION_CODE
 void woal_bgscan_stop_event(moal_private *priv);
 void woal_cfg80211_notify_sched_scan_stop(moal_private *priv);
+void woal_sched_scan_work_queue(struct work_struct *work);
+void woal_report_sched_scan_result(moal_private *priv);
 #endif
 #endif
 

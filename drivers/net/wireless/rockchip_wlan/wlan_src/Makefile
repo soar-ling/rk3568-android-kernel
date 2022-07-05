@@ -16,8 +16,14 @@
 #  this warranty disclaimer.
 #
 
+CONFIG_COMPATDIR=n
+ifeq ($(CONFIG_COMPATDIR), y)
 COMPATDIR=/lib/modules/$(KERNELVERSION_X86)/build/compat-wireless-3.2-rc1-1/include
 CC ?=		$(CROSS_COMPILE)gcc -I$(COMPATDIR)
+else
+CC ?=		$(CROSS_COMPILE)gcc
+endif
+
 LD ?=		$(CROSS_COMPILE)ld
 BACKUP=		/root/backup
 YMD=		`date +%Y%m%d%H%M`
@@ -336,6 +342,7 @@ endif
 #ccflags-y += -Wstringop-truncation
 #ccflags-y += -Wmisleading-indentation
 #ccflags-y += -Wunused-const-variable
+#ccflags-y += -Wno-stringop-truncation
 #############################################################################
 # Make Targets
 #############################################################################

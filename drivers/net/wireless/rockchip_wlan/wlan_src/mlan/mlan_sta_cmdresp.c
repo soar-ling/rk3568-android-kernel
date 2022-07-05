@@ -191,12 +191,12 @@ static mlan_status wlan_process_cmdresp_error(mlan_private *pmpriv,
 		pmadapter->pscan_ioctl_req = MNULL;
 		/* Need to indicate IOCTL complete */
 		if (pscan_ioctl_req) {
-			pscan_ioctl_req->status_code = MLAN_ERROR_CMD_SCAN_FAIL;
+			pscan_ioctl_req->status_code = MLAN_ERROR_NO_ERROR;
 			/* Indicate ioctl complete */
 			pcb->moal_ioctl_complete(
 				pmadapter->pmoal_handle,
 				(pmlan_ioctl_req)pscan_ioctl_req,
-				MLAN_STATUS_FAILURE);
+				MLAN_STATUS_SUCCESS);
 		}
 		wlan_release_cmd_lock(pmadapter);
 		wlan_recv_event(pmpriv, MLAN_EVENT_ID_DRV_SCAN_REPORT, MNULL);
@@ -751,6 +751,14 @@ static mlan_status wlan_ret_get_log(pmlan_private pmpriv,
 			wlan_le32_to_cpu(pget_log->dwMgtErrCnt);
 		pget_info->param.stats.dwDatErrCnt =
 			wlan_le32_to_cpu(pget_log->dwDatErrCnt);
+		pget_info->param.stats.bigtk_mmeGoodCnt =
+			wlan_le32_to_cpu(pget_log->bigtk_mmeGoodCnt);
+		pget_info->param.stats.bigtk_replayErrCnt =
+			wlan_le32_to_cpu(pget_log->bigtk_replayErrCnt);
+		pget_info->param.stats.bigtk_micErrCnt =
+			wlan_le32_to_cpu(pget_log->bigtk_micErrCnt);
+		pget_info->param.stats.bigtk_mmeNotFoundCnt =
+			wlan_le32_to_cpu(pget_log->bigtk_mmeNotFoundCnt);
 
 		if (pmpriv->adapter->getlog_enable) {
 			pget_info->param.stats.tx_frag_cnt =
@@ -2473,6 +2481,40 @@ mlan_status wlan_ret_arb_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp,
 }
 
 /**
+ *  @brief This function handles the command response of ipv6 ra offload feature
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param resp         A pointer to HostCmd_DS_COMMAND
+ *  @param pioctl_buf   A pointer to mlan_ioctl_req structure
+ *
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+mlan_status wlan_ret_ipv6_ra_offload(pmlan_private pmpriv,
+				     HostCmd_DS_COMMAND *resp,
+				     mlan_ioctl_req *pioctl_buf)
+{
+	HostCmd_DS_IPV6_RA_OFFLOAD *ipv6_ra_resp =
+		&resp->params.ipv6_ra_offload;
+	mlan_ds_misc_cfg *misc = MNULL;
+	mlan_ds_misc_ipv6_ra_offload *ipv6_ra = MNULL;
+
+	ENTER();
+
+	if (pioctl_buf && (pioctl_buf->action == MLAN_ACT_GET)) {
+		misc = (mlan_ds_misc_cfg *)pioctl_buf->pbuf;
+		ipv6_ra = (mlan_ds_misc_ipv6_ra_offload *)&misc->param
+				  .ipv6_ra_offload;
+		ipv6_ra->enable = ipv6_ra_resp->enable;
+		memcpy_ext(pmpriv->adapter, ipv6_ra->ipv6_addr,
+			   ipv6_ra_resp->ipv6_addr_param.ipv6_addr, 16,
+			   sizeof(ipv6_ra->ipv6_addr));
+	}
+
+	LEAVE();
+	return MLAN_STATUS_SUCCESS;
+}
+
+/**
  *  @brief This function handles the command response of sta get band and
  * channel
  *
@@ -3196,6 +3238,9 @@ mlan_status wlan_ops_sta_process_cmdresp(t_void *priv, t_u16 cmdresp_no,
 		break;
 	case HostCmd_CMD_802_11_MIMO_SWITCH:
 		break;
+	case HostCmd_CMD_IPV6_RA_OFFLOAD_CFG:
+		ret = wlan_ret_ipv6_ra_offload(pmpriv, resp, pioctl_buf);
+		break;
 	case HostCmd_CMD_STA_CONFIGURE:
 		ret = wlan_ret_sta_config(pmpriv, resp, pioctl_buf);
 		break;
@@ -3240,6 +3285,9 @@ mlan_status wlan_ops_sta_process_cmdresp(t_void *priv, t_u16 cmdresp_no,
 		break;
 	case HostCmd_CMD_TWT_CFG:
 		break;
+	case HOST_CMD_GPIO_TSF_LATCH_PARAM_CONFIG:
+		ret = wlan_ret_gpio_tsf_latch(pmpriv, resp, pioctl_buf);
+		break;
 	case HostCmd_CMD_RX_ABORT_CFG:
 		ret = wlan_ret_rxabortcfg(pmpriv, resp, pioctl_buf);
 		break;
@@ -3258,6 +3306,9 @@ mlan_status wlan_ops_sta_process_cmdresp(t_void *priv, t_u16 cmdresp_no,
 		break;
 	case HostCmd_CMD_HAL_PHY_CFG:
 		ret = wlan_ret_hal_phy_cfg(pmpriv, resp, pioctl_buf);
+		break;
+	case HostCmd_CMD_IPS_CONFIG:
+		ret = wlan_ret_ips_cfg(pmpriv, resp, pioctl_buf);
 		break;
 	case HostCmd_CMD_RATE_ADAPT_CFG:
 		ret = wlan_ret_rate_adapt_cfg(pmpriv, resp, pioctl_buf);

@@ -108,10 +108,16 @@ static region_code_mapping_t hw_region_code_mapping[] = {
 
 /** Country code for ETSI */
 static t_u8 eu_country_code_table[][COUNTRY_CODE_LEN] = {
-	"AL", "AD", "AT", "AU", "BY", "BE", "BA", "BG", "HR", "CY", "CZ", "DK",
-	"EE", "FI", "FR", "MK", "DE", "GR", "HU", "IS", "IE", "IT", "KR", "LV",
-	"LI", "LT", "LU", "MT", "MD", "MC", "ME", "NL", "NO", "PL", "RO", "RU",
-	"SM", "RS", "SI", "SK", "ES", "SE", "CH", "TR", "UA", "UK", "GB", "NE"};
+	"AL", "AD", "AT", "AU", "BE", "BA", "BG", "HR", "CY", "CZ", "DK", "EE",
+	"FI", "FR", "MK", "DE", "GR", "HU", "IS", "IE", "IT", "LV", "LI", "LT",
+	"LU", "MT", "MD", "MC", "ME", "NL", "NO", "PL", "RO", "SM", "RS", "SI",
+	"SK", "ES", "SE", "CH", "TR", "UA", "UK", "GB", "NE", "NZ", "DZ", "AO",
+	"AM", "AW", "BH", "BD", "BT", "BO", "BQ", "BW", "VG", "BF", "BI", "KH",
+	"CL", "CN", "KM", "CG", "CD", "CW", "EG", "FO", "GF", "PF", "GE", "GI",
+	"GP", "HK", "IN", "ID", "IM", "IL", "JE", "KE", "XK", "KW", "LA", "LR",
+	"MW", "MV", "MQ", "MR", "YT", "MA", "MZ", "MM", "NA", "NC", "NG", "OM",
+	"PS", "PT", "QA", "RW", "RE", "BL", "MF", "VC", "SA", "SC", "ZA", "SZ",
+	"SY", "TZ", "TG", "TN", "AE", "VA", "EH", "YE", "ZM", "ZW"};
 
 /********************************************************
 			Global Variables
@@ -252,12 +258,19 @@ t_u8 woal_is_valid_alpha2(char *alpha2)
 /**
  * @brief Get second channel offset
  *
+ * @param priv         A pointer to moal_private structure
  * @param chan             channel num
  * @return                second channel offset
  */
-t_u8 woal_get_second_channel_offset(int chan)
+t_u8 woal_get_second_channel_offset(moal_private *priv, int chan)
 {
 	t_u8 chan2Offset = SEC_CHAN_NONE;
+	mlan_bss_info bss_info;
+
+	/* Special Case: 20Mhz-only Channel */
+	woal_get_bss_info(priv, MOAL_IOCTL_WAIT, &bss_info);
+	if (chan == 165)
+		return chan2Offset;
 
 	switch (chan) {
 	case 36:
@@ -287,10 +300,6 @@ t_u8 woal_get_second_channel_offset(int chan)
 	case 153:
 	case 161:
 		chan2Offset = SEC_CHAN_BELOW;
-		break;
-	case 165:
-		/* Special Case: 20Mhz-only Channel */
-		chan2Offset = SEC_CHAN_NONE;
 		break;
 	}
 	return chan2Offset;
@@ -626,7 +635,8 @@ mlan_status woal_request_ioctl(moal_private *priv, mlan_ioctl_req *req,
 
 	sub_command = *(t_u32 *)req->pbuf;
 
-	if (sub_command != MLAN_OID_GET_DEBUG_INFO) {
+	if (sub_command != MLAN_OID_GET_DEBUG_INFO &&
+	    sub_command != MLAN_OID_MISC_WARM_RESET) {
 		if (priv->phandle->surprise_removed == MTRUE ||
 		    priv->phandle->driver_status) {
 			PRINTM(MCMND,
@@ -1823,6 +1833,53 @@ done:
 	LEAVE();
 	return ret;
 }
+
+/**
+ *  @brief Get assoc_req IEs buffer
+ *
+ *  @param priv                 A pointer to moal_private structure
+ *  @param assoc_rsp            A pointer to mlan_ds_misc_assoc_rsp structure
+ *  @param wait_option          wait option
+ *
+ *  @return                     MLAN_STATUS_SUCCESS -- success, otherwise fail
+ */
+mlan_status woal_get_assoc_req(moal_private *priv,
+			       mlan_ds_misc_assoc_req *assoc_req,
+			       t_u8 wait_option)
+{
+	mlan_status ret = MLAN_STATUS_SUCCESS;
+	mlan_ds_misc_cfg *misc = NULL;
+	mlan_ioctl_req *req = NULL;
+
+	ENTER();
+
+	req = woal_alloc_mlan_ioctl_req(sizeof(mlan_ds_misc_cfg));
+	if (req == NULL) {
+		PRINTM(MERROR,
+		       "Fail to allocate buffer for get assoc request\n");
+		ret = MLAN_STATUS_FAILURE;
+		goto done;
+	}
+
+	req->req_id = MLAN_IOCTL_MISC_CFG;
+	misc = (pmlan_ds_misc_cfg)req->pbuf;
+	misc->sub_command = MLAN_OID_MISC_ASSOC_REQ;
+	req->action = MLAN_ACT_GET;
+
+	ret = woal_request_ioctl(priv, req, wait_option);
+	if (ret == MLAN_STATUS_SUCCESS && assoc_req)
+		moal_memcpy_ext(priv->phandle, assoc_req,
+				&misc->param.assoc_req,
+				sizeof(mlan_ds_misc_assoc_req),
+				sizeof(mlan_ds_misc_assoc_req));
+
+done:
+	if (ret != MLAN_STATUS_PENDING)
+		kfree(req);
+	LEAVE();
+	return ret;
+}
+
 #endif
 
 /**
@@ -2721,6 +2778,300 @@ done:
 #endif /* STA_SUPPORT && UAP_SUPPORT */
 
 /**
+ *  @brief Enable IPv6 Router Advertisement offload
+ *
+ *  @param handle  A pointer to moal_handle structure
+ *  @param enable  enable or disable
+ *
+ *  @return        MLAN_STATUS_SUCCESS/MLAN_STATUS_PENDING -- success, otherwise
+ * fail
+ */
+static mlan_status woal_set_ipv6_ra_offload(moal_handle *handle, t_u8 enable)
+{
+	mlan_status ret = MLAN_STATUS_SUCCESS;
+	moal_private *priv = NULL;
+	mlan_ds_misc_cfg *misc = NULL;
+	mlan_ioctl_req *req = NULL;
+	mlan_ds_misc_ipv6_ra_offload *ipv6_ra;
+	int i = 0;
+
+	ENTER();
+
+	for (i = 0; i < handle->priv_num && (priv = handle->priv[i]); i++) {
+		if (priv->ipv6_addr_configured)
+			break;
+	}
+
+	if (!priv || !priv->ipv6_addr_configured) {
+		PRINTM(MIOCTL, "No IPv6 address configured\n");
+		goto done;
+	}
+
+	req = woal_alloc_mlan_ioctl_req(sizeof(mlan_ds_misc_cfg));
+	if (req == NULL) {
+		PRINTM(MIOCTL, "IOCTL req allocated failed!\n");
+		ret = MLAN_STATUS_FAILURE;
+		goto done;
+	}
+	misc = (mlan_ds_misc_cfg *)req->pbuf;
+	misc->sub_command = MLAN_OID_MISC_IPV6_RA_OFFLOAD;
+	req->req_id = MLAN_IOCTL_MISC_CFG;
+	req->action = MLAN_ACT_SET;
+	ipv6_ra = &misc->param.ipv6_ra_offload;
+	ipv6_ra->enable = enable;
+	moal_memcpy_ext(priv->phandle, ipv6_ra->ipv6_addr, priv->ipv6_addr, 16,
+			sizeof(ipv6_ra->ipv6_addr));
+	ret = woal_request_ioctl(woal_get_priv(handle, MLAN_BSS_ROLE_STA), req,
+				 MOAL_NO_WAIT);
+	if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
+		PRINTM(MIOCTL, "Set IPv6 RA offload failed\n");
+
+done:
+	if (ret != MLAN_STATUS_PENDING && req != NULL)
+		kfree(req);
+	LEAVE();
+	return ret;
+}
+
+/**
+ *  @brief Enable IPv6 Neighbor Solicitation offload
+ *
+ *  @param handle  A pointer to moal_handle structure
+ *  @param enable  enable or disable mef entry
+ *
+ *  @return        MLAN_STATUS_SUCCESS/MLAN_STATUS_PENDING -- success, otherwise
+ * fail
+ */
+static mlan_status woal_set_ipv6_ns_offload(moal_handle *handle)
+{
+	mlan_status ret = MLAN_STATUS_SUCCESS;
+	mlan_ds_misc_cfg *misc = NULL;
+	mlan_ioctl_req *req = NULL;
+	mlan_ds_misc_mef_flt_cfg *mef_cfg = NULL;
+	mef_entry_t *entry = NULL;
+	mef_filter_t *filter = NULL;
+
+	ENTER();
+
+	req = woal_alloc_mlan_ioctl_req(sizeof(mlan_ds_misc_cfg));
+	if (req == NULL) {
+		PRINTM(MIOCTL, "IOCTL req allocated failed!\n");
+		ret = MLAN_STATUS_FAILURE;
+		goto done;
+	}
+	misc = (mlan_ds_misc_cfg *)req->pbuf;
+	misc->sub_command = MLAN_OID_MISC_MEF_FLT_CFG;
+	req->req_id = MLAN_IOCTL_MISC_CFG;
+	req->action = MLAN_ACT_SET;
+
+	mef_cfg = (mlan_ds_misc_mef_flt_cfg *)(&misc->param.mef_flt_cfg);
+	mef_cfg->mef_act_type = MEF_ACT_IPV6_NS;
+	mef_cfg->criteria = (MBIT(1) | MBIT(3));
+
+	entry = (mef_entry_t *)&mef_cfg->mef_entry;
+	entry->mode = MBIT(0);
+	entry->action = 0x40;
+
+	filter = (mef_filter_t *)entry->filter_item;
+	filter->fill_flag = (FILLING_TYPE | FILLING_REPEAT | FILLING_OFFSET |
+			     FILLING_BYTE_SEQ);
+	filter->type = TYPE_BYTE_EQ;
+	filter->repeat = 1;
+	filter->offset = 20;
+	filter->num_byte_seq = 2;
+	moal_memcpy_ext(handle, filter->byte_seq, "\x86\xdd", 2,
+			sizeof(filter->byte_seq));
+	entry->rpn[1] = RPN_TYPE_AND;
+
+	filter++;
+	filter->fill_flag = (FILLING_TYPE | FILLING_REPEAT | FILLING_OFFSET |
+			     FILLING_BYTE_SEQ);
+	filter->type = TYPE_BYTE_EQ;
+	filter->repeat = 1;
+	filter->offset = 62;
+	filter->num_byte_seq = 1;
+	moal_memcpy_ext(handle, filter->byte_seq, "\x87", 1,
+			sizeof(filter->byte_seq));
+
+	entry->filter_num = 2;
+
+	ret = woal_request_ioctl(woal_get_priv(handle, MLAN_BSS_ROLE_ANY), req,
+				 MOAL_NO_WAIT);
+	if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
+		PRINTM(MIOCTL, "Set ipv6 ns offload failed! ret=%d\n", ret);
+
+done:
+	if (ret != MLAN_STATUS_PENDING)
+		kfree(req);
+	LEAVE();
+	return ret;
+}
+
+/**
+ *  @brief Set auto arp resp
+ *
+ *  @param handle         A pointer to moal_handle structure
+ *  @param enable         enable/disable
+ *
+ *  @return               MLAN_STATUS_SUCCESS/MLAN_STATUS_PENDING -- success,
+ * otherwise fail
+ */
+static mlan_status woal_set_auto_arp(moal_handle *handle, t_u8 enable)
+{
+	mlan_status ret = MLAN_STATUS_SUCCESS;
+	int i = 0;
+	moal_private *priv = NULL;
+	mlan_ds_misc_cfg *misc = NULL;
+	mlan_ioctl_req *req = NULL;
+	mlan_ds_misc_ipaddr_cfg ipaddr_cfg;
+
+	ENTER();
+
+	memset(&ipaddr_cfg, 0, sizeof(ipaddr_cfg));
+	for (i = 0; i < handle->priv_num && (priv = handle->priv[i]); i++) {
+		if (priv && priv->ip_addr_type != IPADDR_TYPE_NONE) {
+			moal_memcpy_ext(
+				handle,
+				ipaddr_cfg.ip_addr[ipaddr_cfg.ip_addr_num],
+				priv->ip_addr, IPADDR_LEN, IPADDR_LEN);
+			ipaddr_cfg.ip_addr_num++;
+		}
+	}
+	if (ipaddr_cfg.ip_addr_num == 0) {
+		PRINTM(MIOCTL, "No IP addr configured.\n");
+		goto done;
+	}
+
+	req = woal_alloc_mlan_ioctl_req(sizeof(mlan_ds_misc_cfg));
+	if (req == NULL) {
+		PRINTM(MIOCTL, "IOCTL req allocated failed!\n");
+		ret = MLAN_STATUS_FAILURE;
+		goto done;
+	}
+	misc = (mlan_ds_misc_cfg *)req->pbuf;
+	misc->sub_command = MLAN_OID_MISC_IP_ADDR;
+	req->req_id = MLAN_IOCTL_MISC_CFG;
+	req->action = MLAN_ACT_SET;
+	moal_memcpy_ext(handle, &misc->param.ipaddr_cfg, &ipaddr_cfg,
+			sizeof(ipaddr_cfg), sizeof(misc->param.ipaddr_cfg));
+	if (enable) {
+		misc->param.ipaddr_cfg.op_code = MLAN_IPADDR_OP_ARP_FILTER |
+						 MLAN_IPADDR_OP_AUTO_ARP_RESP;
+		misc->param.ipaddr_cfg.ip_addr_type = IPADDR_TYPE_IPV4;
+	} else {
+		/** remove ip */
+		misc->param.ipaddr_cfg.op_code = MLAN_IPADDR_OP_IP_REMOVE;
+	}
+	ret = woal_request_ioctl(woal_get_priv(handle, MLAN_BSS_ROLE_ANY), req,
+				 MOAL_NO_WAIT);
+	if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
+		PRINTM(MIOCTL, "Set auto arp IOCTL failed!\n");
+done:
+	if (ret != MLAN_STATUS_PENDING)
+		kfree(req);
+	LEAVE();
+	return ret;
+}
+
+/**
+ *  @brief Set auto arp resp with enhancement method
+ *
+ *  @param handle         A pointer to moal_handle structure
+ *  @param enable         enable/disable
+ *
+ *  @return               MLAN_STATUS_SUCCESS/MLAN_STATUS_PENDING -- success,
+ * otherwise fail
+ */
+mlan_status woal_set_auto_arp_ext(moal_handle *handle, t_u8 enable)
+{
+	mlan_status ret = MLAN_STATUS_SUCCESS;
+	int i = 0, ip_addr_num = 0;
+	moal_private *priv = NULL;
+	mlan_ds_misc_cfg *misc = NULL;
+	mlan_ioctl_req *req = NULL;
+	mlan_ds_misc_mef_flt_cfg *mef_cfg = NULL;
+	mef_entry_t *entry = NULL;
+	mef_filter_t *filter = NULL;
+	t_u8 ip_addr[MAX_IPADDR][IPADDR_LEN];
+
+	ENTER();
+
+	memset(&mef_cfg, 0, sizeof(mef_cfg));
+	for (i = 0; i < handle->priv_num && (priv = handle->priv[i]); i++) {
+		if (priv && priv->ip_addr_type != IPADDR_TYPE_NONE) {
+			moal_memcpy_ext(handle, ip_addr[ip_addr_num],
+					priv->ip_addr, IPADDR_LEN, IPADDR_LEN);
+			ip_addr_num++;
+		}
+	}
+	if (ip_addr_num == 0) {
+		PRINTM(MIOCTL, "No IP addr configured.\n");
+		goto done;
+	}
+
+	req = woal_alloc_mlan_ioctl_req(sizeof(mlan_ds_misc_cfg));
+	if (req == NULL) {
+		PRINTM(MIOCTL, "IOCTL req allocated failed!\n");
+		ret = MLAN_STATUS_FAILURE;
+		goto done;
+	}
+	misc = (mlan_ds_misc_cfg *)req->pbuf;
+	misc->sub_command = MLAN_OID_MISC_MEF_FLT_CFG;
+	req->req_id = MLAN_IOCTL_MISC_CFG;
+	req->action = MLAN_ACT_SET;
+
+	mef_cfg = (mlan_ds_misc_mef_flt_cfg *)(&(misc->param.mef_flt_cfg));
+	mef_cfg->mef_act_type = MEF_ACT_AUTOARP;
+	mef_cfg->criteria = (MBIT(0) | MBIT(1));
+
+	entry = (mef_entry_t *)&mef_cfg->mef_entry;
+	entry->mode = MBIT(0);
+	entry->action = 0x10;
+
+	filter = (mef_filter_t *)(entry->filter_item);
+	filter->fill_flag = (FILLING_TYPE | FILLING_REPEAT | FILLING_OFFSET |
+			     FILLING_BYTE_SEQ);
+	filter->type = TYPE_BYTE_EQ;
+	filter->repeat = 1;
+	filter->offset = 20;
+	filter->num_byte_seq = 2;
+	moal_memcpy_ext(handle, filter->byte_seq, "\x08\x06", 2,
+			sizeof(filter->byte_seq));
+	entry->rpn[1] = RPN_TYPE_AND;
+
+	for (i = 0; i < ip_addr_num; i++) {
+		filter++;
+		filter->fill_flag = (FILLING_TYPE | FILLING_REPEAT |
+				     FILLING_OFFSET | FILLING_BYTE_SEQ);
+		filter->type = TYPE_BYTE_EQ;
+		filter->repeat = 1;
+		filter->offset = 46;
+		filter->num_byte_seq = 4;
+		moal_memcpy_ext(handle, filter->byte_seq, &ip_addr[i],
+				sizeof(t_u32), sizeof(filter->byte_seq));
+		if (i > 1)
+			entry->rpn[i] = RPN_TYPE_OR;
+	}
+	entry->filter_num = ip_addr_num + 1;
+
+	if (enable)
+		mef_cfg->op_code = MLAN_IPADDR_OP_ARP_FILTER |
+				   MLAN_IPADDR_OP_AUTO_ARP_RESP;
+	else
+		/** remove ip */
+		mef_cfg->op_code = MLAN_IPADDR_OP_IP_REMOVE;
+	ret = woal_request_ioctl(woal_get_priv(handle, MLAN_BSS_ROLE_ANY), req,
+				 MOAL_NO_WAIT);
+	if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
+		PRINTM(MIOCTL, "Set auto arp IOCTL failed!\n");
+done:
+	if (ret != MLAN_STATUS_PENDING)
+		kfree(req);
+	LEAVE();
+	return ret;
+}
+
+/**
  *  @brief Set/Get DTIM period
  *
  *  @param priv                 A pointer to moal_private structure
@@ -2952,6 +3303,22 @@ mlan_status woal_cancel_hs(moal_private *priv, t_u8 wait_option)
 	hscfg.is_invoke_hostcmd = MTRUE;
 	ret = woal_set_get_hs_params(priv, MLAN_ACT_SET, wait_option, &hscfg);
 
+#if IS_ENABLED(CONFIG_IPV6)
+	if (priv->phandle->hs_auto_arp) {
+		PRINTM(MIOCTL, "Canecl Host Sleep... remove ipv6 offload\n");
+		/** Set ipv6 router advertisement message offload */
+		woal_set_ipv6_ra_offload(priv->phandle, MFALSE);
+	}
+#endif
+
+	if (priv->phandle->hs_auto_arp) {
+		PRINTM(MIOCTL, "Cancel Host Sleep... remove FW auto arp\n");
+		/* remove auto arp from FW */
+		woal_set_auto_arp(priv->phandle, MFALSE);
+		/* remove auto arp from FW */
+		woal_set_auto_arp_ext(priv->phandle, MFALSE);
+	}
+
 #ifdef STA_CFG80211
 #if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 1, 0)
 	handle = priv->phandle;
@@ -2991,6 +3358,7 @@ int woal_enable_hs(moal_private *priv)
 	mlan_ds_ps_info pm_info;
 #endif
 	pmlan_ds_misc_keep_alive keep_alive = NULL;
+	t_u8 media_connected = MFALSE;
 
 	ENTER();
 
@@ -3061,6 +3429,24 @@ int woal_enable_hs(moal_private *priv)
 #ifdef STA_SUPPORT
 	woal_reconfig_bgscan(priv->phandle);
 #endif
+
+	media_connected = woal_check_media_connected(handle);
+#if IS_ENABLED(CONFIG_IPV6)
+	if (handle->hs_auto_arp && media_connected) {
+		PRINTM(MIOCTL, "Host Sleep enabled... set ipv6 offload\n");
+		/** Set ipv6 router advertisement message offload */
+		woal_set_ipv6_ra_offload(handle, MTRUE);
+		/** Set Neighbor Solitation message offload */
+		woal_set_ipv6_ns_offload(handle);
+	}
+#endif
+	if (handle->hs_auto_arp && media_connected) {
+		PRINTM(MIOCTL, "Host Sleep enabled... set FW auto arp\n");
+		/* Set auto arp response configuration to Fw */
+		woal_set_auto_arp(handle, MTRUE);
+		/* Set auto arp response configuration to Fw */
+		woal_set_auto_arp_ext(handle, MTRUE);
+	}
 
 #ifdef STA_CFG80211
 #if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 1, 0)

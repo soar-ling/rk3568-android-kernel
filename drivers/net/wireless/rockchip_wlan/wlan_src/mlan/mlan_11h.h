@@ -146,9 +146,8 @@ t_s32 wlan_11h_cancel_radar_detect(mlan_private *priv);
 /** Handler for DFS_TESTING IOCTL */
 extern mlan_status wlan_11h_ioctl_dfs_testing(pmlan_adapter pmadapter,
 					      pmlan_ioctl_req pioctl_req);
-extern mlan_status
-wlan_11h_ioctl_get_channel_nop_info(pmlan_adapter pmadapter,
-				    pmlan_ioctl_req pioctl_req);
+extern mlan_status wlan_11h_ioctl_channel_nop_info(pmlan_adapter pmadapter,
+						   pmlan_ioctl_req pioctl_req);
 
 extern mlan_status wlan_11h_ioctl_dfs_chan_report(mlan_private *priv,
 						  pmlan_ioctl_req pioctl_req);
@@ -192,7 +191,8 @@ extern mlan_status wlan_11h_dfs_event_preprocessing(mlan_adapter *pmadapter);
 /** DFS switch to non-DFS channel */
 extern mlan_status wlan_11h_switch_non_dfs_chan(mlan_private *priv, t_u8 *chan);
 
-extern void wlan_11h_update_bandcfg(Band_Config_t *uap_band_cfg,
+extern void wlan_11h_update_bandcfg(mlan_private *pmpriv,
+				    Band_Config_t *uap_band_cfg,
 				    t_u8 new_channel);
 
 /** function checks if interface is active. **/

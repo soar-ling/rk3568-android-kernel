@@ -2289,9 +2289,13 @@ mlan_status wlan_ret_tx_bf_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp,
  * @param chan            channel num
  * @return                second channel offset
  */
-t_u8 wlan_get_second_channel_offset(int chan)
+t_u8 wlan_get_second_channel_offset(mlan_private *priv, int chan)
 {
 	t_u8 chan2Offset = SEC_CHAN_NONE;
+
+	/* Special Case: 20Mhz-only Channel */
+	if (chan == 165)
+		return chan2Offset;
 
 	switch (chan) {
 	case 36:
@@ -2321,10 +2325,6 @@ t_u8 wlan_get_second_channel_offset(int chan)
 	case 153:
 	case 161:
 		chan2Offset = SEC_CHAN_BELOW;
-		break;
-	case 165:
-		/* Special Case: 20Mhz-only Channel */
-		chan2Offset = SEC_CHAN_NONE;
 		break;
 	}
 	return chan2Offset;
@@ -2371,7 +2371,8 @@ t_u8 wlan_validate_chan_offset(mlan_private *pmpriv, t_u16 band, t_u32 chan,
 				if ((chan == 8) || (chan == 9))
 					chan_offset = SEC_CHAN_BELOW;
 		} else if (band & BAND_AN)
-			chan_offset = wlan_get_second_channel_offset(chan);
+			chan_offset =
+				wlan_get_second_channel_offset(pmpriv, chan);
 	}
 	return chan_offset;
 }

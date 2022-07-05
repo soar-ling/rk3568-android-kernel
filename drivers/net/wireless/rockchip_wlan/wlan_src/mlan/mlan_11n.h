@@ -123,7 +123,7 @@ mlan_status wlan_cmd_amsdu_aggr_ctrl(mlan_private *priv,
 t_u8 wlan_validate_chan_offset(mlan_private *pmpriv, t_u16 band, t_u32 chan,
 			       t_u8 chan_bw);
 /** get channel offset */
-t_u8 wlan_get_second_channel_offset(int chan);
+t_u8 wlan_get_second_channel_offset(mlan_private *priv, int chan);
 
 void wlan_update_11n_cap(mlan_private *pmpriv);
 
@@ -271,12 +271,6 @@ static INLINE void wlan_update_station_del_ba_count(mlan_private *priv,
 static INLINE void wlan_update_del_ba_count(mlan_private *priv, raListTbl *ptr)
 {
 	t_s8 rssi;
-#ifdef UAP_802_11N
-#ifdef UAP_SUPPORT
-	if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP)
-		return wlan_update_station_del_ba_count(priv, ptr);
-#endif /* UAP_SUPPORT */
-#endif /* UAP_802_11N */
 	if (ptr->is_tdls_link)
 		return wlan_update_station_del_ba_count(priv, ptr);
 	rssi = priv->snr - priv->nf;

@@ -92,10 +92,16 @@ static country_code_mapping_t country_code_mapping[] = {
 
 /** Country code for ETSI */
 static t_u8 eu_country_code_table[][COUNTRY_CODE_LEN] = {
-	"AL", "AD", "AT", "AU", "BY", "BE", "BA", "BG", "HR", "CY", "CZ", "DK",
-	"EE", "FI", "FR", "MK", "DE", "GR", "HU", "IS", "IE", "IT", "KR", "LV",
-	"LI", "LT", "LU", "MT", "MD", "MC", "ME", "NL", "NO", "PL", "RO", "RU",
-	"SM", "RS", "SI", "SK", "ES", "SE", "CH", "TR", "UA", "UK", "GB", "NZ"};
+	"AL", "AD", "AT", "AU", "BE", "BA", "BG", "HR", "CY", "CZ", "DK", "EE",
+	"FI", "FR", "MK", "DE", "GR", "HU", "IS", "IE", "IT", "LV", "LI", "LT",
+	"LU", "MT", "MD", "MC", "ME", "NL", "NO", "PL", "RO", "SM", "RS", "SI",
+	"SK", "ES", "SE", "CH", "TR", "UA", "UK", "GB", "NZ", "DZ", "AO", "AM",
+	"AW", "BH", "BD", "BT", "BO", "BQ", "BW", "VG", "BF", "BI", "KH", "CL",
+	"CN", "KM", "CG", "CD", "CW", "EG", "FO", "GF", "PF", "GE", "GI", "GP",
+	"HK", "IN", "ID", "IM", "IL", "JE", "KE", "XK", "KW", "LA", "LR", "MW",
+	"MV", "MQ", "MR", "YT", "MA", "MZ", "MM", "NA", "NC", "NE", "NG", "OM",
+	"PS", "PT", "QA", "RW", "RE", "BL", "MF", "VC", "SA", "SC", "ZA", "SZ",
+	"SY", "TZ", "TG", "TN", "AE", "VA", "EH", "YE", "ZM", "ZW"};
 
 /**
  * The structure for Channel-Frequency-Power table
@@ -2214,6 +2220,7 @@ t_u32 wlan_get_supported_rates(mlan_private *pmpriv, t_u32 bss_mode,
 		case BAND_B | BAND_G:
 		case BAND_A | BAND_B | BAND_G:
 		case BAND_A | BAND_B:
+		case BAND_A | BAND_B | BAND_G | BAND_GN:
 		case BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN:
 		case BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC:
 		case BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC |

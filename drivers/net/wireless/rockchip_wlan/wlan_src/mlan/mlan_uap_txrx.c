@@ -244,6 +244,7 @@ t_void *wlan_ops_uap_process_txpd(t_void *priv, pmlan_buffer pmbuf)
 		plocal_tx_pd->tx_pkt_type = (t_u16)pkt_type;
 		plocal_tx_pd->tx_control = tx_control;
 	}
+
 	if (pmbuf->flags & MLAN_BUF_FLAG_TX_CTRL) {
 		if (pmbuf->u.tx_info.data_rate) {
 			memcpy_ext(pmpriv->adapter, dst_mac,
@@ -423,7 +424,7 @@ mlan_status wlan_ops_uap_process_rx_packet(t_void *adapter, pmlan_buffer pmbuf)
 	}
 #endif
 
-	pmbuf->priority = prx_pd->priority;
+	pmbuf->priority |= prx_pd->priority;
 	memcpy_ext(pmadapter, ta, prx_pkt->eth803_hdr.src_addr,
 		   MLAN_MAC_ADDR_LENGTH, MLAN_MAC_ADDR_LENGTH);
 	if ((rx_pkt_type != PKT_TYPE_BAR) && (prx_pd->priority < MAX_NUM_TID)) {
@@ -484,8 +485,7 @@ mlan_status wlan_uap_recv_packet(mlan_private *priv, pmlan_buffer pmbuf)
 	       MAC2STR(prx_pkt->eth803_hdr.dest_addr));
 
 	/* don't do packet forwarding in disconnected state */
-	if ((priv->media_connected == MFALSE) ||
-	    (pmbuf->data_len > MV_ETH_FRAME_LEN))
+	if (priv->media_connected == MFALSE)
 		goto upload;
 
 	if (prx_pkt->eth803_hdr.dest_addr[0] & 0x01) {
@@ -636,8 +636,7 @@ mlan_status wlan_process_uap_rx_packet(mlan_private *priv, pmlan_buffer pmbuf)
 
 	/* don't do packet forwarding in disconnected state */
 	/* don't do packet forwarding when packet > 1514 */
-	if ((priv->media_connected == MFALSE) ||
-	    ((pmbuf->data_len - prx_pd->rx_pkt_offset) > MV_ETH_FRAME_LEN))
+	if (priv->media_connected == MFALSE)
 		goto upload;
 
 	if (prx_pkt->eth803_hdr.dest_addr[0] & 0x01) {

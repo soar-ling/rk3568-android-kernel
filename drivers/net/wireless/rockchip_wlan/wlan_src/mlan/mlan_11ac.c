@@ -29,8 +29,6 @@
 #include "mlan_11n.h"
 #include "mlan_11ac.h"
 
-#define NO_NSS_SUPPORT 0x3
-
 /********************************************************
 			Local Variables
 ********************************************************/
@@ -197,7 +195,6 @@ static void wlan_fill_cap_info(mlan_private *priv, VHT_capa_t *vht_cap,
 			       t_u8 bands)
 {
 	t_u32 usr_dot_11ac_dev_cap;
-
 	ENTER();
 
 	if (bands & BAND_A)
@@ -207,6 +204,7 @@ static void wlan_fill_cap_info(mlan_private *priv, VHT_capa_t *vht_cap,
 
 	vht_cap->vht_cap_info = usr_dot_11ac_dev_cap;
 
+	RESET_VHTCAP_MAXMPDULEN(vht_cap->vht_cap_info);
 	LEAVE();
 }
 
@@ -1184,7 +1182,7 @@ int wlan_cmd_append_11ac_tlv(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc,
 			   pvht_cap->header.len, sizeof(VHT_capa_t));
 		bw_80p80 = wlan_is_80_80_support(pmpriv, pbss_desc);
 		wlan_fill_vht_cap_tlv(pmpriv, pvht_cap, pbss_desc->bss_band,
-				      MTRUE, bw_80p80);
+				      MFALSE, bw_80p80);
 
 		HEXDUMP("VHT_CAPABILITIES IE", (t_u8 *)pvht_cap,
 			sizeof(MrvlIETypes_VHTCap_t));
