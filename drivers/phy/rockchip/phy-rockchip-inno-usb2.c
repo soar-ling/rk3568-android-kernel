@@ -1950,11 +1950,11 @@ static int rockchip_usb2phy_probe(struct platform_device *pdev)
 	if (IS_ERR(rphy->reset_gpio)) {
 		printk("no reset gpio\n");
 	} else {
-		printk("reset gpio start \n");
-		gpiod_direction_output(rphy->reset_gpio, 0);
-		udelay(10000);
 		gpiod_direction_output(rphy->reset_gpio, 1);
-		printk("reset gpio end \n");
+		mdelay(100);
+		gpiod_direction_output(rphy->reset_gpio, 0);
+		mdelay(100);
+		gpiod_direction_output(rphy->reset_gpio, 1);
 	}
 
 	index = 0;
