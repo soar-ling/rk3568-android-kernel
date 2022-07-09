@@ -556,6 +556,11 @@ dw_hdmi_rockchip_mode_valid(struct drm_connector *connector,
 			return status;
 	}
 
+	if (!strcmp(mode->name, "1920x2160")) {
+		   printk(KERN_ERR"bad mode:%s, vrefresh:%d\n",mode->name, mode->vrefresh);
+		   return MODE_BAD;
+	}
+
 	return status;
 }
 
