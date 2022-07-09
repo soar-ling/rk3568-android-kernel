@@ -135,7 +135,7 @@
 		clock-output-names = "clkin_gmac";
 		#clock-cells = <0>;
 	};
-
+    /*
 	rk_headset: rk-headset {
 		compatible = "rockchip_headset";
 		headset_gpio = <&gpio4 RK_PD4 GPIO_ACTIVE_HIGH>;
@@ -143,7 +143,7 @@
 		pinctrl-0 = <&hp_det>;
 		io-channels = <&saradc 2>;
 	};
-
+    */
 	es8316-sound {
 		status = "okay";
 		compatible = "simple-audio-card";
