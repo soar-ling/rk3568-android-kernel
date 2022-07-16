@@ -507,8 +507,11 @@ static int rk817_playback_path_config(struct snd_soc_component *component,
 
 	if (rk817->playback_path != OFF)
 		clk_prepare_enable(rk817->mclk);
-	else
+	else {
 		clk_disable_unprepare(rk817->mclk);
+		rk817_codec_ctl_gpio(rk817, CODEC_SET_SPK, 0);
+		rk817_codec_ctl_gpio(rk817, CODEC_SET_HP, 0);
+	}
 
 	switch (rk817->playback_path) {
 	case OFF:
@@ -585,6 +588,8 @@ static int rk817_playback_path_config(struct snd_soc_component *component,
 					rk817->spk_volume);
 		snd_soc_component_write(component, RK817_CODEC_DDAC_VOLR,
 					rk817->spk_volume);
+		rk817_codec_ctl_gpio(rk817, CODEC_SET_SPK, 1);
+		rk817_codec_ctl_gpio(rk817, CODEC_SET_HP, 0);
 		break;
 	case HP_PATH:
 	case HP_NO_MIC:
@@ -608,6 +613,8 @@ static int rk817_playback_path_config(struct snd_soc_component *component,
 					rk817->hp_volume);
 		snd_soc_component_write(component, RK817_CODEC_DDAC_VOLR,
 					rk817->hp_volume);
+		rk817_codec_ctl_gpio(rk817, CODEC_SET_SPK, 0);
+		rk817_codec_ctl_gpio(rk817, CODEC_SET_HP, 1);
 		break;
 	case BT:
 		break;
@@ -645,6 +652,8 @@ static int rk817_playback_path_config(struct snd_soc_component *component,
 					rk817->hp_volume);
 		snd_soc_component_write(component, RK817_CODEC_DDAC_VOLR,
 					rk817->hp_volume);
+		rk817_codec_ctl_gpio(rk817, CODEC_SET_SPK, 1);
+		rk817_codec_ctl_gpio(rk817, CODEC_SET_HP, 1);
 		break;
 	default:
 		return -EINVAL;
