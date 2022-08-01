@@ -1414,10 +1414,10 @@ static int rk808_probe(struct i2c_client *client,
 	val = 1;
 	val = val + (val << 2) + (val << 4) + (val << 6);
 	ret = regmap_update_bits(rk808->regmap, 0x90, 0xff, val);
-	printk("skysi ----ret : %d---------line %d,  val : 0x%x\n", ret,  __LINE__, val);
+	//printk("skysi ----ret : %d---------line %d,  val : 0x%x\n", ret,  __LINE__, val);
 
 	ret = regmap_read(rk808->regmap, 0x90, &val);
-	printk("skysi test ---------ret : %d, line : %d-------- 0x90 read : 0x%x\n", ret, __LINE__, val);
+	//printk("skysi test ---------ret : %d, line : %d-------- 0x90 read : 0x%x\n", ret, __LINE__, val);
 
 	return 0;
 
