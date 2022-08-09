@@ -9,7 +9,7 @@
 #include "rk3399-android.dtsi"
 
 / {
-	model = "Sksyi RK3399 EVB LPDDR4 ADVT(Android)";
+	model = "RK3399 EVB LPDDR4 ADVT(Android)";
 	compatible = "rockchip,android", "rockchip,rk3399-evb-lp4x-advt", "rockchip,rk3399";
 
 	chosen: chosen {
