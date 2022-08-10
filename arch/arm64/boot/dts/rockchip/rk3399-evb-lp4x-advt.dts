@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 /*
  * Copyright (c) 2018 Skysi Inc. (3399 advt.)
- *		Sanle Zheng <zsl@skysi.com>
+ *		Author: Sanle
  */
 
 /dts-v1/;
@@ -9,7 +9,7 @@
 #include "rk3399-android.dtsi"
 
 / {
-	model = "RK3399 EVB LPDDR4 ADVT(Android)";
+	model = "advantech EBC-RS09 (Android)";
 	compatible = "rockchip,android", "rockchip,rk3399-evb-lp4x-advt", "rockchip,rk3399";
 
 	chosen: chosen {
