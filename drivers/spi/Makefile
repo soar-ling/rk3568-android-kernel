@@ -112,4 +112,4 @@ obj-$(CONFIG_SPI_ZYNQMP_GQSPI)		+= spi-zynqmp-gqspi.o
 obj-$(CONFIG_SPI_SLAVE_TIME)		+= spi-slave-time.o
 obj-$(CONFIG_SPI_SLAVE_SYSTEM_CONTROL)	+= spi-slave-system-control.o
 
-obj-$(CONFIG_SPI_WK2124) += wk2124.o
+obj-$(CONFIG_SPI_WK2124) += wk2xxx_spi.o
