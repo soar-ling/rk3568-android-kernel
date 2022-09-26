@@ -660,10 +660,6 @@
 	status = "disabled";
 };
 
-&uart4 {
-	status = "okay";
-};
-
 &usbdrd_dwc3_0 {
 	extcon = <&u2phy0>;
 	maximum-speed = "high-speed";
