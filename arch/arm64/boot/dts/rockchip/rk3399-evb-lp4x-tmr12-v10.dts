@@ -116,7 +116,7 @@
 		compatible = "gpio-leds";
 
 		work-led {
-			label = "white";
+			label = "work";
 			gpios = <&gpio4 RK_PC7 GPIO_ACTIVE_LOW>;
 			linux,default-trigger = "none";
 			default-state = "on";
@@ -550,7 +550,7 @@
 		clock-names = "mclk";
 		pinctrl-names = "default";
 		pinctrl-0 = <&i2s_8ch_mclk>;
-		spk-con-gpios = <&gpio1 RK_PA2 GPIO_ACTIVE_HIGH>;
+		spk-con-gpios = <&gpio4 RK_PD2 GPIO_ACTIVE_HIGH>;
 	};
 
 	/delete-node/ rt5651;
