@@ -385,6 +385,14 @@ config MICROSEMI_PHY
 	---help---
 	  Currently supports VSC8530, VSC8531, VSC8540 and VSC8541 PHYs
 
+config MOTORCOMM_PHY
+	tristate "Motorcomm PHYs"
+	---help---
+          Supports Giga phys: yt8511, yt8521, yt8531, yt8614, yt8618
+          100/10 Phys : yt8512, yt8512b, yt8510
+          Automotive 100Mb Phys : yt8010
+          Automotive 100/10 hyper range Phys: yt8510
+
 config NATIONAL_PHY
 	tristate "National Semiconductor PHYs"
 	---help---
