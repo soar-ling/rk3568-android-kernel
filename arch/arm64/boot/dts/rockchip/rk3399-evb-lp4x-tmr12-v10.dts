@@ -112,6 +112,18 @@
 		};
 	};
 
+	pwm-leds {
+		compatible = "pwm-leds";
+
+		front {
+			active-high;
+			label = "flash_led";
+			max-brightness = <255>;
+			pwms = <&pwm1 0 25000 0>;
+			linux,default-trigger = "default-on";
+		};
+	};
+
 	leds {
 		compatible = "gpio-leds";
 
@@ -669,6 +681,10 @@
 };
 
 &pwm0 {
+	status = "okay";
+};
+
+&pwm1 {
 	status = "okay";
 };
 
