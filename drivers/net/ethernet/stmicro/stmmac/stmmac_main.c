@@ -54,6 +54,12 @@
 #include "dwmac1000.h"
 #include "dwxgmac2.h"
 #include "hwif.h"
+#include <linux/interrupt.h>
+#include <linux/gpio.h>
+ 
+
+
+int stmmac_set_wol(struct net_device *dev, struct ethtool_wolinfo *wol);
 
 #define	STMMAC_ALIGN(x)		ALIGN(ALIGN(x, SMP_CACHE_BYTES), 16)
 #define	TSO_MAX_BUFF_SIZE	(SZ_16K - 1)
@@ -228,7 +234,7 @@ static void stmmac_clk_csr_set(struct stmmac_priv *priv)
 			priv->clk_csr = STMMAC_CSR_100_150M;
 		else if ((clk_rate >= CSR_F_150M) && (clk_rate < CSR_F_250M))
 			priv->clk_csr = STMMAC_CSR_150_250M;
-		else if ((clk_rate >= CSR_F_250M) && (clk_rate <= CSR_F_300M))
+		else if ((clk_rate >= CSR_F_250M) && (clk_rate < CSR_F_300M))
 			priv->clk_csr = STMMAC_CSR_250_300M;
 	}
 
@@ -2156,7 +2162,8 @@ static int stmmac_get_hw_features(struct stmmac_priv *priv)
  */
 static void stmmac_check_ether_addr(struct stmmac_priv *priv)
 {
-	if (!is_valid_ether_addr(priv->dev->dev_addr)) {
+//	if (!is_valid_ether_addr(priv->dev->dev_addr)) {/*where come from,this mac address*/
+	if(1){/*read mac address from emmc */
 		stmmac_get_umac_addr(priv, priv->hw, priv->dev->dev_addr, 0);
 		if (likely(priv->plat->get_eth_addr))
 			priv->plat->get_eth_addr(priv->plat->bsp_priv,
@@ -2587,6 +2594,15 @@ static int stmmac_hw_setup(struct net_device *dev, bool init_ptp)
 	return 0;
 }
 
+static irqreturn_t wol_io_isr(int irq, void *dev_id)
+{
+	struct net_device *dev = (struct net_device *)dev_id;
+	struct stmmac_priv *priv = netdev_priv(dev);
+
+	wake_lock_timeout(&priv->plat->wol_wake_lock, msecs_to_jiffies(8000));
+	return IRQ_HANDLED;
+}
+
 static void stmmac_hw_teardown(struct net_device *dev)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -2653,6 +2669,28 @@ static int stmmac_open(struct net_device *dev)
 
 	if (dev->phydev)
 		phy_start(dev->phydev);
+	
+	if (priv->plat->wolirq_io > 0) {
+		ret = devm_gpio_request(priv->device, priv->plat->wolirq_io, "gmac_wol_io");
+		if (ret) {
+			pr_err("%s: ERROR: failed to request WOL GPIO %d, err: %d\n",
+				   __func__, priv->plat->wolirq_io, ret);
+			goto lpiirq_error;
+		}
+
+		priv->plat->wol_irq = gpio_to_irq(priv->plat->wolirq_io);
+		ret = devm_request_irq(priv->device, priv->plat->wol_irq, wol_io_isr,
+			IRQF_TRIGGER_FALLING, "gmac_wol_io_irq", dev);
+		if (ret) {
+			pr_err("%s: ERROR: request wol io irq fail: %d", __func__, ret);
+			devm_gpio_free(priv->device, priv->plat->wolirq_io);
+			goto lpiirq_error;
+		}
+		disable_irq(priv->plat->wol_irq);
+		enable_irq_wake(priv->plat->wol_irq);
+	}
+
+	
 
 	/* Request the IRQ lines */
 	ret = request_irq(dev->irq, stmmac_interrupt,
@@ -2759,6 +2797,12 @@ static int stmmac_release(struct net_device *dev)
 	stmmac_mac_set(priv, priv->ioaddr, false);
 
 	netif_carrier_off(dev);
+	
+	if (priv->plat->wol_irq > 0)
+		devm_free_irq(priv->device, priv->plat->wol_irq, dev);
+
+	if (priv->plat->wolirq_io > 0)
+		devm_gpio_free(priv->device, priv->plat->wolirq_io);
 
 	if (IS_ENABLED(CONFIG_STMMAC_PTP))
 		stmmac_release_ptp(priv);
@@ -4285,6 +4329,13 @@ int stmmac_dvr_probe(struct device *device,
 	u32 queue, maxq;
 	int ret = 0;
 
+	struct ethtool_wolinfo wol;
+	printk("==zc: stmmac_dvr_probe == \n");
+	
+		/* set phy wol enable */
+	memset(&wol, 0x0, sizeof(struct ethtool_wolinfo));
+	wol.wolopts |= WAKE_MAGIC;
+	
 	ndev = alloc_etherdev_mqs(sizeof(struct stmmac_priv),
 				  MTL_MAX_TX_QUEUES,
 				  MTL_MAX_RX_QUEUES);
@@ -4324,6 +4375,7 @@ int stmmac_dvr_probe(struct device *device,
 	}
 
 	INIT_WORK(&priv->service_task, stmmac_service_task);
+	wake_lock_init(&priv->plat->wol_wake_lock, WAKE_LOCK_SUSPEND, "wol_wake_lock");
 
 	/* Override with kernel parameters if supplied XXX CRS XXX
 	 * this needs to have multiple instances
@@ -4444,6 +4496,7 @@ int stmmac_dvr_probe(struct device *device,
 			goto error_mdio_register;
 		}
 	}
+	stmmac_set_wol(ndev, &wol);
 
 	ret = register_netdev(ndev);
 	if (ret) {
@@ -4540,7 +4593,7 @@ int stmmac_suspend(struct device *dev)
 	mutex_lock(&priv->lock);
 
 	netif_device_detach(ndev);
-
+    enable_irq(priv->plat->wol_irq);
 	stmmac_disable_all_queues(priv);
 
 	for (chan = 0; chan < priv->plat->tx_queues_to_use; chan++)
@@ -4550,7 +4603,7 @@ int stmmac_suspend(struct device *dev)
 		priv->tx_path_in_lpi_mode = false;
 		del_timer_sync(&priv->eee_ctrl_timer);
 	}
-
+  
 	/* Stop TX/RX DMA */
 	stmmac_stop_all_dma(priv);
 
@@ -4657,7 +4710,8 @@ int stmmac_resume(struct device *dev)
 	netif_device_attach(ndev);
 
 	mutex_unlock(&priv->lock);
-
+    disable_irq(priv->plat->wol_irq);
+	
 	if (ndev->phydev)
 		phy_start(ndev->phydev);
 

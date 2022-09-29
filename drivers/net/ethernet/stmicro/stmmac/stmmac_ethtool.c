@@ -640,7 +640,7 @@ static void stmmac_get_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
 	mutex_unlock(&priv->lock);
 }
 
-static int stmmac_set_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
+ int stmmac_set_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 	u32 support = WAKE_MAGIC | WAKE_UCAST;
@@ -658,7 +658,7 @@ static int stmmac_set_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
 		return -EINVAL;
 
 	if (wol->wolopts) {
-		pr_info("stmmac: wakeup enable\n");
+		pr_info("zc: stmmac: wakeup enable\n");
 		device_set_wakeup_enable(priv->device, 1);
 		enable_irq_wake(priv->wol_irq);
 	} else {
@@ -672,6 +672,10 @@ static int stmmac_set_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
 
 	return 0;
 }
+
+EXPORT_SYMBOL(stmmac_set_wol);
+
+
 
 static int stmmac_ethtool_op_get_eee(struct net_device *dev,
 				     struct ethtool_eee *edata)
