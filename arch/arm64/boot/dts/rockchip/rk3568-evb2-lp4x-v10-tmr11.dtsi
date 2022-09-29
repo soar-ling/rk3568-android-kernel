@@ -71,6 +71,46 @@
 		clock-output-names = "CLK_CAMERA_24MHZ";
 		#clock-cells = <0>;
 	};
+	
+	usb1_5v_pwr: usb1-pwr-regulator {
+		compatible = "regulator-fixed";
+		enable-active-high;
+		gpio = <&gpio0 RK_PB7 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&usb1_pwr_pin>;
+		regulator-name = "USB1-PWR-5V";
+		regulator-always-on;
+	};
+
+	usb2_5v_pwr: usb2-pwr-regulator {
+		compatible = "regulator-fixed";
+		enable-active-high;
+		gpio = <&gpio0 RK_PA0 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&usb2_pwr_pin>;
+		regulator-name = "USB2-PWR-5V";
+		regulator-always-on;
+	};
+
+	usb3_5v_pwr: usb3-pwr-regulator {
+		compatible = "regulator-fixed";
+		enable-active-high;
+		gpio = <&gpio0 RK_PC0 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&usb3_pwr_pin>;
+		regulator-name = "USB3-PWR-5V";
+		regulator-always-on;
+	};
+
+	usb4_5v_pwr: usb4-pwr-regulator {
+		compatible = "regulator-fixed";
+		enable-active-high;
+		gpio = <&gpio4 RK_PC2 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&usb4_pwr_pin>;
+		regulator-name = "USB4-PWR-5V";
+		regulator-always-on;
+	};
 };
 
 &combphy0_us {
@@ -303,6 +343,23 @@
 			rockchip,pins = <2 RK_PB5 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
+	usb-pwr {
+		usb1_pwr_pin: usb1-pwr-pin {
+			rockchip,pins = <0 RK_PB7 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		usb2_pwr_pin: usb2-pwr-pin {
+			rockchip,pins = <0 RK_PA0 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		usb3_pwr_pin: usb3-pwr-pin {
+			rockchip,pins = <0 RK_PC0 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		usb4_pwr_pin: usb4-pwr-pin {
+			rockchip,pins = <4 RK_PC2 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};	
 };
 
 &pmu_io_domains {
