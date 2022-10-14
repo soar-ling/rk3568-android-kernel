@@ -535,6 +535,18 @@
 	};
 };
 
+&i2c7 {
+	status = "okay";
+
+	egalax_i2c@2a {
+		compatible = "eeti,egalax_i2c";
+		reg = <0x2a>;
+		interrupt-parent = <&gpio4>;
+		interrupts = <RK_PC1 IRQ_TYPE_LEVEL_LOW>;
+		int-gpios = <&gpio4 RK_PC1 GPIO_ACTIVE_LOW>;
+	};
+};
+
 &i2s2 {
 	#sound-dai-cells = <0>;
 	status = "okay";
