@@ -177,8 +177,7 @@
 	};
 
 	wireless-bluetooth {
-		BT,wake_gpio     = <&gpio2 RK_PD3 GPIO_ACTIVE_HIGH>;
-		status = "okay";
+		status = "disabled";
 	};
 };
 
@@ -467,8 +466,8 @@
 
 			vdd1v8_dvp: LDO_REG7 {
 				regulator-name = "vdd1v8_dvp";
-				/delete-property/ regulator-always-on;
-				/delete-property/ regulator-boot-on;
+				regulator-always-on;
+				regulator-boot-on;
 				regulator-state-mem {
 					regulator-off-in-suspend;
 				};
@@ -506,7 +505,34 @@
 		pinctrl-0 = <&i2s_8ch_mclk>;
 		spk-con-gpios = <&gpio4 RK_PD2 GPIO_ACTIVE_HIGH>;
 	};
-
+	
+	os08a20: os08a20@36 {
+		compatible = "ovti,os08a20";
+		status = "okay";
+		reg = <0x36>;
+		clocks = <&cru SCLK_CIF_OUT>;
+		clock-names = "xvclk";
+		/* avdd-supply = <>; */
+		/* dvdd-supply = <>; */
+		/* dovdd-supply = <>; */
+		/* reset-gpios = <>; */
+		reset-gpios = <&gpio2 27 GPIO_ACTIVE_LOW>;
+		//pwdn-gpios = <&gpio1 4 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "rockchip,camera_default","rockchip,camera_rst";
+		pinctrl-0 = <&cif_clkout>;
+		pinctrl-1 = <&camera_rst_gpio>;
+		rockchip,camera-module-index = <0>;
+		rockchip,camera-module-facing = "back";
+		rockchip,camera-module-name = "CMK-CT0116";
+		rockchip,camera-module-lens-name = "NC";
+		port {
+			ucam_out0: endpoint {
+				remote-endpoint = <&mipi_in_ucam0>;
+				data-lanes = <1 2 3 4>;
+			};
+		};
+	};
+	
 	/delete-node/ rt5651;
 };
 
@@ -656,14 +682,62 @@
 	pinctrl-0 = <&pwm2_pin_pull_down>;
 };
 
-&pinctrl {
-	wireless-bluetooth {
-		bt_wake_gpio: bt-wake-gpio {
-			rockchip,pins =
-				<2 RK_PD3 RK_FUNC_GPIO &pcfg_pull_none>;
+
+&mipi_dphy_rx0 {
+	status = "okay";
+
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port@0 {
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			mipi_in_ucam0: endpoint@1 {
+				reg = <1>;
+				remote-endpoint = <&ucam_out0>;
+				data-lanes = <1 2 3 4>;
+			};
+		};
+
+		port@1 {
+			reg = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			dphy_rx0_out: endpoint@0 {
+				reg = <0>;
+				remote-endpoint = <&isp0_mipi_in>;
+			};
 		};
 	};
+};
 
+
+&rkisp1_0 {
+	status = "okay";
+    
+	port {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		isp0_mipi_in: endpoint@0 {
+			reg = <0>;
+			remote-endpoint = <&dphy_rx0_out>;
+		};
+	};  
+};
+
+
+&pinctrl {
+	camera {
+		camera_rst_gpio: camera-rst-gpio {
+			rockchip,pins =
+				<2 27 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
 	gmac {
 		rgmii_sleep_pins: rgmii-sleep-pins {
 			rockchip,pins =
@@ -764,6 +838,10 @@
 };
 
 &vdpu {
+	status = "okay";
+};
+
+&isp0_mmu {
 	status = "okay";
 };
 

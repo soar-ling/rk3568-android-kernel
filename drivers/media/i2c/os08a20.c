@@ -30,6 +30,13 @@
 #include <media/v4l2-image-sizes.h>
 #include <media/v4l2-mediabus.h>
 #include <media/v4l2-subdev.h>
+#include <linux/of_device.h>
+#include <linux/gpio.h>
+#include <linux/of_gpio.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
 
 #include <linux/rk-camera-module.h>
 
@@ -93,6 +100,8 @@
 
 #define OF_CAMERA_PINCTRL_STATE_DEFAULT	"rockchip,camera_default"
 #define OF_CAMERA_PINCTRL_STATE_SLEEP	"rockchip,camera_sleep"
+#define OF_CAMERA_PINCTRL_STATE_RST	   "rockchip,camera_rst"
+
 
 #define OS08A20_NAME			"os08a20"
 #define OS08A20_MEDIA_BUS_FMT		MEDIA_BUS_FMT_SBGGR10_1X10
@@ -136,13 +145,16 @@ struct os08a20 {
 	struct i2c_client	*client;
 	struct clk		*xvclk;
 	struct gpio_desc	*power_gpio;
-	struct gpio_desc	*reset_gpio;
+	//struct gpio_desc	*reset_gpio;
+	int reset_gpio;
 	struct gpio_desc	*pwdn_gpio;
 	struct regulator_bulk_data supplies[OS08A20_NUM_SUPPLIES];
 
 	struct pinctrl		*pinctrl;
 	struct pinctrl_state	*pins_default;
 	struct pinctrl_state	*pins_sleep;
+	struct pinctrl_state	*pins_rst;
+	
 
 	struct v4l2_subdev	subdev;
 	struct media_pad	pad;
@@ -440,8 +452,8 @@ static int os08a20_write_reg(struct i2c_client *client, u16 reg,
 	u8 *val_p;
 	__be32 val_be;
 
-	dev_dbg(&client->dev, "%s(%d) enter!\n", __func__, __LINE__);
-	dev_dbg(&client->dev, "write reg(0x%x val:0x%x)!\n", reg, val);
+	dev_err(&client->dev, "zc:%s(%d) enter!\n", __func__, __LINE__);
+	dev_err(&client->dev, "zc:write reg(0x%x val:0x%x)!\n", reg, val);
 
 	if (len > 4)
 		return -EINVAL;
@@ -576,7 +588,9 @@ static int os08a20_set_fmt(struct v4l2_subdev *sd,
 	struct os08a20 *os08a20 = to_os08a20(sd);
 	const struct os08a20_mode *mode;
 	s64 h_blank, vblank_def;
-
+    
+	printk("zc:%s(%d) enter!\n", __func__, __LINE__);
+	
 	mutex_lock(&os08a20->mutex);
 
 	mode = os08a20_find_best_fit(os08a20, fmt);
@@ -842,7 +856,8 @@ static long os08a20_compat_ioctl32(struct v4l2_subdev *sd,
 static int __os08a20_start_stream(struct os08a20 *os08a20)
 {
 	int ret;
-
+    printk("zc:%s(%d) enter!\n", __func__, __LINE__);
+	
 	ret = os08a20_write_array(os08a20->client, os08a20->cur_mode->reg_list);
 	if (ret)
 		return ret;
@@ -931,7 +946,7 @@ static int os08a20_s_power(struct v4l2_subdev *sd, int on)
 	struct i2c_client *client = os08a20->client;
 	int ret = 0;
 
-	dev_dbg(&client->dev, "%s(%d) on(%d)\n", __func__, __LINE__, on);
+	dev_dbg(&client->dev, "zc:%s(%d) on(%d)\n", __func__, __LINE__, on);
 
 	mutex_lock(&os08a20->mutex);
 
@@ -954,11 +969,11 @@ static int os08a20_s_power(struct v4l2_subdev *sd, int on)
 		}
 
 		os08a20->power_on = true;
-		/* export gpio */
+		/* export gpio */  /*
 		if (!IS_ERR(os08a20->reset_gpio))
 			gpiod_export(os08a20->reset_gpio, false);
 		if (!IS_ERR(os08a20->pwdn_gpio))
-			gpiod_export(os08a20->pwdn_gpio, false);
+			gpiod_export(os08a20->pwdn_gpio, false);  */
 	} else {
 		pm_runtime_put(&client->dev);
 		os08a20->power_on = false;
@@ -981,7 +996,8 @@ static int __os08a20_power_on(struct os08a20 *os08a20)
 	int ret;
 	u32 delay_us;
 	struct device *dev = &os08a20->client->dev;
-
+    printk("zc:%s(%d) enter!\n", __func__, __LINE__);
+	
 	if (!IS_ERR(os08a20->power_gpio))
 		gpiod_set_value_cansleep(os08a20->power_gpio, 1);
 
@@ -1010,17 +1026,21 @@ static int __os08a20_power_on(struct os08a20 *os08a20)
 		goto disable_clk;
 	}
 
-	if (!IS_ERR(os08a20->reset_gpio))
-		gpiod_set_value_cansleep(os08a20->reset_gpio, 1);
+//	if (!IS_ERR(os08a20->reset_gpio))
+	//	gpiod_set_value_cansleep(os08a20->reset_gpio, 1);
+		
+		gpio_direction_output(os08a20->reset_gpio, 1);
+
+
 
 	if (!IS_ERR(os08a20->pwdn_gpio))
 		gpiod_set_value_cansleep(os08a20->pwdn_gpio, 1);
 
-	/* export gpio */
+	/* export gpio */  /*
 	if (!IS_ERR(os08a20->reset_gpio))
 		gpiod_export(os08a20->reset_gpio, false);
 	if (!IS_ERR(os08a20->pwdn_gpio))
-		gpiod_export(os08a20->pwdn_gpio, false);
+		gpiod_export(os08a20->pwdn_gpio, false);  */
 
 	/* 8192 cycles prior to first SCCB transaction */
 	delay_us = os08a20_cal_delay(8192);
@@ -1036,24 +1056,33 @@ disable_clk:
 
 static void __os08a20_power_off(struct os08a20 *os08a20)
 {
-	int ret;
+  	int ret;
 	struct device *dev = &os08a20->client->dev;
-
+    printk("zc:%s(%d) enter!\n", __func__, __LINE__);
+	
 	if (!IS_ERR(os08a20->pwdn_gpio))
 		gpiod_set_value_cansleep(os08a20->pwdn_gpio, 0);
-	clk_disable_unprepare(os08a20->xvclk);
-	if (!IS_ERR(os08a20->reset_gpio))
-		gpiod_set_value_cansleep(os08a20->reset_gpio, 0);
+	 
+	 clk_disable_unprepare(os08a20->xvclk);
+	
+	//if (!IS_ERR(os08a20->reset_gpio))
+	//	gpiod_set_value_cansleep(os08a20->reset_gpio, 0);
+		
+	gpio_direction_output(os08a20->reset_gpio, 0);
+	
 	if (!IS_ERR_OR_NULL(os08a20->pins_sleep)) {
 		ret = pinctrl_select_state(os08a20->pinctrl,
 					   os08a20->pins_sleep);
 		if (ret < 0)
 			dev_dbg(dev, "could not set pins\n");
 	}
+	
 	if (!IS_ERR(os08a20->power_gpio))
 		gpiod_set_value_cansleep(os08a20->power_gpio, 0);
 
-	regulator_bulk_disable(OS08A20_NUM_SUPPLIES, os08a20->supplies);
+   // regulator_bulk_disable(OS08A20_NUM_SUPPLIES, os08a20->supplies);  
+	
+	return;
 }
 
 static int os08a20_runtime_resume(struct device *dev)
@@ -1083,7 +1112,8 @@ static int os08a20_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
 	struct v4l2_mbus_framefmt *try_fmt =
 				v4l2_subdev_get_try_format(sd, fh->pad, 0);
 	const struct os08a20_mode *def_mode = &supported_modes[0];
-
+    printk("zc:%s(%d) enter!\n", __func__, __LINE__);
+	
 	mutex_lock(&os08a20->mutex);
 	/* Initialize try_fmt */
 	try_fmt->width = def_mode->width;
@@ -1178,7 +1208,8 @@ static int os08a20_set_ctrl(struct v4l2_ctrl *ctrl)
 	s64 max;
 	u32 val = 0;
 	int ret = 0;
-
+printk("zc:%s(%d) enter!\n", __func__, __LINE__);
+	
 	/* Propagate change of current control to all related controls */
 	switch (ctrl->id) {
 	case V4L2_CID_VBLANK:
@@ -1336,7 +1367,8 @@ static int os08a20_check_sensor_id(struct os08a20 *os08a20,
 	struct device *dev = &os08a20->client->dev;
 	u32 id = 0;
 	int ret;
-
+    printk("zc:%s(%d) enter!\n", __func__, __LINE__);
+	
 	ret = os08a20_read_reg(client, OS08A20_REG_CHIP_ID,
 			       OS08A20_REG_VALUE_24BIT, &id);
 	if (id != CHIP_ID) {
@@ -1344,7 +1376,7 @@ static int os08a20_check_sensor_id(struct os08a20 *os08a20,
 		return -ENODEV;
 	}
 
-	dev_info(dev, "Detected OV%06x sensor\n", CHIP_ID);
+	dev_info(dev, "zc:Detected OV%06x sensor\n", CHIP_ID);
 
 	return 0;
 }
@@ -1407,7 +1439,12 @@ static int os08a20_probe(struct i2c_client *client,
 	struct v4l2_subdev *sd;
 	char facing[2] = "b";
 	int ret;
-
+	enum of_gpio_flags ts_flags_gpio1;
+   
+	
+	
+    printk("zc:%s(%d) enter!\n", __func__, __LINE__);
+	
 	dev_info(dev, "driver version: %02x.%02x.%02x",
 		DRIVER_VERSION >> 16,
 		(DRIVER_VERSION & 0xff00) >> 8,
@@ -1446,9 +1483,19 @@ static int os08a20_probe(struct i2c_client *client,
 	if (IS_ERR(os08a20->power_gpio))
 		dev_warn(dev, "Failed to get power-gpios, maybe no use\n");
 
-	os08a20->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_LOW);
-	if (IS_ERR(os08a20->reset_gpio))
-		dev_warn(dev, "Failed to get reset-gpios, maybe no use\n");
+//	os08a20->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_LOW);
+//	if (IS_ERR(os08a20->reset_gpio))
+//		dev_warn(dev, "Failed to get reset-gpios, maybe no use\n");
+    
+	os08a20->reset_gpio = of_get_named_gpio_flags(node, "reset-gpios", 0, &ts_flags_gpio1);
+		  
+	ret = gpio_request(os08a20->reset_gpio, "gpio1");
+	if(ret<0)	
+	{
+	 printk("gpio1 error");
+	}
+     printk("gpio set ok ===\n");
+	
 
 	os08a20->pwdn_gpio = devm_gpiod_get(dev, "pwdn", GPIOD_OUT_LOW);
 	if (IS_ERR(os08a20->pwdn_gpio))
@@ -1476,6 +1523,14 @@ static int os08a20_probe(struct i2c_client *client,
 					     OF_CAMERA_PINCTRL_STATE_SLEEP);
 		if (IS_ERR(os08a20->pins_sleep))
 			dev_err(dev, "could not get sleep pinstate\n");
+		
+		os08a20->pins_rst =
+			pinctrl_lookup_state(os08a20->pinctrl,
+					     OF_CAMERA_PINCTRL_STATE_RST);
+		if (IS_ERR(os08a20->pins_rst))
+			dev_err(dev, "zc could not get sleep pinstate\n");
+		
+		
 	}
 
 	mutex_init(&os08a20->mutex);
@@ -1552,7 +1607,7 @@ static int os08a20_remove(struct i2c_client *client)
 {
 	struct v4l2_subdev *sd = i2c_get_clientdata(client);
 	struct os08a20 *os08a20 = to_os08a20(sd);
-
+   printk("zc:%s(%d) enter!\n", __func__, __LINE__);
 	v4l2_async_unregister_subdev(sd);
 #if defined(CONFIG_MEDIA_CONTROLLER)
 	media_entity_cleanup(&sd->entity);
