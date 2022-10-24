@@ -77,6 +77,15 @@
 		#clock-cells = <0>;
 	};
 
+	 wifi_3v3_enable: wifi-enable-regulator {
+        compatible = "regulator-fixed";
+        gpio = <&gpio0 RK_PB5 GPIO_ACTIVE_HIGH>;
+        pinctrl-names = "default";
+        pinctrl-0 = <&wifi_pwr_pin>;
+        regulator-name = "wifi-pwr";
+        regulator-always-on;
+               enable-active-high;
+    };
 	es8316-sound {
 		status = "okay";
 		compatible = "simple-audio-card";
@@ -169,9 +178,9 @@
 	wireless-wlan {
 		compatible = "wlan-platdata";
 		rockchip,grf = <&grf>;
-		wifi_chip_type = "ap6354";
+		wifi_chip_type = "RTL8822ES";
 		sdio_vref = <1800>;
-		WIFI,reset_gpio    = <&gpio0 RK_PB2 GPIO_ACTIVE_LOW>;
+		//WIFI,reset_gpio    = <&gpio0 RK_PB2 GPIO_ACTIVE_LOW>;
 		WIFI,host_wake_irq = <&gpio0 RK_PA3 GPIO_ACTIVE_HIGH>;
 		status = "okay";
 	};
@@ -420,11 +429,15 @@
 };
 
 &sdio_pwrseq {
-	status = "disabled";
+	status = "okay";
+	clocks = <&rk808 1>;
+	clock-names = "ext_clock";
+	pinctrl-0 = <&wifi_enable_h>;
+	reset-gpios = <&gpio0 RK_PB2 GPIO_ACTIVE_LOW>;
 };
 
 &sdio0 {
-	status = "disabled";
+	status = "okay";
 };
 
 &emmc_phy {
@@ -732,6 +745,21 @@
 
 
 &pinctrl {
+	sdio-pwrseq {
+         wifi_enable_h: wifi-enable-h {
+              rockchip,pins = <0 RK_PB2 RK_FUNC_GPIO &pcfg_pull_none>;
+             };  
+        };  
+    
+     wireless-bluetooth {
+        bt_wake_gpio: bt-wake-gpio {
+            rockchip,pins =
+                <2 RK_PD3 RK_FUNC_GPIO &pcfg_pull_none>;
+        };  
+        wifi_pwr_pin: wifi-pwr {
+              rockchip,pins = <0 RK_PB5 RK_FUNC_GPIO &pcfg_pull_down>;
+                };  
+    };  
 	camera {
 		camera_rst_gpio: camera-rst-gpio {
 			rockchip,pins =

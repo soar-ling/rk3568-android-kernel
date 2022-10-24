@@ -662,6 +662,7 @@ try_again:
 	 * try to init uhs card. sdio_read_cccr will take over this task
 	 * to make sure which speed mode should work.
 	 */
+#if 0
 	if (!powered_resume && (rocr & ocr & R4_18V_PRESENT)) {
 		err = mmc_set_uhs_voltage(host, ocr_card);
 		if (err == -EAGAIN) {
@@ -672,6 +673,7 @@ try_again:
 			ocr &= ~R4_18V_PRESENT;
 		}
 	}
+#endif
 
 	/*
 	 * For native busses:  set card RCA and quit open drain mode.
