@@ -84,7 +84,7 @@
         pinctrl-0 = <&wifi_pwr_pin>;
         regulator-name = "wifi-pwr";
         regulator-always-on;
-               enable-active-high;
+        enable-active-high;
     };
 	es8316-sound {
 		status = "okay";
@@ -291,8 +291,7 @@
 };
 
 &route_dsi {
-	status = "disabled";
-	connect = <&vopb_out_dsi>;
+	status = "okay";
 };
 
 &dmac_bus {
