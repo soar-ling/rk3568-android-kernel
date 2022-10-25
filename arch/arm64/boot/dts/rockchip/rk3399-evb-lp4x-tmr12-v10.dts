@@ -185,9 +185,7 @@
 		status = "okay";
 	};
 
-	wireless-bluetooth {
-		status = "disabled";
-	};
+
 };
 
 &dsi_in_vopb {
@@ -201,7 +199,8 @@
 &backlight {
 	status = "okay";
 	pwms = <&pwm0 0 200000 0>;
-	enable-gpios = <&gpio4 RK_PD5 GPIO_ACTIVE_HIGH>;
+	//enable-gpios = <&gpio0 RK_PB5 GPIO_ACTIVE_HIGH>;
+
 };
 
 &dsi {
@@ -292,7 +291,7 @@
 };
 
 &route_dsi {
-	status = "okay";
+	status = "disabled";
 	connect = <&vopb_out_dsi>;
 };
 
@@ -487,8 +486,8 @@
 			};
 
 			vcc3v3_s0: SWITCH_REG2 {
-				/delete-property/ regulator-always-on;
-				/delete-property/ regulator-boot-on;
+				regulator-always-on;
+				regulator-boot-on;
 			};
 		};
 	};
@@ -500,6 +499,13 @@
 	rockchip,playback-channels = <8>;
 	rockchip,capture-channels = <8>;
 	#sound-dai-cells = <0>;
+};
+
+
+&i2s1 {
+	#sound-dai-cells = <0>;
+	rockchip,bclk-fs = <64>;
+	status = "okay";
 };
 
 &i2c1 {
@@ -535,9 +541,9 @@
 		pinctrl-0 = <&cif_clkout>;
 		pinctrl-1 = <&camera_rst_gpio>;
 		rockchip,camera-module-index = <0>;
-		rockchip,camera-module-facing = "back";
-		rockchip,camera-module-name = "CMK-CT0116";
-		rockchip,camera-module-lens-name = "NC";
+		rockchip,camera-module-facing = "back";  
+		rockchip,camera-module-name = "RS-8MTP659";
+		rockchip,camera-module-lens-name = "V1_default";
 		port {
 			ucam_out0: endpoint {
 				remote-endpoint = <&mipi_in_ucam0>;
@@ -586,10 +592,6 @@
 	};
 };
 
-&i2s2 {
-	#sound-dai-cells = <0>;
-	status = "okay";
-};
 
 &gmac {
 	phy-supply = <&vcc3v3_sys>;
@@ -645,7 +647,7 @@
 };
 
 &sdmmc {
-	status = "disabled";
+	status = "okay";
 };
 
 &spdif {

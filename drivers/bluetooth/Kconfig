@@ -45,7 +45,7 @@ config BT_HCIBTUSB_BCM
 	bool "Broadcom protocol support"
 	depends on BT_HCIBTUSB
 	select BT_BCM
-	default y
+	default n
 	help
 	  The Broadcom protocol support enables firmware and patchram
 	  download support for Broadcom Bluetooth controllers.
@@ -56,7 +56,7 @@ config BT_HCIBTUSB_RTL
 	bool "Realtek protocol support"
 	depends on BT_HCIBTUSB
 	select BT_RTL
-	default y
+	default n 
 	help
 	  The Realtek protocol support enables firmware and configuration
 	  download support for Realtek Bluetooth controllers.
@@ -160,6 +160,7 @@ config BT_HCIUART_3WIRE
 	bool "Three-wire UART (H5) protocol support"
 	depends on BT_HCIUART
 	depends on BT_HCIUART_SERDEV
+	default y
 	help
 	  The HCI Three-wire UART Transport Layer makes it possible to
 	  user the Bluetooth HCI over a serial port interface. The HCI
