@@ -1471,8 +1471,8 @@ static struct uart_driver wk2xxx_uart_driver = {
     owner:                  THIS_MODULE,
     major:                  SERIAL_WK2XXX_MAJOR,
 
-    driver_name:            "ttySWK",
-    dev_name:               "ttysWK",
+    driver_name:            "ttyACM",
+    dev_name:               "ttyACM",
 
     minor:                  MINOR_START,
     nr:                     NR_PORTS,
