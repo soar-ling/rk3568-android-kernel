@@ -483,11 +483,6 @@
 					regulator-off-in-suspend;
 				};
 			};
-
-			vcc3v3_s0: SWITCH_REG2 {
-				regulator-always-on;
-				regulator-boot-on;
-			};
 		};
 	};
 };
@@ -846,6 +841,7 @@
 		(0
 		| RKPM_GPIO_WKUP_EN
 		| RKPM_PWM_WKUP_EN
+		| RKPM_USB_WKUP_EN
 		)
 	>;
 	rockchip,pwm-regulator-config = <

@@ -430,8 +430,8 @@
 
 			vcc3v3_s0: SWITCH_REG2 {
 				regulator-name = "vcc3v3_s0";
-				regulator-always-on;
-				regulator-boot-on;
+				//regulator-always-on;
+				//regulator-boot-on;
 				regulator-state-mem {
 					regulator-off-in-suspend;
 				};
