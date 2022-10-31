@@ -155,6 +155,7 @@
 	};
 
 	adc_keys {
+	     status = "disabled";
 		/delete-node/ menu-key;
 		/delete-node/ home-key;
 		/delete-node/ camera-key;
