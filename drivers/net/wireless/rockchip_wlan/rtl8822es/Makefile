@@ -94,28 +94,28 @@ CONFIG_IP_R_MONITOR = n #arp VOQ and high rate
 # user priority mapping rule : tos, dscp
 CONFIG_RTW_UP_MAPPING_RULE = tos
 CONFIG_RTW_MBO = y
-CONFIG_WAKE_ON_BT = n
+CONFIG_WAKE_ON_BT = y
 CONFIG_HIGH_PRIORITY_CMD_THREAD = n
 CONFIG_RTW_DISABLE_HW_PDN = n
 ########################## Android ###########################
 # CONFIG_RTW_ANDROID - 0: no Android, 4/5/6/7/8/9/10/11 : Android version
-CONFIG_RTW_ANDROID = n
+CONFIG_RTW_ANDROID = 0
 
 ifeq ($(shell test $(CONFIG_RTW_ANDROID) -gt 0; echo $$?), 0)
 EXTRA_CFLAGS += -DCONFIG_RTW_ANDROID=$(CONFIG_RTW_ANDROID)
 endif
 
 ########################## Debug ###########################
-CONFIG_RTW_DEBUG = y
+CONFIG_RTW_DEBUG = n
 # default log level is _DRV_INFO_ = 4,
 # please refer to "How_to_set_driver_debug_log_level.doc" to set the available level.
 CONFIG_RTW_LOG_LEVEL = 4
 
 # enable /proc/net/rtlxxxx/ debug interfaces
-CONFIG_PROC_DEBUG = y
+CONFIG_PROC_DEBUG = n
 
 ######################## Wake On Lan ##########################
-CONFIG_WOWLAN = n
+CONFIG_WOWLAN = y
 #bit2: deauth, bit1: unicast, bit0: magic pkt.
 CONFIG_WAKEUP_TYPE = 0x7
 CONFIG_WOW_IPS_MODE = default
@@ -123,7 +123,7 @@ CONFIG_WOW_LPS_MODE = default
 #bit0: disBBRF off, #bit1: Wireless remote controller (WRC)
 CONFIG_SUSPEND_TYPE = 0
 CONFIG_WOW_STA_MIX = n
-CONFIG_GPIO_WAKEUP = n
+CONFIG_GPIO_WAKEUP = y
 # Please contact with RTK support team first. After getting the agreement from RTK support team, 
 # you are just able to modify the CONFIG_WAKEUP_GPIO_IDX with customized requirement.
 CONFIG_WAKEUP_GPIO_IDX = default
@@ -1767,7 +1767,7 @@ ifeq ($(CONFIG_PLATFORM_ARM_RK3188), y)
 EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN -DCONFIG_PLATFORM_ANDROID -DCONFIG_PLATFORM_ROCKCHIPS
 # default setting for Android 4.1, 4.2, 4.3, 4.4
 EXTRA_CFLAGS += -DCONFIG_IOCTL_CFG80211 -DRTW_USE_CFG80211_STA_EVENT
-#EXTRA_CFLAGS += -DCONFIG_CONCURRENT_MODE
+EXTRA_CFLAGS += -DCONFIG_CONCURRENT_MODE
 # default setting for Power control
 #EXTRA_CFLAGS += -DRTW_ENABLE_WIFI_CONTROL_FUNC
 ifeq ($(CONFIG_SDIO_HCI), y)
