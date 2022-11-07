@@ -48,6 +48,9 @@ source "drivers/net/wireless/rockchip_wlan/rtl8723cs/Kconfig"
 source "drivers/net/wireless/rockchip_wlan/rtl8723ds/Kconfig"
 source "drivers/net/wireless/rockchip_wlan/rtl8821cs/Kconfig"
 source "drivers/net/wireless/rockchip_wlan/rtl8822bs/Kconfig"
+source "drivers/net/wireless/rockchip_wlan/rtl8822cs/Kconfig"
+source "drivers/net/wireless/rockchip_wlan/rtl8822es/Kconfig"
+
 endif
 
 source "drivers/net/wireless/rockchip_wlan/mvl88w8977/Kconfig"
