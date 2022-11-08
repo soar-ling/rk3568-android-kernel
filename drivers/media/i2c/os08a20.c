@@ -452,8 +452,8 @@ static int os08a20_write_reg(struct i2c_client *client, u16 reg,
 	u8 *val_p;
 	__be32 val_be;
 
-	dev_err(&client->dev, "zc:%s(%d) enter!\n", __func__, __LINE__);
-	dev_err(&client->dev, "zc:write reg(0x%x val:0x%x)!\n", reg, val);
+	//dev_err(&client->dev, "zc:%s(%d) enter!\n", __func__, __LINE__);
+	//dev_err(&client->dev, "zc:write reg(0x%x val:0x%x)!\n", reg, val);
 
 	if (len > 4)
 		return -EINVAL;
@@ -589,7 +589,7 @@ static int os08a20_set_fmt(struct v4l2_subdev *sd,
 	const struct os08a20_mode *mode;
 	s64 h_blank, vblank_def;
     
-	printk("zc:%s(%d) enter!\n", __func__, __LINE__);
+	//printk("zc:%s(%d) enter!\n", __func__, __LINE__);
 	
 	mutex_lock(&os08a20->mutex);
 
@@ -856,7 +856,7 @@ static long os08a20_compat_ioctl32(struct v4l2_subdev *sd,
 static int __os08a20_start_stream(struct os08a20 *os08a20)
 {
 	int ret;
-    printk("zc:%s(%d) enter!\n", __func__, __LINE__);
+   // printk("zc:%s(%d) enter!\n", __func__, __LINE__);
 	
 	ret = os08a20_write_array(os08a20->client, os08a20->cur_mode->reg_list);
 	if (ret)
@@ -884,8 +884,12 @@ static int __os08a20_start_stream(struct os08a20 *os08a20)
 	if (ret)
 		return ret;
 
-	ret = os08a20_write_reg(os08a20->client, OS08A20_REG_CTRL_MODE,
-				OS08A20_REG_VALUE_08BIT, OS08A20_MODE_STREAMING);
+	ret = os08a20_write_reg(os08a20->client, OS08A20_REG_CTRL_MODE,OS08A20_REG_VALUE_08BIT, OS08A20_MODE_STREAMING);
+	
+	ret = os08a20_write_reg(os08a20->client, OS08A20_REG_MIRROR,OS08A20_REG_VALUE_08BIT,MIRROR_BIT_MASK);
+			
+				
+				
 	return ret;
 }
 
@@ -913,7 +917,7 @@ static int os08a20_s_stream(struct v4l2_subdev *sd, int on)
 		goto unlock_and_return;
 
 	if (on) {
-		dev_info(&client->dev, "stream on!!!\n");
+		//dev_info(&client->dev, "stream on!!!\n");
 		ret = pm_runtime_get_sync(&client->dev);
 		if (ret < 0) {
 			pm_runtime_put_noidle(&client->dev);
@@ -946,7 +950,7 @@ static int os08a20_s_power(struct v4l2_subdev *sd, int on)
 	struct i2c_client *client = os08a20->client;
 	int ret = 0;
 
-	dev_dbg(&client->dev, "zc:%s(%d) on(%d)\n", __func__, __LINE__, on);
+	//dev_dbg(&client->dev, "zc:%s(%d) on(%d)\n", __func__, __LINE__, on);
 
 	mutex_lock(&os08a20->mutex);
 
@@ -996,7 +1000,7 @@ static int __os08a20_power_on(struct os08a20 *os08a20)
 	int ret;
 	u32 delay_us;
 	struct device *dev = &os08a20->client->dev;
-    printk("zc:%s(%d) enter!\n", __func__, __LINE__);
+  //  printk("zc:%s(%d) enter!\n", __func__, __LINE__);
 	
 	if (!IS_ERR(os08a20->power_gpio))
 		gpiod_set_value_cansleep(os08a20->power_gpio, 1);
@@ -1058,7 +1062,7 @@ static void __os08a20_power_off(struct os08a20 *os08a20)
 {
   	int ret;
 	struct device *dev = &os08a20->client->dev;
-    printk("zc:%s(%d) enter!\n", __func__, __LINE__);
+   // printk("zc:%s(%d) enter!\n", __func__, __LINE__);
 	
 	if (!IS_ERR(os08a20->pwdn_gpio))
 		gpiod_set_value_cansleep(os08a20->pwdn_gpio, 0);
@@ -1112,7 +1116,7 @@ static int os08a20_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
 	struct v4l2_mbus_framefmt *try_fmt =
 				v4l2_subdev_get_try_format(sd, fh->pad, 0);
 	const struct os08a20_mode *def_mode = &supported_modes[0];
-    printk("zc:%s(%d) enter!\n", __func__, __LINE__);
+   // printk("zc:%s(%d) enter!\n", __func__, __LINE__);
 	
 	mutex_lock(&os08a20->mutex);
 	/* Initialize try_fmt */
@@ -1208,7 +1212,7 @@ static int os08a20_set_ctrl(struct v4l2_ctrl *ctrl)
 	s64 max;
 	u32 val = 0;
 	int ret = 0;
-printk("zc:%s(%d) enter!\n", __func__, __LINE__);
+  //  printk("zc:%s(%d) enter!\n", __func__, __LINE__);
 	
 	/* Propagate change of current control to all related controls */
 	switch (ctrl->id) {
@@ -1281,6 +1285,7 @@ printk("zc:%s(%d) enter!\n", __func__, __LINE__);
 
 	return ret;
 }
+
 
 static const struct v4l2_ctrl_ops os08a20_ctrl_ops = {
 	.s_ctrl = os08a20_set_ctrl,
@@ -1367,7 +1372,7 @@ static int os08a20_check_sensor_id(struct os08a20 *os08a20,
 	struct device *dev = &os08a20->client->dev;
 	u32 id = 0;
 	int ret;
-    printk("zc:%s(%d) enter!\n", __func__, __LINE__);
+   // printk("zc:%s(%d) enter!\n", __func__, __LINE__);
 	
 	ret = os08a20_read_reg(client, OS08A20_REG_CHIP_ID,
 			       OS08A20_REG_VALUE_24BIT, &id);
@@ -1544,6 +1549,8 @@ static int os08a20_probe(struct i2c_client *client,
 	ret = __os08a20_power_on(os08a20);
 	if (ret)
 		goto err_free_handler;
+
+   // os08a20_write_reg(os08a20->client, OS08A20_REG_MIRROR,OS08A20_REG_VALUE_08BIT,MIRROR_BIT_MASK);
 
 	ret = os08a20_check_sensor_id(os08a20, client);
 	if (ret < 0) {
