@@ -93,15 +93,6 @@
 #define YT8531_EXTREG_LED2		0xA00E
 #define YT8531_EXTREG_LED_CFG	0xA00F
 
-
-
-#define YT8531_LED0_CFG   	    0xA00C
-#define YT8531_LED1_CFG	        0xA00D
-#define YT8531_LED2_CFG    	    0xA00E
-#define YT8531_LED_BLINK_CFG    0xA00F
-#define YT8531_LED_PADSTRENG_CFG   0xA010
-
-
 #define YT8531_LED_FORCE_EN (1<<2)
 #define YT8531_LED_FORCE_MODE_BLINK_MODE2 (3)
 #define YT8531_LED_FORCE_MODE_BLINK_MODE1 (2)
@@ -617,37 +608,69 @@ static int yt8531_led_init(struct phy_device *phydev)
 {
 	int ret;
 	int val;
+	int mask;
 
-	val = ytphy_read_ext(phydev, YT8531_LED_GENERAL_CFG);
+	/*val = ytphy_read_ext(phydev, YT8531_LED_GENERAL_CFG);
 	if (val < 0)
-		return val;	
-	
-	ret = ytphy_write_ext(phydev, YT8531_LED_GENERAL_CFG, 0xF028);
-	if (ret < 0)
-		return ret;
+		return val;
 
-	val = ytphy_read_ext(phydev, YT8531_LED0_CFG);
-	if (val < 0)
-		return val;	
-	
-	ret = ytphy_write_ext(phydev, YT8531_LED0_CFG, 0x0F3F);
+	val |= (YT8531_LED_FORCE_EN | YT8531_LED_FORCE_MODE_ON) << YT8531_CFG_LED2;
+
+	ret = ytphy_write_ext(phydev, YT8531_LED_GENERAL_CFG, val);
 	if (ret < 0)
-		return ret;
-	val = ytphy_read_ext(phydev, YT8531_LED1_CFG);
+		return ret;*/
+
+	val = ytphy_read_ext(phydev, YT8531_EXTREG_LED0);
 	if (val < 0)
-		return val;	
-	
-	ret = ytphy_write_ext(phydev, YT8531_LED1_CFG, 0x0F3F);
-	if (ret < 0)
-		return ret;
-	val = ytphy_read_ext(phydev, YT8531_LED2_CFG);
-	if (val < 0)
-		return val;	
-	
-	ret = ytphy_write_ext(phydev, YT8531_LED2_CFG, 0x0F3F);
+		return val;
+
+	val |= YT8531_LED_HT_ON_EN | YT8531_LED_GT_ON_EN |
+		YT8531_LED_ACT_BLK_IND | YT8531_LED_RXACT_BLK_EN |
+		YT8531_LED_TXACT_BLK_EN;
+	mask = YT8531_LED_FDX_ON_EN | YT8531_LED_HDX_ON_EN;
+	val &= ~mask;
+
+	ret = ytphy_write_ext(phydev, YT8531_EXTREG_LED0, val);
 	if (ret < 0)
 		return ret;
 
+	val = ytphy_read_ext(phydev, YT8531_EXTREG_LED1);
+	if (val < 0)
+		return val;
+
+	val |= YT8531_LED_BT_ON_EN | YT8531_LED_HT_ON_EN |
+		YT8531_LED_GT_ON_EN;
+	mask = YT8531_LED_RXACT_BLK_EN | YT8531_LED_TXACT_BLK_EN |
+		YT8531_LED_BT_BLK_EN | YT8531_LED_HT_BLK_EN |
+		YT8531_LED_GT_BLK_EN | YT8531_LED_COL_BLK_EN;
+	val &= ~mask;
+
+	ret = ytphy_write_ext(phydev, YT8531_EXTREG_LED1, val);
+	if (val < 0)
+		return val;
+
+	val = ytphy_read_ext(phydev, YT8531_EXTREG_LED2);
+	if (val < 0)
+		return val;
+
+	val |= YT8531_LED_TXACT_BLK_EN | YT8531_LED_RXACT_BLK_EN |
+		YT8531_LED_RXACT_ON_EN | YT8531_LED_TXACT_ON_EN;
+	mask = YT8531_LED_FDX_ON_EN | YT8531_LED_HDX_ON_EN |
+		YT8531_LED_ACT_BLK_IND;
+	val &= ~mask;
+
+	ret = ytphy_write_ext(phydev, YT8531_EXTREG_LED2, val);
+	if (val < 0)
+		return val;
+
+    val = ytphy_read_ext(phydev, YT8531_EXTREG_LED_CFG);
+	if (val < 0)
+		return val;
+
+	val |= _2Hz;
+	mask = (_8Hz & YT8531_LED_BLINK_MODE1) | ((_8Hz<<2) & YT8531_LED_BLINK_MODE2);
+	val &= ~mask;
+	ret = ytphy_write_ext(phydev, YT8531_EXTREG_LED_CFG, val);
 	return ret;
 }
 
