@@ -200,6 +200,7 @@
 &backlight {
 	status = "okay";
 	pwms = <&pwm0 0 200000 0>;
+	default-brightness-level = <230>;
 	//enable-gpios = <&gpio0 RK_PB5 GPIO_ACTIVE_HIGH>;
 
 };
