@@ -58,7 +58,7 @@
  * by degault, it is set to 0
  * NOTE: this macro will need macro SYS_WAKEUP_BASED_ON_ETH_PKT to set to 1
  */
-#define GMAC_CLOCK_INPUT_NEEDED         0
+#define GMAC_CLOCK_INPUT_NEEDED         1
 
 /* the max number of yt8521 chip on pcb board
  * the most case is only 1 chip per board, but
@@ -608,10 +608,7 @@ static int ytphy_mii_rd_ext(struct mii_bus *bus, int phy_id, u32 regnum)
 	return val;
 }
 
-static int ytphy_mii_wr_ext(struct mii_bus *bus
-				int phy_id,
-				u32 regnum,
-				u16 val)
+static int ytphy_mii_wr_ext(struct mii_bus *bus, int phy_id, u32 regnum, u16 val)
 {
 	int ret;
 

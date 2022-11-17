@@ -712,7 +712,7 @@
 		gmac1m1_clkinout: gmac1m1-clkinout {
 			rockchip,pins =
 				/* gmac1_mclkinoutm1 */
-				<4 RK_PC1 3 &pcfg_pull_none>;
+				<4 RK_PC1 3 &pcfg_pull_none_drv_level_3>;
 		};
 
 		/omit-if-no-ref/
