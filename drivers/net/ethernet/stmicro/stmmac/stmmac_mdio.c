@@ -271,7 +271,9 @@ int stmmac_mdio_reset(struct mii_bus *bus)
 					      "mdio-reset"))
 				return 0;
 		}
-
+        if (data->delays[0])
+			msleep(DIV_ROUND_UP(data->delays[0], 1000));
+		
 		gpio_direction_output(data->reset_gpio,
 				      data->active_low ? 1 : 0);
 		if (data->delays[0])
