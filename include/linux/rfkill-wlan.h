@@ -20,6 +20,14 @@ struct rksdmmc_gpio {
     struct rksdmmc_iomux  iomux;
 };
 
+struct rksdmmc_rk_irq {
+    char                    name[64];
+    struct rksdmmc_gpio     gpio;
+    int                     irq;
+};
+
+
+
 struct rksdmmc_pmu {
     bool power_ctrl_by_pmu;
     char pmu_regulator[20];
@@ -30,6 +38,7 @@ struct rksdmmc_gpio_wifi_moudle {
     int sdio_vol;    //sdio reference voltage
     bool vref_ctrl_enble;
     bool wifi_power_remain;
+	char                    *name;
     struct rksdmmc_pmu    mregulator;
     struct rksdmmc_pmu    ioregulator;
     struct rksdmmc_gpio   vbat_n;
@@ -42,6 +51,7 @@ struct rksdmmc_gpio_wifi_moudle {
     struct rksdmmc_gpio   ANTSEL2;  //pin5--ANTSEL2  
     struct rksdmmc_gpio   ANTSEL3;  //pin6--ANTSEL3 
     struct rksdmmc_gpio   GPS_LAN;  //pin33--GPS_LAN
+    struct rksdmmc_rk_irq  wifi_rksdmmc_rk_irq;
     struct regmap *grf;
 	struct clk *ext_clk;
 };

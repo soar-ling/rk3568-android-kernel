@@ -12,7 +12,7 @@
 #include "rk3568-evb-tmr10.dtsi"
 
 / {
-	model = "Rockchip RK3568 EVB2 LP4X V10 Board";
+	model = "Rockchip RK3568 EVB2 LP4X V10 TMR10";
 	compatible = "rockchip,rk3568-evb2-lp4x-v10-tmr10", "rockchip,rk3568";
 
 	rk_headset: rk-headset {
@@ -137,37 +137,6 @@
 
 
 
-&sdio_pwrseq {
-	clocks = <&rk809 1>;
-	clock-names = "ext_clock";
-	pinctrl-0 = <&wifi_enable_h>;
-
-	/*
-	 * On the module itself this is one of these (depending
-	 * on the actual card populated):
-	 * - SDIO_RESET_L_WL_REG_ON
-	 * - PDN (power down when low)
-	 */
-	reset-gpios = <&gpio2 RK_PB1 GPIO_ACTIVE_LOW>;
-};
-
-&sdmmc1 {
-	max-frequency = <150000000>;
-	supports-sdio;
-	bus-width = <4>;
-	disable-wp;
-	cap-sd-highspeed;
-	cap-sdio-irq;
-	keep-power-in-suspend;
-	mmc-pwrseq = <&sdio_pwrseq>;
-	non-removable;
-	pinctrl-names = "default";
-	pinctrl-0 = <&sdmmc1_bus4 &sdmmc1_cmd &sdmmc1_clk>;
-	sd-uhs-sdr104;
-	status = "okay";
-};
-
-
 &sdmmc2 {
 	status = "disabled";
 };
@@ -178,7 +147,6 @@
 	pinctrl-0 = <&uart1m0_xfer &uart1m0_ctsn>;
 };
 
-
 &wireless_wlan {
 	wifi_chip_type = "RTL8822CS";
 	sdio_vref = <1800>;
@@ -187,6 +155,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&wifi_host_wake_irq>;
 	WIFI,host_wake_irq = <&gpio2 RK_PB2 GPIO_ACTIVE_HIGH>;
+	
 	status = "okay";
 };
 
@@ -221,12 +190,6 @@
 			rockchip,pins = <0 RK_PD3 RK_FUNC_GPIO &pcfg_pull_up>;
         };
      };
-
-	sdio-pwrseq {
-		wifi_enable_h: wifi-enable-h {
-			rockchip,pins = <2 RK_PB1 RK_FUNC_GPIO &pcfg_pull_none>;
-		};
-	};
 
 	wireless-wlan {
 		wifi_host_wake_irq: wifi-host-wake-irq {

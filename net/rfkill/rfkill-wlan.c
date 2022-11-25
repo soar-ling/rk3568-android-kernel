@@ -48,17 +48,19 @@
 
 #include "../../drivers/mmc/core/pwrseq.h"
 
-#if 0
-#define DBG(x...) pr_info("[WLAN_RFKILL]: " x)
+#if 1
+#define DBG(x...) pr_info("TS:[WLAN_RFKILL]: " x)
 #else
 #define DBG(x...)
 #endif
 
-#define LOG(x...) pr_info("[WLAN_RFKILL]: " x)
+#define LOG(x...) pr_info("TS:[WLAN_RFKILL]: " x)
 
 struct rfkill_wlan_data {
+	struct platform_device *pdev;
 	struct rksdmmc_gpio_wifi_moudle *pdata;
 	struct wake_lock wlan_irq_wl;
+	int irq_req;
 };
 
 static struct rfkill_wlan_data *g_rfkill = NULL;
@@ -94,6 +96,10 @@ static char wifi_chip_type_string[64];
 #define WLAN_SECTION_SIZE_5 (64 * 1024)
 #define WLAN_SECTION_SIZE_6 (4 * 1024)
 #define WLAN_SECTION_SIZE_7 (4 * 1024)
+
+#define WIFI_WAKEUP_TIMEOUT 10000
+#define WIFI_IRQ_WAKELOCK_TIMEOUT (10 * 1000)
+
 
 static struct sk_buff *wlan_static_skb[WLAN_SKB_BUF_NUM + 1];
 
@@ -234,8 +240,8 @@ int rockchip_wifi_power(int on)
 
 	LOG("%s: %d\n", __func__, on);
 
-	if (!on && primary_sdio_host)
-		mmc_pwrseq_power_off(primary_sdio_host);
+	//if (!on && primary_sdio_host)
+	//	mmc_pwrseq_power_off(primary_sdio_host);
 
 	if (!mrfkill) {
 		LOG("%s: rfkill-wlan driver has not Successful initialized\n",
@@ -316,11 +322,6 @@ int rockchip_wifi_power(int on)
 			}
 
 			wifi_power_state = 0;
-
-			if (!rfkill_get_bt_power_state(&bt_power, &toggle)) {
-				LOG("%s: toggle = %s\n", __func__, toggle ? "true" : "false");
-			}
-
 			if (toggle) {
 				if (!bt_power) {
 					LOG("%s: wifi will set vbat to low\n", __func__);
@@ -394,6 +395,14 @@ int rockchip_wifi_get_oob_irq_flag(void)
 	return gpio_flags;
 }
 EXPORT_SYMBOL(rockchip_wifi_get_oob_irq_flag);
+
+
+
+
+
+
+
+
 
 /**************************************************************************
  *
@@ -515,6 +524,20 @@ void *rockchip_wifi_country_code(char *ccode)
 EXPORT_SYMBOL(rockchip_wifi_country_code);
 /**************************************************************************/
 
+
+
+static irqreturn_t rfkill_rkwifi_wake_host_irq(int irq, void *dev)
+{
+	struct rfkill_wlan_data *rfkill = dev;
+
+	LOG("WIFI_WAKE_HOST IRQ fired\n");
+
+	wake_lock_timeout(&rfkill->wlan_irq_wl,
+			  msecs_to_jiffies(1000*10));
+
+	return IRQ_HANDLED;
+}
+
 static int rfkill_rk_setup_gpio(struct rksdmmc_gpio *gpio, const char *prefix,
 				const char *name)
 {
@@ -531,6 +554,62 @@ static int rfkill_rk_setup_gpio(struct rksdmmc_gpio *gpio, const char *prefix,
 
 	return 0;
 }
+
+
+
+static int rfkill_rkwifi_setup_wake_irq(struct rfkill_wlan_data *rfkill, int flag)
+{
+	int ret = 0;
+	struct rksdmmc_rk_irq *irq = &rfkill->pdata->wifi_rksdmmc_rk_irq;
+
+	if (!flag) {
+		rfkill->irq_req = 0;
+		ret = rfkill_rk_setup_gpio(&irq->gpio,
+					   rfkill->pdata->name, "wifi_wake");
+		if (ret)
+			goto fail1;
+	}
+
+	LOG("zc:rfkill_rkwifi_setup_wake_irq\n");
+	
+	if (gpio_is_valid(irq->gpio.io)) {
+		if (rfkill->irq_req) {
+			rfkill->irq_req = 0;
+			free_irq(irq->irq, rfkill);
+		}
+		LOG("Request irq for wifi wakeup host\n");
+		irq->irq = gpio_to_irq(irq->gpio.io);
+		sprintf(irq->name, "%s_irq", irq->gpio.name);
+		ret = request_irq(irq->irq, rfkill_rkwifi_wake_host_irq,
+				  (irq->gpio.enable == GPIO_ACTIVE_LOW) ?
+					  IRQF_TRIGGER_FALLING :
+					  IRQF_TRIGGER_RISING,
+				  irq->name, rfkill);
+		if (ret)
+			goto fail2;
+		rfkill->irq_req = 1;
+		LOG("** disable irq\n");
+		disable_irq(irq->irq);
+		ret = enable_irq_wake(irq->irq);
+		if (ret)
+			goto fail3;
+	}
+
+	return ret;
+
+fail3:
+	free_irq(irq->irq, rfkill);
+fail2:
+	gpio_free(irq->gpio.io);
+fail1:
+	return ret;
+}
+
+
+
+
+
+				
 
 #ifdef CONFIG_OF
 static int wlan_platdata_parse_dt(struct device *dev,
@@ -637,12 +716,12 @@ static int wlan_platdata_parse_dt(struct device *dev,
 		gpio = of_get_named_gpio_flags(node, "WIFI,host_wake_irq", 0,
 					       &flags);
 		if (gpio_is_valid(gpio)) {
-			data->wifi_int_b.io = gpio;
-			data->wifi_int_b.enable = !flags;
-			LOG("%s: WIFI,host_wake_irq = %d, flags = %d.\n",
+			data->wifi_rksdmmc_rk_irq.gpio.io = gpio;
+			data->wifi_rksdmmc_rk_irq.gpio.enable = !flags;
+			LOG("%s: WIFI,wifi_rksdmmc_rk_irq = %d, flags = %d.\n",
 			    __func__, gpio, flags);
 		} else {
-			data->wifi_int_b.io = -1;
+			data->wifi_rksdmmc_rk_irq.gpio.io = -1;
 		}
 	}
 
@@ -874,6 +953,12 @@ static int rfkill_wlan_probe(struct platform_device *pdev)
 	wake_lock_init(&rfkill->wlan_irq_wl, WAKE_LOCK_SUSPEND,
 		       "rfkill_wlan_wake");
 
+
+	ret = rfkill_rkwifi_setup_wake_irq(rfkill, 0);
+		
+
+			   
+
 	rfkill_set_wifi_bt_power(1);
 
 #ifdef CONFIG_SDIO_KEEPALIVE
@@ -902,6 +987,8 @@ static int rfkill_wlan_probe(struct platform_device *pdev)
 	LOG("Exit %s\n", __func__);
 
 	return 0;
+
+	
 
 fail_alloc:
 	kfree(rfkill);

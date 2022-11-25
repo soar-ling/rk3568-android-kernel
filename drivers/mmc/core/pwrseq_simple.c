@@ -70,8 +70,8 @@ static void mmc_pwrseq_simple_pre_power_on(struct mmc_host *host)
 static void mmc_pwrseq_simple_post_power_on(struct mmc_host *host)
 {
 	struct mmc_pwrseq_simple *pwrseq = to_pwrseq_simple(host->pwrseq);
-
-	mmc_pwrseq_simple_set_gpios_value(pwrseq, 0);
+    printk("TS:mmc_pwrseq_simple_post_power_on===\n");
+	mmc_pwrseq_simple_set_gpios_value(pwrseq, 1);
 
 	if (pwrseq->post_power_on_delay_ms)
 		msleep(pwrseq->post_power_on_delay_ms);
@@ -80,7 +80,7 @@ static void mmc_pwrseq_simple_post_power_on(struct mmc_host *host)
 static void mmc_pwrseq_simple_power_off(struct mmc_host *host)
 {
 	struct mmc_pwrseq_simple *pwrseq = to_pwrseq_simple(host->pwrseq);
-
+    printk("TS:mmc_pwrseq_simple_power_off===\n");
 	mmc_pwrseq_simple_set_gpios_value(pwrseq, 1);
 
 	if (pwrseq->power_off_delay_us)
@@ -109,7 +109,7 @@ static int mmc_pwrseq_simple_probe(struct platform_device *pdev)
 {
 	struct mmc_pwrseq_simple *pwrseq;
 	struct device *dev = &pdev->dev;
-
+    printk("TS:mmc_pwrseq_simple_probe===\n");
 	pwrseq = devm_kzalloc(dev, sizeof(*pwrseq), GFP_KERNEL);
 	if (!pwrseq)
 		return -ENOMEM;
@@ -135,7 +135,7 @@ static int mmc_pwrseq_simple_probe(struct platform_device *pdev)
 	pwrseq->pwrseq.ops = &mmc_pwrseq_simple_ops;
 	pwrseq->pwrseq.owner = THIS_MODULE;
 	platform_set_drvdata(pdev, pwrseq);
-
+    mmc_pwrseq_simple_set_gpios_value(pwrseq, 1);
 	return mmc_pwrseq_register(&pwrseq->pwrseq);
 }
 
