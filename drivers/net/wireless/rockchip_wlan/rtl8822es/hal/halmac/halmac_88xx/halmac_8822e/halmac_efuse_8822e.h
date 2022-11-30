@@ -26,6 +26,17 @@
 #define BT_1B_ENTRY_SIZE 0x80
 #define PG_VER_LEN_8822E 7
 
+#define EFUSE_PART_1_END 1024
+
+#define LIM_LOG_SIZE_PCIE_8822E 416
+#define LIM_LOG_SIZE_USB_8822E	416
+#define LIM_LOG_SIZE_SDIO_8822E 416
+
+enum efuse_c2h_part{
+	EFUSE_C2H_PART_1,
+	EFUSE_C2H_PART_2,
+};
+
 enum halmac_ret_status
 dump_efuse_map_8822e(struct halmac_adapter *adapter,
 		    enum halmac_efuse_read_cfg cfg);

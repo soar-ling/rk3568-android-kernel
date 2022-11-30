@@ -495,6 +495,10 @@ struct pkt_attrib {
 #ifdef CONFIG_RTW_MGMT_QUEUE
 	u8 ps_dontq; /* 1: this frame can't be queued at PS state */
 #endif
+#if defined(CONFIG_CHANGE_DTIM_PERIOD) && defined(CONFIG_AP_MODE)
+	u8 dtim_period;
+	u8 tim_ie_offset;
+#endif
 };
 
 #ifdef CONFIG_RTW_WDS

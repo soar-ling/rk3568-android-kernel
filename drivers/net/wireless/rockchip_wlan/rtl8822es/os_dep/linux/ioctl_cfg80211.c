@@ -6365,6 +6365,10 @@ static int	cfg80211_rtw_set_txq_params(struct wiphy *wiphy
 #else
 	_adapter *padapter = wiphy_to_adapter(wiphy);
 #endif
+#ifdef CONFIG_NARROWBAND_SUPPORTING
+	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
+	struct registry_priv *regsty = dvobj_to_regsty(dvobj);
+#endif /* CONFIG_NARROWBAND_SUPPORTING */
 	struct mlme_ext_priv	*pmlmeext = &padapter->mlmeextpriv;
 	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
 	u8	ac, AIFS, ECWMin, ECWMax, aSifsTime;
@@ -6412,6 +6416,13 @@ static int	cfg80211_rtw_set_txq_params(struct wiphy *wiphy
 		aSifsTime = 16;
 	else
 		aSifsTime = 10;
+
+#ifdef CONFIG_NARROWBAND_SUPPORTING
+	if (regsty->rtw_nb_config == RTW_NB_CONFIG_WIDTH_10)
+		aSifsTime = 32;
+	else if (regsty->rtw_nb_config == RTW_NB_CONFIG_WIDTH_5)
+		aSifsTime = 64;
+#endif /* CONFIG_NARROWBAND_SUPPORTING */
 
 	AIFS = params->aifs * pmlmeinfo->slotTime + aSifsTime;
 

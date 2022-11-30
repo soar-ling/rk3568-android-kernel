@@ -4104,7 +4104,7 @@ void rtw_free_mgmt_xmitframe_queue(struct xmit_priv *pxmitpriv, _queue *mgmt_que
 		RTW_INFO("%s seq_num = %u\n", __func__, pxmitframe->attrib.seqnum);
 		#endif
 
-		rtw_free_xmitbuf_ext(pxmitpriv, pxmitframe->pxmitbuf);
+		rtw_free_xmitbuf(pxmitpriv, pxmitframe->pxmitbuf);
 		rtw_free_xmitframe(pxmitpriv, pxmitframe);
 	}
 	_exit_critical_bh(&(mgmt_queue->lock), &irqL);

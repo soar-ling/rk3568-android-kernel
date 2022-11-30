@@ -3866,6 +3866,12 @@ phy_set_tx_power_limit_ex(
 	case PW_LMT_REGU_CN:
 		lmt_id = TXPWR_LMT_CN;
 		break;
+	case PW_LMT_REGU_QATAR:
+		lmt_id = TXPWR_LMT_QATAR;
+		break;
+	case PW_LMT_REGU_UK:
+		lmt_id = TXPWR_LMT_UK;
+		break;
 	case PW_LMT_REGU_WW13:
 	default:	
 		RTW_PRINT("Wrong phydm_id:%d\n", phydm_id);

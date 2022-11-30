@@ -57,7 +57,7 @@ enum _EFUSE_DEF_TYPE {
 /*RTL8822B 8821C BT EFUSE Define 1 BANK 128 size logical map 1024*/
 #ifdef RTW_HALMAC
 #define BANK_NUM		1
-#if defined(CONFIG_RTL8723F)
+#if defined(CONFIG_RTL8723F) || defined(CONFIG_RTL8822E)
 #define EFUSE_BT_REAL_BANK_CONTENT_LEN		512
 #else
 #define EFUSE_BT_REAL_BANK_CONTENT_LEN		128

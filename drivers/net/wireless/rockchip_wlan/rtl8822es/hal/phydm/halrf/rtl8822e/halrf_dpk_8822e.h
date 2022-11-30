@@ -43,7 +43,7 @@
 #define DPK_PATH_A_8822E 1
 #define DPK_PATH_B_8822E 1
 #define DPK_THRESHOLD_8822E 6
-#define DPK_INFO_RSVD_LEN_8822E 179
+#define DPK_INFO_RSVD_LEN_8822E 204
 #define DPK_C2H_REPORT_LEN_8822E 19
 
 /*---------------------------End Define Parameters----------------------------*/

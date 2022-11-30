@@ -455,6 +455,9 @@ static void init_phydm_cominfo(PADAPTER adapter)
 	odm_cmn_info_init(p_dm_odm, ODM_CMNINFO_DIS_DPD, _FALSE);
 	odm_cmn_info_init(p_dm_odm, ODM_CMNINFO_TSSI_ENABLE
 		, hal->txpwr_pg_mode == TXPWR_PG_WITH_TSSI_OFFSET ? _TRUE : _FALSE);
+#ifdef CONFIG_RTW_NBI
+	odm_cmn_info_init (p_dm_odm, ODM_CMNINFO_EN_NBI_DETECT, _TRUE);
+#endif
 }
 
 void rtl8822e_phy_init_dm_priv(PADAPTER adapter)

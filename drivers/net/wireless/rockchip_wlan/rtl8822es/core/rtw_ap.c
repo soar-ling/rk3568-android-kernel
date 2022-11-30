@@ -148,9 +148,12 @@ static void update_BCNTIM(_adapter *padapter)
 			if (pbackup_remainder_ie && premainder_ie)
 				_rtw_memcpy(pbackup_remainder_ie, premainder_ie, remainder_ielen);
 		}
-
+#ifdef CONFIG_CHANGE_DTIM_PERIOD
+		dst_ie += rtw_set_tim_ie(0, padapter->registrypriv.dtim_period, pstapriv->tim_bitmap, pstapriv->aid_bmp_len, dst_ie);
+#else
 		/* append TIM IE */
 		dst_ie += rtw_set_tim_ie(0, 1, pstapriv->tim_bitmap, pstapriv->aid_bmp_len, dst_ie);
+#endif
 
 		/*copy remainder IE*/
 		if (pbackup_remainder_ie) {
@@ -1752,6 +1755,12 @@ void start_bss_network(_adapter *padapter, struct createbss_parm *parm)
 
 	/* Beacon Control related register */
 	rtw_hal_set_hwreg(padapter, HW_VAR_BEACON_INTERVAL, (u8 *)(&bcn_interval));
+
+#ifdef CONFIG_CHANGE_DTIM_PERIOD
+	/* DTIM period */
+	val8 = _TRUE;
+	rtw_hal_set_hwreg(padapter, HW_VAR_DTIM, (u8 *)(&val8));
+#endif
 
 	rtw_hal_rcr_set_chk_bssid(padapter, mlme_act);
 
@@ -4581,6 +4590,13 @@ void stop_ap_mode(_adapter *padapter)
 #ifdef CONFIG_FW_MULTI_PORT_SUPPORT
 	/* Disable beacon early interrupt IMR of AP mode */
 	rtw_hal_set_ap_bcn_imr_cmd(padapter, 0);
+#endif
+#ifdef CONFIG_CHANGE_DTIM_PERIOD
+	if (self_action == MLME_AP_STOPPED) {
+		/* DTIM period */
+		u8 val8 = _FALSE;
+		rtw_hal_set_hwreg(padapter, HW_VAR_DTIM, (u8 *)(&val8));
+	}
 #endif
 }
 

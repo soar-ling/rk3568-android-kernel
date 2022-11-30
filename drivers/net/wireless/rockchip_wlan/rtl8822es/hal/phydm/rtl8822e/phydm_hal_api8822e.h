@@ -26,8 +26,8 @@
 #define __INC_PHYDM_API_H_8822E__
 
 #if (RTL8822E_SUPPORT)
-/*2021.02.05: Let the auto_nbi_detect th be 0x1 due to technicolor issue*/
-#define PHY_CONFIG_VERSION_8822E "1.9.1"
+/*2022.09.01: Support Auto NBI when en_nbi_detect is true*/
+#define PHY_CONFIG_VERSION_8822E "1.9.4"
 /*#define CONFIG_TXAGC_DEBUG_8822E*/
 
 #define INVALID_RF_DATA 0xffffffff
@@ -165,5 +165,7 @@ void phydm_get_txagc_ref_and_diff_8822e(struct dm_struct *dm,
 					u8 txagc_buff[2][NUM_RATE_AC_2SS],
 					u16 length,
 					struct txagc_table_8822e *tab);
+
+void phydm_tx_triangular_shap_cfg_8822e(struct dm_struct *dm, boolean is_2g_ch);
 #endif /* RTL8822E_SUPPORT */
 #endif /*  __INC_PHYDM_API_H_8822E__ */

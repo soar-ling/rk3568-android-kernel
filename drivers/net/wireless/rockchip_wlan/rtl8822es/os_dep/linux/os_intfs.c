@@ -1088,6 +1088,11 @@ uint rtw_max_unassoc_sta_cnt = 0;
 module_param(rtw_max_unassoc_sta_cnt, uint, 0644);
 #endif
 
+#if defined(CONFIG_CHANGE_DTIM_PERIOD) && defined(CONFIG_AP_MODE)
+uint rtw_dtim_period = 1;
+module_param(rtw_dtim_period, uint, 0644);
+#endif
+
 #if CONFIG_TX_AC_LIFETIME
 static void rtw_regsty_load_tx_ac_lifetime(struct registry_priv *regsty)
 {
@@ -1684,7 +1689,9 @@ uint loadparam(_adapter *padapter)
 #ifdef CONFIG_RTW_MULTI_AP
 	rtw_regsty_init_unassoc_sta_param(registry_par);
 #endif
-
+#if defined(CONFIG_CHANGE_DTIM_PERIOD) && defined(CONFIG_AP_MODE)
+	registry_par->dtim_period = rtw_dtim_period;
+#endif
 	return status;
 }
 

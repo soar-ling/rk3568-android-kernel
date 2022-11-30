@@ -18,8 +18,8 @@
 #if (BT_SUPPORT == 1 && COEX_SUPPORT == 1)
 
 static u8 *trace_buf = &gl_btc_trace_buf[0];
-static const u32 coex_ver_date = 20220513;
-static const u32 coex_ver = 0x2c;
+static const u32 coex_ver_date = 20220722;
+static const u32 coex_ver = 0x2d;
 
 static u8
 rtw_btc_rssi_state(struct btc_coexist *btc, u8 pre_state,
@@ -1281,11 +1281,17 @@ rtw_btc_set_rf_para(struct btc_coexist *btc, boolean force_exec,
 	}
 
 	/* fix LNA2 + TIA gain not change by GNT_BT */
-	if (btc->board_info.btdm_ant_num == 1) {
+	if (btc->board_info.btdm_ant_num == 1) { /* Shared-Ant */
 		if (coex_sta->bt_profile_num == 0) {
 			lna2_level = 0;
 		} else {
 			lna2_level = 1;
+		}
+	} else { /* Non-Shared-Ant */
+		if (coex_sta->coex_freerun) {
+			lna2_level = 1;
+		} else {
+			lna2_level = 0;
 		}
 	}
 
@@ -2629,13 +2635,8 @@ static void rtw_btc_action_bt_hfp(struct btc_coexist *btc)
 			tdma_case = 0;
 		}
 	} else { /* Non-Shared-Ant */
-		if (coex_sta->bt_multi_link) {
-			table_case = 105;
-			tdma_case = 100;
-		} else {
-			table_case = 105;
-			tdma_case = 100;
-		}
+		table_case = 105;
+		tdma_case = 100;
 	}
 
 	rtw_btc_table(btc, NM_EXCU, table_case);
@@ -3809,7 +3810,7 @@ void rtw_btc_ex_power_on_setting(struct btc_coexist *btc)
 	/* SD1 Chunchu red x issue */
 	btc->btc_write_1byte(btc, 0xff1a, 0x0);
 
-	rtw_btc_gnt_debug(btc, TRUE);
+	rtw_btc_gnt_debug(btc, FALSE);
 
 	board_info->btdm_ant_pos = BTC_ANTENNA_AT_MAIN_PORT;
 }

@@ -136,6 +136,11 @@ void rtw_hal_def_value_init(_adapter *padapter)
 
 		GET_HAL_DATA(padapter)->rx_tsf_addr_filter_config = 0;
 	}
+	#ifdef CONFIG_NARROWBAND_SUPPORTING
+	if ((padapter->registrypriv.rtw_nb_config == RTW_NB_CONFIG_WIDTH_10)
+                || (padapter->registrypriv.rtw_nb_config == RTW_NB_CONFIG_WIDTH_5))
+                GET_HAL_DATA(padapter)->dis_turboedca = 1;
+	#endif /* CONFIG_NARROWBAND_SUPPORTING */
 }
 
 u8 rtw_hal_data_init(_adapter *padapter)

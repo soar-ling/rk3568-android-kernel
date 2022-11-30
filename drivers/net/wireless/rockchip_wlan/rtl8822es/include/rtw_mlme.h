@@ -1023,7 +1023,7 @@ void rtw_scan_abort(_adapter *adapter);
 u32 rtw_join_abort_timeout(_adapter *adapter, u32 timeout_ms);
 
 int rtw_cached_pmkid(_adapter *Adapter, u8 *bssid);
-int rtw_rsn_sync_pmkid(_adapter *adapter, u8 *ie, uint ie_len, int i_ent);
+int rtw_pmkid_sync_rsn(_adapter *adapter, u8 *ie, uint ie_len, int i_ent);
 
 extern int rtw_restruct_sec_ie(_adapter *adapter, u8 *out_ie);
 #ifdef CONFIG_WMMPS_STA

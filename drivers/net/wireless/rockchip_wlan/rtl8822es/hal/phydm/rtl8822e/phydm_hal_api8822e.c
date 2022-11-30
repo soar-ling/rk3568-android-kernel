@@ -148,7 +148,6 @@ void phydm_bb_reset_8822e(struct dm_struct *dm)
 {
 	//if (*dm->mp_mode)
 		//return;
-	u32 cnt = 0;
 
 	odm_set_mac_reg(dm, R_0x0, BIT(16), 1);
 	odm_set_mac_reg(dm, R_0x0, BIT(16), 0);
@@ -1667,6 +1666,8 @@ void phydm_spur_eliminate_8822e(struct dm_struct *dm, u8 central_ch)
 		phydm_clean_all_csi_mask_8822e(dm);
 		phydm_csi_mask_enable_8822e(dm, false);
 		odm_set_bb_reg(dm, R_0xc24, MASKLWORD, 0x00ff); /*packet detection set to default value*/
+		if (dm->en_nbi_detect)
+			phydm_set_auto_nbi_8822e(dm, true);
 	}
 }
 
@@ -1714,6 +1715,28 @@ void phydm_set_agc_table_8822e(struct dm_struct *dm, boolean bt_is_linked)
 		}
 	}
 }
+
+__odm_func__
+void phydm_tx_triangular_shap_cfg_8822e(struct dm_struct *dm, boolean is_2g_ch)
+{
+
+	odm_set_bb_reg(dm, R_0x808, 0x70, 0x3);
+
+	if (is_2g_ch) {
+		odm_set_bb_reg(dm, R_0xa74, BIT(31), 0x1);
+		odm_set_bb_reg(dm, R_0x80c, 0xf, 0x5);
+		odm_set_bb_reg(dm, R_0x81c, MASKBYTE0, 0xff);
+		odm_set_bb_reg(dm, R_0x81c, 0xf000000, 0x0);
+		odm_set_bb_reg(dm, R_0x8a0, 0xf0000000, 0xb);
+	} else {
+		odm_set_bb_reg(dm, R_0xa74, BIT(31), 0x0);
+		odm_set_bb_reg(dm, R_0x80c, 0xf, 0x7);
+		odm_set_bb_reg(dm, R_0x81c, MASKBYTE0, 0x55);
+		odm_set_bb_reg(dm, R_0x81c, 0xf000000, 0x7);
+		odm_set_bb_reg(dm, R_0x8a0, 0xf0000000, 0x0);
+	}
+}
+
 __odm_func__
 boolean
 config_phydm_switch_channel_8822e(struct dm_struct *dm, u8 central_ch)
@@ -1848,6 +1871,9 @@ config_phydm_switch_channel_8822e(struct dm_struct *dm, u8 central_ch)
 		}
 	}
 
+	/*Set CFR and tx triangular shap para*/
+	phydm_tx_triangular_shap_cfg_8822e(dm, is_2g_ch);
+
 #if 0
 	if (iot_table->patch_id_011f0500) {
 		if (central_ch != 1 && dm->en_dis_dpd)
@@ -1874,7 +1900,9 @@ config_phydm_switch_bandwidth_8822e(struct dm_struct *dm, u8 pri_ch,
 {
 	u32 rf_reg18 = 0;
 	u32 rf_reg1a = 0;
+	u8 central_ch = 0;
 	boolean rf_reg_status = true;
+	boolean is_2g_ch = true;
 
 	PHYDM_DBG(dm, ODM_PHY_CONFIG, "%s ======>\n", __func__);
 
@@ -1895,6 +1923,7 @@ config_phydm_switch_bandwidth_8822e(struct dm_struct *dm, u8 pri_ch,
 						  RFREG_MASK);
 	rf_reg1a = config_phydm_read_rf_reg_8822e(dm, RF_PATH_A, RF_0x1a,
 						  RFREG_MASK);
+	central_ch = (u8)(rf_reg18 & 0x7f);
 	if (rf_reg18 != INVALID_RF_DATA)
 		rf_reg_status = true;
 	else
@@ -1902,6 +1931,8 @@ config_phydm_switch_bandwidth_8822e(struct dm_struct *dm, u8 pri_ch,
 
 	rf_reg18 &= ~(BIT(13) | BIT(12));
 	rf_reg1a &= ~0x7c00;
+
+	is_2g_ch = (central_ch <= 14) ? true : false;
 
 	/*Switch bandwidth */
 	switch (bw) {
@@ -1925,6 +1956,16 @@ config_phydm_switch_bandwidth_8822e(struct dm_struct *dm, u8 pri_ch,
 			/*Set nbi wa para*/
 			if (dm->en_nbi_detect)
 				phydm_set_nbi_wa_para_8822e(dm, false, bw);
+
+			/*Set CFR para*/
+			odm_set_bb_reg(dm, R_0xa74, BIT(31), 0x0);
+			odm_set_bb_reg(dm, R_0x808, 0x70, 0x1);
+			odm_set_bb_reg(dm, R_0x80c, 0xf, 0x5);
+
+			/*Set tx triangular shap para*/
+			odm_set_bb_reg(dm, R_0x81c, MASKBYTE0, 0x0);
+			odm_set_bb_reg(dm, R_0x81c, 0xf000000, 0x0);
+			odm_set_bb_reg(dm, R_0x8a0, 0xf0000000, 0x0);
 		} else if (bw == CHANNEL_WIDTH_10) {
 			/*RX DFIR*/
 			odm_set_bb_reg(dm, R_0x810, 0x3ff0, 0x2ab);
@@ -1942,6 +1983,16 @@ config_phydm_switch_bandwidth_8822e(struct dm_struct *dm, u8 pri_ch,
 			/*Set nbi wa para*/
 			if (dm->en_nbi_detect)
 				phydm_set_nbi_wa_para_8822e(dm, false, bw);
+
+			/*Set CFR para*/
+			odm_set_bb_reg(dm, R_0xa74, BIT(31), 0x0);
+			odm_set_bb_reg(dm, R_0x808, 0x70, 0x1);
+			odm_set_bb_reg(dm, R_0x80c, 0xf, 0x5);
+
+			/*Set tx triangular shap para*/
+			odm_set_bb_reg(dm, R_0x81c, MASKBYTE0, 0x0);
+			odm_set_bb_reg(dm, R_0x81c, 0xf000000, 0x0);
+			odm_set_bb_reg(dm, R_0x8a0, 0xf0000000, 0x0);
 		} else if (bw == CHANNEL_WIDTH_20) {
 			/*RX DFIR*/
 			odm_set_bb_reg(dm, R_0x810, 0x3ff0, 0x19b);
@@ -1959,6 +2010,9 @@ config_phydm_switch_bandwidth_8822e(struct dm_struct *dm, u8 pri_ch,
 			/*Set nbi wa para*/
 			if (dm->en_nbi_detect)
 				phydm_set_nbi_wa_para_8822e(dm, true, bw);
+
+			/*Set CFR and tx triangular shap para*/
+			phydm_tx_triangular_shap_cfg_8822e(dm, is_2g_ch);
 		}
 
 		/*TX_RF_BW:[1:0]=0x0, RX_RF_BW:[3:2]=0x0 */
@@ -2021,6 +2075,10 @@ config_phydm_switch_bandwidth_8822e(struct dm_struct *dm, u8 pri_ch,
 		/*Set nbi wa para*/
 		if (dm->en_nbi_detect)
 			phydm_set_nbi_wa_para_8822e(dm, true, bw);
+
+		/*Set CFR and tx triangular shap para*/
+		phydm_tx_triangular_shap_cfg_8822e(dm, is_2g_ch);
+
 		break;
 	case CHANNEL_WIDTH_80:
 		/*TX_RF_BW:[1:0]=0x2, RX_RF_BW:[3:2]=0x2 */
@@ -2047,6 +2105,10 @@ config_phydm_switch_bandwidth_8822e(struct dm_struct *dm, u8 pri_ch,
 		/*Set nbi wa para*/
 		if (dm->en_nbi_detect)
 			phydm_set_nbi_wa_para_8822e(dm, true, bw);
+
+		/*Set CFR and tx triangular shap para*/
+		phydm_tx_triangular_shap_cfg_8822e(dm, is_2g_ch);
+
 		break;
 	default:
 		PHYDM_DBG(dm, ODM_PHY_CONFIG,
@@ -2064,6 +2126,17 @@ config_phydm_switch_bandwidth_8822e(struct dm_struct *dm, u8 pri_ch,
 	odm_set_rf_reg(dm, RF_PATH_B, RF_0x1a, RFREG_MASK, rf_reg1a);
 	/*reset HSSI*/
 	//phydm_rstb_3wire_8822e(dm, true);
+
+	/*TX_CCK_IND_int workaround*/
+	if (bw == CHANNEL_WIDTH_40) {
+		odm_set_rf_reg(dm, RF_PATH_A, RF_0x1a, BIT(0), 0x1);
+		odm_set_rf_reg(dm, RF_PATH_B, RF_0x1a, BIT(0), 0x1);
+		odm_set_rf_reg(dm, RF_PATH_A, RF_0x1a, BIT(16), 0x0);
+		odm_set_rf_reg(dm, RF_PATH_B, RF_0x1a, BIT(16), 0x0);
+	} else {
+		odm_set_rf_reg(dm, RF_PATH_A, RF_0x1a, BIT(0), 0x0);
+		odm_set_rf_reg(dm, RF_PATH_B, RF_0x1a, BIT(0), 0x0);
+	}
 
 	if (!rf_reg_status) {
 		PHYDM_DBG(dm, ODM_PHY_CONFIG,

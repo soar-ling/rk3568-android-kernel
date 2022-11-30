@@ -14290,6 +14290,54 @@
 
 #endif
 
+#if (HALMAC_8822E_SUPPORT)
+
+/* 2 REG_EFUSE_CTRL_1			(Offset 0x00A4) */
+
+#define BIT_EF_ENT BIT(31)
+#define BIT__BT_OTP_PWC_DIS BIT(28)
+#define BIT_EF_RDT_V1 BIT(27)
+#define BIT_EF_BURST BIT(19)
+#define BIT_SHIFT_EF_TEST_SEL 16
+#define BIT_MASK_EF_TEST_SEL 0x7
+#define BIT_EF_TEST_SEL(x)                                                     \
+	(((x) & BIT_MASK_EF_TEST_SEL) << BIT_SHIFT_EF_TEST_SEL)
+#define BITS_EF_TEST_SEL (BIT_MASK_EF_TEST_SEL << BIT_SHIFT_EF_TEST_SEL)
+#define BIT_CLEAR_EF_TEST_SEL(x) ((x) & (~BITS_EF_TEST_SEL))
+#define BIT_GET_EF_TEST_SEL(x)                                                 \
+	(((x) >> BIT_SHIFT_EF_TEST_SEL) & BIT_MASK_EF_TEST_SEL)
+#define BIT_SET_EF_TEST_SEL(x, v)                                              \
+	(BIT_CLEAR_EF_TEST_SEL(x) | BIT_EF_TEST_SEL(v))
+
+#endif
+
+#if (HALMAC_8822E_SUPPORT)
+
+/* 2 REG_EFUSE_CTRL_1			(Offset 0x00A4) */
+
+#define BIT_EF_TROW_EN BIT(15)
+#define BIT_EF_ERR_FLAG BIT(14)
+#define BIT_EF_FBURST_DIS BIT(13)
+#define BIT_EF_DSB_EN BIT(11)
+
+#endif
+
+#if (HALMAC_8822E_SUPPORT)
+
+/* 2 REG_EFUSE_CTRL_1			(Offset 0x00A4) */
+
+#define BIT_SHIFT_EF_DLY_SEL 0
+#define BIT_MASK_EF_DLY_SEL 0xf
+#define BIT_EF_DLY_SEL(x)                                                      \
+	(((x) & BIT_MASK_EF_DLY_SEL) << BIT_SHIFT_EF_DLY_SEL)
+#define BITS_EF_DLY_SEL (BIT_MASK_EF_DLY_SEL << BIT_SHIFT_EF_DLY_SEL)
+#define BIT_CLEAR_EF_DLY_SEL(x) ((x) & (~BITS_EF_DLY_SEL))
+#define BIT_GET_EF_DLY_SEL(x)                                                  \
+	(((x) >> BIT_SHIFT_EF_DLY_SEL) & BIT_MASK_EF_DLY_SEL)
+#define BIT_SET_EF_DLY_SEL(x, v) (BIT_CLEAR_EF_DLY_SEL(x) | BIT_EF_DLY_SEL(v))
+
+#endif
+
 #if (HALMAC_8197F_SUPPORT || HALMAC_8197G_SUPPORT || HALMAC_8198F_SUPPORT ||   \
      HALMAC_8812F_SUPPORT || HALMAC_8814B_SUPPORT || HALMAC_8821C_SUPPORT ||   \
      HALMAC_8822B_SUPPORT || HALMAC_8822C_SUPPORT || HALMAC_8822E_SUPPORT)

@@ -4073,6 +4073,11 @@ void halrf_dpk_info_rsvd_page(void *dm_void, u8 *buf, u32 *buf_size)
 		dpk_info_rsvd_page_8822c(dm, buf, buf_size);
 		break;
 #endif
+#if (RTL8822E_SUPPORT == 1)
+	case ODM_RTL8822E:
+		dpk_info_rsvd_page_8822e(dm, buf, buf_size);
+		break;
+#endif
 	default:
 		break;
 	}
@@ -4107,6 +4112,21 @@ void halrf_iqk_info_rsvd_page(void *dm_void, u8 *buf, u32 *buf_size)
 #endif
 
 
+	default:
+		break;
+	}
+}
+
+void halrf_kip_rsvd_page(void *dm_void, u8 *buf, u32 *buf_size)
+{
+	struct dm_struct *dm = (struct dm_struct *)dm_void;
+
+	switch (dm->support_ic_type) {
+#if (RTL8822E_SUPPORT == 1)
+	case ODM_RTL8822E:
+		halrf_kip_rsvd_page_8822e(dm, buf, buf_size);
+		break;
+#endif
 	default:
 		break;
 	}

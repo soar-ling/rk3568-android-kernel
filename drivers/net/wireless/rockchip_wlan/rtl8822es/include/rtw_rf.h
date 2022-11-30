@@ -22,6 +22,8 @@
 /* slot time for 11g */
 #define SHORT_SLOT_TIME					9
 #define NON_SHORT_SLOT_TIME				20
+#define SLOT_TIME_10M					0xD
+#define SLOT_TIME_5M					0x15
 
 #define CENTER_CH_2G_NUM		14
 #define CENTER_CH_2G_40M_NUM	9

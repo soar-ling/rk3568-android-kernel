@@ -23,7 +23,7 @@
  *
  *****************************************************************************/
 
-/*Image2HeaderVersion: R3 1.5.16*/
+/*Image2HeaderVersion: R3 1.5.17*/
 #include "mp_precomp.h"
 #include "../phydm_precomp.h"
 
@@ -4172,7 +4172,7 @@ odm_read_and_config_mp_8822e_agc_tab(struct dm_struct *dm)
 u32
 odm_get_version_mp_8822e_agc_tab(void)
 {
-		return 26;
+		return 32;
 }
 
 /******************************************************************************
@@ -4192,7 +4192,7 @@ const u32 array_mp_8822e_phy_reg[] = {
 		0x1C90, 0x00E49708,
 		0x800, 0x00000000,
 		0x804, 0xD6300000,
-		0x808, 0x60956093,
+		0x808, 0x60B56093,
 		0x80C, 0x00000025,
 		0x810, 0x11B019B0,
 		0x814, 0x00904080,
@@ -4230,7 +4230,7 @@ const u32 array_mp_8822e_phy_reg[] = {
 		0x894, 0x72745F43,
 		0x898, 0x03F02F0D,
 		0x89C, 0x5DB6886F,
-		0x8A0, 0x07DC309F,
+		0x8A0, 0x07D4309F,
 		0x8A4, 0x09412495,
 		0x8A8, 0x222222A9,
 		0x8AC, 0x89628C44,
@@ -4345,8 +4345,8 @@ const u32 array_mp_8822e_phy_reg[] = {
 		0xA68, 0x00020000,
 		0xA6C, 0x00000000,
 		0xA70, 0x00000000,
-		0xA74, 0x0FF0004A,
-		0xA78, 0x467194FF,
+		0xA74, 0x0FF04C15,
+		0xA78, 0x247FFFFF,
 		0xA7C, 0x00000001,
 		0xA80, 0x00000000,
 		0xA84, 0x00000000,
@@ -5206,7 +5206,7 @@ const u32 array_mp_8822e_phy_reg[] = {
 		0x1AC4, 0x00000000,
 		0x1AC8, 0x00000807,
 		0x1ACC, 0x00000707,
-		0x1AD0, 0xA33529CF,
+		0x1AD0, 0xA33529F0,
 		0x1AD4, 0x0D8D8452,
 		0x1AD8, 0x08024024,
 		0x1ADC, 0x000D0001,
@@ -5572,7 +5572,7 @@ odm_read_and_config_mp_8822e_phy_reg(struct dm_struct *dm)
 u32
 odm_get_version_mp_8822e_phy_reg(void)
 {
-		return 26;
+		return 32;
 }
 
 /******************************************************************************

@@ -7209,6 +7209,10 @@ void issue_beacon(_adapter *padapter, int timeout_ms)
 #ifdef CONFIG_P2P
 	struct wifidirect_info	*pwdinfo = &(padapter->wdinfo);
 #endif /* CONFIG_P2P */
+#ifdef CONFIG_CHANGE_DTIM_PERIOD
+	u32 tim_ielen;
+	u8 *tim_ie;
+#endif
 
 
 	/* RTW_INFO("%s\n", __FUNCTION__); */
@@ -7431,6 +7435,14 @@ void issue_beacon(_adapter *padapter, int timeout_ms)
 #ifdef CONFIG_RTW_TOKEN_BASED_XMIT
 		if (padapter->tbtx_capability == _TRUE)
 			pframe = rtw_set_ie(pframe, _VENDOR_SPECIFIC_IE_, 8, REALTEK_TBTX_IE, &pattrib->pktlen);
+#endif
+#ifdef CONFIG_CHANGE_DTIM_PERIOD
+	tim_ie = rtw_get_ie((u8 *)pwlanhdr + sizeof(struct rtw_ieee80211_hdr_3addr) + _FIXED_IE_LENGTH_, _TIM_IE_, &tim_ielen, pattrib->pktlen - _FIXED_IE_LENGTH_);
+	if (tim_ie != NULL && tim_ielen > 0) {
+		pattrib->dtim_period = padapter->registrypriv.dtim_period;
+		/* calculate TIM ie offset from Frame Body */
+		pattrib->tim_ie_offset = tim_ie - ((u8 *)pwlanhdr + sizeof(struct rtw_ieee80211_hdr_3addr));
+	}
 #endif
 
 		goto _issue_bcn;
@@ -8689,15 +8701,6 @@ void _issue_assocreq(_adapter *padapter, u8 is_reassoc)
 			} else
 #endif
 			{
-#ifdef CONFIG_IOCTL_CFG80211
-				if (rtw_sec_chk_auth_alg(padapter, WLAN_AUTH_OPEN) &&
-					rtw_sec_chk_auth_type(padapter, MLME_AUTHTYPE_SAE)) {
-					s32 entry = rtw_cached_pmkid(padapter, pmlmepriv->assoc_bssid);
-
-					rtw_rsn_sync_pmkid(padapter, (u8 *)pIE, (pIE->Length + 2), entry);
-				}
-#endif /* CONFIG_IOCTL_CFG80211 */
-
 				pframe = rtw_set_ie(pframe, EID_WPA2, pIE->Length, pIE->data, &(pattrib->pktlen));
 				/* tmp: update rsn's spp related opt. */
 				/*rtw_set_spp_amsdu_mode(padapter->registrypriv.amsdu_mode, pframe - (pIE->Length + 2), pIE->Length +2);*/

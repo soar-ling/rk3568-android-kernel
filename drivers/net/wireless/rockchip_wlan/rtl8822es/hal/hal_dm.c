@@ -490,14 +490,14 @@ void Init_ODM_ComInfo(_adapter *adapter)
 #endif
 
 #ifdef CONFIG_LITTLE_ENDIAN
+	odm_cmn_info_hook(pDM_Odm, ODM_CMNINFO_BW, &(pHalData->current_channel_bw));
 	odm_cmn_info_hook(pDM_Odm, ODM_CMNINFO_BAND, &(pHalData->current_band_type));
 	odm_cmn_info_hook(pDM_Odm, ODM_CMNINFO_SEC_MODE, &(adapter->securitypriv.dot11PrivacyAlgrthm));
-	odm_cmn_info_hook(pDM_Odm, ODM_CMNINFO_BW, &(pHalData->current_channel_bw));
 	odm_cmn_info_hook(pDM_Odm, ODM_CMNINFO_NET_CLOSED, &(adapter->net_closed));
 #else /* CONFIG_BIG_ENDIAN */
+	odm_cmn_info_hook(pDM_Odm, ODM_CMNINFO_BW, convert_to_big_endian(&(pHalData->current_channel_bw), sizeof(enum channel_width)));
 	odm_cmn_info_hook(pDM_Odm, ODM_CMNINFO_BAND, convert_to_big_endian(&(pHalData->current_band_type), sizeof(BAND_TYPE)));
 	odm_cmn_info_hook(pDM_Odm, ODM_CMNINFO_SEC_MODE, convert_to_big_endian(&(adapter->securitypriv.dot11PrivacyAlgrthm), sizeof(u32)));
-	odm_cmn_info_hook(pDM_Odm, ODM_CMNINFO_BW, convert_to_big_endian(&(pHalData->current_channel_bw), sizeof(enum channel_width)));
 	odm_cmn_info_hook(pDM_Odm, ODM_CMNINFO_NET_CLOSED, convert_to_big_endian(&(adapter->net_closed), sizeof(int)));
 #endif
 	odm_cmn_info_hook(pDM_Odm, ODM_CMNINFO_CHNL, &(pHalData->current_channel));

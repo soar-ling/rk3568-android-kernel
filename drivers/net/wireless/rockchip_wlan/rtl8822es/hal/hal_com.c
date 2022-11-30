@@ -13294,6 +13294,10 @@ int rtw_hal_reset_tsf(_adapter *adapter, u8 reset_port)
 #ifndef CONFIG_HAS_HW_VAR_CORRECT_TSF
 #ifdef CONFIG_HW_P0_TSF_SYNC
 #ifdef CONFIG_CONCURRENT_MODE
+/* Base value of tsf sync offset */
+#define TSF_SYNC_BASE_OFFSET 50
+/* Positive and negative offset values for tsf sync */
+#define TSF_SYNC_OFFSET_RANGE 25
 static void hw_port0_tsf_sync_sel(_adapter *adapter, u8 benable, u8 hw_port, u16 tr_offset)
 {
 	u8 val8;
@@ -13405,6 +13409,8 @@ void hw_var_set_correct_tsf(PADAPTER adapter, u8 mlme_state)
 	struct mlme_ext_priv *pmlmeext = &adapter->mlmeextpriv;
 	_adapter *sta_if = NULL;
 	u8 hw_port;
+	s8 tsf_sync_offset_tu = TSF_SYNC_BASE_OFFSET; /* unit is TU(1024us) */
+	u8 tsf_offset_range_rand = 0;
 
 	RTW_INFO(FUNC_ADPT_FMT "\n", FUNC_ADPT_ARG(adapter));
 	#ifdef DBG_P0_TSF_SYNC
@@ -13417,6 +13423,15 @@ void hw_var_set_correct_tsf(PADAPTER adapter, u8 mlme_state)
 		RTW_INFO("[TSF_SYNC] org p0 sync port = %d\n", dvobj->p0_tsf.sync_port);
 	RTW_INFO("[TSF_SYNC] timer offset = %d\n", dvobj->p0_tsf.offset);
 	#endif
+
+	tsf_offset_range_rand = rtw_random32() % (2 * TSF_SYNC_OFFSET_RANGE + 1);
+	if (tsf_offset_range_rand != 0) {
+		if (tsf_offset_range_rand > TSF_SYNC_OFFSET_RANGE)
+			tsf_sync_offset_tu -= (tsf_offset_range_rand - TSF_SYNC_OFFSET_RANGE);
+		else
+			tsf_sync_offset_tu += tsf_offset_range_rand;
+	}
+
 	switch (mlme_state) {
 		case MLME_STA_CONNECTED :
 			{
@@ -13435,7 +13450,7 @@ void hw_var_set_correct_tsf(PADAPTER adapter, u8 mlme_state)
 
 				if ((dvobj->p0_tsf.sync_port == MAX_HW_PORT) &&
 					(rtw_mi_get_ap_num(adapter) || rtw_mi_get_mesh_num(adapter))) {
-					hw_port0_tsf_sync_sel(adapter, _TRUE, hw_port, 50);/*timer offset 50ms*/
+					hw_port0_tsf_sync_sel(adapter, _TRUE, hw_port, tsf_sync_offset_tu);
 					#ifdef DBG_P0_TSF_SYNC
 					RTW_INFO("[TSF_SYNC] STA_LINKED => EN P0_TSF_SYNC\n");
 					#endif
@@ -13457,7 +13472,7 @@ void hw_var_set_correct_tsf(PADAPTER adapter, u8 mlme_state)
 						sta_if = _search_ld_sta(adapter, _FALSE);
 						if (sta_if) {
 							hw_port = rtw_hal_get_port(sta_if);
-							hw_port0_tsf_sync_sel(adapter, _TRUE, hw_port, 50);/*timer offset 50ms*/
+							hw_port0_tsf_sync_sel(adapter, _TRUE, hw_port, tsf_sync_offset_tu);
 							#ifdef DBG_P0_TSF_SYNC
 							RTW_INFO("[TSF_SYNC] STA_DIS_CON => CHANGE P0_TSF_SYNC\n");
 							#endif
@@ -13486,7 +13501,7 @@ void hw_var_set_correct_tsf(PADAPTER adapter, u8 mlme_state)
 					sta_if = _search_ld_sta(adapter, _FALSE);
 					if (sta_if) {
 						hw_port = rtw_hal_get_port(sta_if);
-						hw_port0_tsf_sync_sel(adapter, _TRUE, hw_port, 50);/*timer offset 50ms*/
+						hw_port0_tsf_sync_sel(adapter, _TRUE, hw_port, tsf_sync_offset_tu);
 						#ifdef DBG_P0_TSF_SYNC
 						RTW_INFO("[TSF_SYNC] AP_START => EN P0_TSF_SYNC\n");
 						#endif
@@ -16623,13 +16638,25 @@ void ResumeTxBeacon(_adapter *padapter)
 #endif
 	/* TBTT hold time: 0x540[19:8] */
 #ifdef	CONFIG_NARROWBAND_SUPPORTING
-	if (padapter->registrypriv.rtw_nb_config == RTW_NB_CONFIG_WIDTH_10)
-		rtw_write8(padapter, REG_TBTT_PROHIBIT + 1, 0xc8);
-	else
-#endif
+	if (padapter->registrypriv.rtw_nb_config == RTW_NB_CONFIG_WIDTH_10) {
+		rtw_write8(padapter, REG_TBTT_PROHIBIT , 0x8);
+		rtw_write8(padapter, REG_TBTT_PROHIBIT + 1, TBTT_PROHIBIT_HOLD_TIME_10M & 0xFF);
+		rtw_write8(padapter, REG_TBTT_PROHIBIT + 2,
+			(rtw_read8(padapter, REG_TBTT_PROHIBIT + 2) & 0xF0) | (TBTT_PROHIBIT_HOLD_TIME_10M >> 8));
+
+	} else if (padapter->registrypriv.rtw_nb_config == RTW_NB_CONFIG_WIDTH_5) {
+		rtw_write8(padapter, REG_TBTT_PROHIBIT , 0xf);
+		rtw_write8(padapter, REG_TBTT_PROHIBIT + 1, TBTT_PROHIBIT_HOLD_TIME_5M & 0xFF);
+		rtw_write8(padapter, REG_TBTT_PROHIBIT + 2,
+			(rtw_read8(padapter, REG_TBTT_PROHIBIT + 2) & 0xF0) | (TBTT_PROHIBIT_HOLD_TIME_5M >> 8));
+
+	} else
+#endif /* CONFIG_NARROWBAND_SUPPORTING */
+	{
 		rtw_write8(padapter, REG_TBTT_PROHIBIT + 1, TBTT_PROHIBIT_HOLD_TIME & 0xFF);
-	rtw_write8(padapter, REG_TBTT_PROHIBIT + 2,
-		(rtw_read8(padapter, REG_TBTT_PROHIBIT + 2) & 0xF0) | (TBTT_PROHIBIT_HOLD_TIME >> 8));
+		rtw_write8(padapter, REG_TBTT_PROHIBIT + 2,
+			(rtw_read8(padapter, REG_TBTT_PROHIBIT + 2) & 0xF0) | (TBTT_PROHIBIT_HOLD_TIME >> 8));
+	}
 }
 
 void StopTxBeacon(_adapter *padapter)
@@ -16644,9 +16671,22 @@ void StopTxBeacon(_adapter *padapter)
 	#endif
 
 	/* TBTT hold time: 0x540[19:8] */
-	rtw_write8(padapter, REG_TBTT_PROHIBIT + 1, TBTT_PROHIBIT_HOLD_TIME_STOP_BCN & 0xFF);
-	rtw_write8(padapter, REG_TBTT_PROHIBIT + 2,
-		(rtw_read8(padapter, REG_TBTT_PROHIBIT + 2) & 0xF0) | (TBTT_PROHIBIT_HOLD_TIME_STOP_BCN >> 8));
+#ifdef	CONFIG_NARROWBAND_SUPPORTING
+	if (padapter->registrypriv.rtw_nb_config == RTW_NB_CONFIG_WIDTH_10) {
+		rtw_write8(padapter, REG_TBTT_PROHIBIT + 1, TBTT_PROHIBIT_HOLD_TIME_10M & 0xFF);
+		rtw_write8(padapter, REG_TBTT_PROHIBIT + 2,
+			(rtw_read8(padapter, REG_TBTT_PROHIBIT + 2) & 0xF0) | (TBTT_PROHIBIT_HOLD_TIME_10M >> 8));
+	} else if (padapter->registrypriv.rtw_nb_config == RTW_NB_CONFIG_WIDTH_5) {
+		rtw_write8(padapter, REG_TBTT_PROHIBIT + 1, TBTT_PROHIBIT_HOLD_TIME_5M & 0xFF);
+		rtw_write8(padapter, REG_TBTT_PROHIBIT + 2,
+			(rtw_read8(padapter, REG_TBTT_PROHIBIT + 2) & 0xF0) | (TBTT_PROHIBIT_HOLD_TIME_5M >> 8));
+	} else
+#endif /* CONFIG_NARROWBAND_SUPPORTING */
+	{
+		rtw_write8(padapter, REG_TBTT_PROHIBIT + 1, TBTT_PROHIBIT_HOLD_TIME_STOP_BCN & 0xFF);
+		rtw_write8(padapter, REG_TBTT_PROHIBIT + 2,
+			(rtw_read8(padapter, REG_TBTT_PROHIBIT + 2) & 0xF0) | (TBTT_PROHIBIT_HOLD_TIME_STOP_BCN >> 8));
+	}
 }
 #endif /* CONFIG_HAS_TX_BEACON_PAUSE */
 

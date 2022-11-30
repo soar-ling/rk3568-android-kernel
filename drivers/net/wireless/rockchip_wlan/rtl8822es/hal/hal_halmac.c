@@ -2701,6 +2701,10 @@ int rtw_halmac_poweron(struct dvobj_priv *d)
 	struct halmac_api *api;
 	enum halmac_ret_status status;
 	int err = -1;
+#ifdef CONFIG_NARROWBAND_SUPPORTING
+	struct registry_priv *regsty = dvobj_to_regsty(d);
+	u32 bw_type;
+#endif /* CONFIG_NARROWBAND_SUPPORTING */
 #if defined(CONFIG_PCI_HCI) && defined(CONFIG_RTL8822B)
 	struct _ADAPTER *a;
 	u8 v8;
@@ -2736,6 +2740,16 @@ int rtw_halmac_poweron(struct dvobj_priv *d)
 		v8 = rtw_write8(a, addr, v8);
 	}
 #endif
+
+#ifdef CONFIG_NARROWBAND_SUPPORTING
+	if (regsty->rtw_nb_config == RTW_NB_CONFIG_WIDTH_10)
+		bw_type = HALMAC_BW_10;
+	else if (regsty->rtw_nb_config == RTW_NB_CONFIG_WIDTH_5)
+		bw_type = HALMAC_BW_5;
+
+	if ((bw_type == HALMAC_BW_10) || (bw_type == HALMAC_BW_5))
+	api->halmac_set_hw_value(dvobj_to_halmac(d), HALMAC_HW_BANDWIDTH, &bw_type);
+#endif /* CONFIG_NARROWBAND_SUPPORTING */
 
 	status = _power_switch(halmac, api, HALMAC_MAC_POWER_ON);
 	if (HALMAC_RET_PWR_UNCHANGE == status) {
@@ -4345,13 +4359,16 @@ int rtw_halmac_read_physical_efuse_map(struct dvobj_priv *d, u8 *map, u32 size)
 	return 0;
 }
 
+/*
+ * Return 0 for success and otherwise fail.
+ */
 int rtw_halmac_read_physical_efuse(struct dvobj_priv *d, u32 offset, u32 cnt, u8 *data)
 {
 	struct halmac_adapter *mac;
 	struct halmac_api *api;
 	enum halmac_ret_status status;
 	u8 v;
-	u32 i;
+	u32 i, n;
 	u8 *efuse = NULL;
 	u32 size = 0;
 	int err = 0;
@@ -4364,25 +4381,49 @@ int rtw_halmac_read_physical_efuse(struct dvobj_priv *d, u32 offset, u32 cnt, u8
 		for (i = 0; i < cnt; i++) {
 			status = api->halmac_read_efuse(mac, offset + i, &v);
 			if (HALMAC_RET_SUCCESS != status)
-				return -1;
+				return -EPERM;
 			data[i] = v;
 		}
 	} else {
 		err = rtw_halmac_get_physical_efuse_size(d, &size);
 		if (err)
-			return -1;
+			return -EPERM;
 
-		efuse = rtw_zmalloc(size);
-		if (!efuse)
-			return -1;
+		/* General eFuse area */
+		if (offset < size) {
+			n = cnt;
+			if ((offset + n) > size)
+				n = size - offset;
 
-		err = rtw_halmac_read_physical_efuse_map(d, efuse, size);
-		if (err)
-			err = -1;
-		else
-			_rtw_memcpy(data, efuse + offset, cnt);
+			efuse = rtw_zmalloc(size);
+			if (!efuse)
+				return -ENOMEM;
 
-		rtw_mfree(efuse, size);
+			err = rtw_halmac_read_physical_efuse_map(d, efuse, size);
+			if (err) {
+				err = -EPERM;
+				cnt = 0;
+			} else {
+				_rtw_memcpy(data, efuse + offset, n);
+				cnt -= n;
+			}
+			rtw_mfree(efuse, size);
+
+			if (!cnt)
+				return err;
+
+			offset += n;
+			data += n;
+		}
+
+		/* Extra eFuse area */
+		if (cnt) {
+			status = api->halmac_read_wifi_phy_efuse(mac, offset, cnt, data);
+			if (HALMAC_RET_EFUSE_SIZE_INCORRECT == status)
+				return -EINVAL;
+			if (HALMAC_RET_SUCCESS != status)
+				return -EPERM;
+		}
 	}
 
 	return err;

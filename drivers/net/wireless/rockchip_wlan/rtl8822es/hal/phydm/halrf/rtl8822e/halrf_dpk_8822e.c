@@ -38,7 +38,7 @@
 
 /*---------------------------Define Local Constant---------------------------*/
 
-/*8822E DPK ver:0x4 20220607*/
+/*8822E DPK ver:0x6 20220907*/
 
 static u32
 _btc_wait_indirect_reg_ready_8822e(
@@ -569,7 +569,7 @@ void _dpk_rf_setting_8822e(
 
 	/*TXAGC for gainloss*/
 	odm_set_rf_reg(dm, (enum rf_path)path,
-		       RF_0x00, RFREG_MASK, 0x50018);
+		       RF_0x00, RFREG_MASK, 0x50016);
 
 	ori_txbb = odm_get_rf_reg(dm, (enum rf_path)path,
 				  RF_0x56, RFREG_MASK);
@@ -1041,10 +1041,10 @@ void _dpk_coef_read_8822e(
 	
 	if (path == RF_PATH_A) {
 		odm_set_bb_reg(dm, R_0x1bb4, BIT(24), 0x0);
-		odm_set_bb_reg(dm, R_0x1b04, BIT(29) | BIT(28), 0x3);
+		odm_set_bb_reg(dm, R_0x1b04, BIT(29) | BIT(28), 0x2);
 	} else if (path == RF_PATH_B) {
 		odm_set_bb_reg(dm, R_0x1bb4, BIT(24), 0x1);
-		odm_set_bb_reg(dm, R_0x1b5c, BIT(29) | BIT(28), 0x3);
+		odm_set_bb_reg(dm, R_0x1b5c, BIT(29) | BIT(28), 0x2);
 	}
 
 	odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x000400F0);
@@ -1144,7 +1144,6 @@ boolean _dpk_mdpk_8822e(
 	struct dm_dpk_info *dpk_info = &dm->dpk_info;
 
 	boolean is_fail = false;
-	u32 err_val;
 
 	odm_set_bb_reg(dm, R_0x1b00, BIT(2) | BIT(1), 0x2);
 	odm_set_bb_reg(dm, R_0x1bd4, 0x000000F0, 0xf); /*[7:4] force all clock on*/
@@ -1154,13 +1153,13 @@ boolean _dpk_mdpk_8822e(
 	_dpk_one_shot_8822e(dm, path, MDPK_DC);
 	_dpk_one_shot_8822e(dm, path, DO_DPK);
 
-	err_val = _dpk_lms_error_rpt_8822e(dm, path);
-
-	if (err_val > 0x500) {
+	dpk_info->dpk_lms_err[path] = _dpk_lms_error_rpt_8822e(dm, path);
+#if 0
+	if (dpk_info->dpk_lms_error[path] > 0x500) {
 		RF_DBG(dm, DBG_RF_DPK, "[DPK] LMS err_val Overlimit!!!\n");
 		is_fail = true;
 	}
-
+#endif
 	if (DPK_COEF_DBG_8822E)
 		_dpk_coef_read_8822e(dm, path);
 
@@ -1485,6 +1484,84 @@ void _dpk_reload_data_8822e(
 #endif
 }
 
+u32 _dpk_coef_transfer_8822e(struct dm_struct *dm)
+{
+    u32 reg_1bfc = 0;
+    u16 coef_i = 0, coef_q = 0;
+
+    reg_1bfc = odm_get_bb_reg(dm, R_0x1bfc, MASKDWORD);
+
+    coef_i = (u16)odm_get_bb_reg(dm, R_0x1bfc, MASKHWORD) & 0x1fff;
+    coef_q = (u16)odm_get_bb_reg(dm, R_0x1bfc, MASKLWORD) & 0x1fff;
+
+    coef_q = ((0x2000 - coef_q) & 0x1fff) - 1;
+
+    reg_1bfc = (coef_i << 16) | coef_q;
+
+    return reg_1bfc;
+}
+
+void
+dpk_backup_coef_8822e(struct dm_struct *dm, u8 path)
+{
+    struct dm_dpk_info *dpk_info = &dm->dpk_info;
+
+    odm_set_bb_reg(dm, R_0x1b00, MASKDWORD, 0x0000000c);
+
+    if (path == RF_PATH_A) {
+     odm_set_bb_reg(dm, R_0x1bb4, MASKDWORD, 0x08000000);
+     odm_set_bb_reg(dm, R_0x1b04, MASKDWORD, 0x2000005B);
+
+//     odm_set_bb_reg(dm, R_0x1bb4, BIT(24), 0x0);
+//        odm_set_bb_reg(dm, R_0x1b04, BIT(29) | BIT(28), 0x2);
+    } else {
+     odm_set_bb_reg(dm, R_0x1bb4, MASKDWORD, 0x09000000);
+     odm_set_bb_reg(dm, R_0x1b5c, MASKDWORD, 0x2000005B );
+//        odm_set_bb_reg(dm, R_0x1bb4, BIT(24), 0x1);
+   //     odm_set_bb_reg(dm, R_0x1b5c, BIT(29) | BIT(28), 0x2);
+    }
+    odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x000400F0);
+    dpk_info->coef[path][0] = _dpk_coef_transfer_8822e(dm);
+    odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x040400F0);
+    dpk_info->coef[path][1] = _dpk_coef_transfer_8822e(dm);
+     odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x080400F0);
+    dpk_info->coef[path][2] = _dpk_coef_transfer_8822e(dm);
+     odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x010400F0);
+    dpk_info->coef[path][3] = _dpk_coef_transfer_8822e(dm);
+    odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x050400F0);
+    dpk_info->coef[path][4] = _dpk_coef_transfer_8822e(dm);
+    odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x090400F0);
+    dpk_info->coef[path][5] = _dpk_coef_transfer_8822e(dm);
+    odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x020400F0);
+    dpk_info->coef[path][6] = _dpk_coef_transfer_8822e(dm);
+     odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x060400F0);
+    dpk_info->coef[path][7] = _dpk_coef_transfer_8822e(dm);
+     odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x0A0400F0);
+    dpk_info->coef[path][8] = _dpk_coef_transfer_8822e(dm);
+    odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x030400F0);
+    dpk_info->coef[path][9] = _dpk_coef_transfer_8822e(dm);
+    odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x070400F0);
+    dpk_info->coef[path][10] = _dpk_coef_transfer_8822e(dm);
+    odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x0B0400F0);
+    dpk_info->coef[path][11] = _dpk_coef_transfer_8822e(dm);
+     odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x0C0400F0);
+    dpk_info->coef[path][12] = _dpk_coef_transfer_8822e(dm);
+     odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x100400F0);
+    dpk_info->coef[path][13] = _dpk_coef_transfer_8822e(dm);
+    odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x0D0400F0);
+    dpk_info->coef[path][14] = _dpk_coef_transfer_8822e(dm);
+    odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x110400F0);
+    dpk_info->coef[path][15] = _dpk_coef_transfer_8822e(dm);
+    odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x0E0400F0);
+    dpk_info->coef[path][16] = _dpk_coef_transfer_8822e(dm);
+     odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x120400F0);
+    dpk_info->coef[path][17] = _dpk_coef_transfer_8822e(dm);
+     odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x0F0400F0);
+    dpk_info->coef[path][18] = _dpk_coef_transfer_8822e(dm);
+    odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x130400F0);
+    dpk_info->coef[path][19] = _dpk_coef_transfer_8822e(dm);
+}
+
 u8 dpk_reload_8822e(
 	void *dm_void)
 {
@@ -1525,6 +1602,30 @@ void _dpk_force_bypass_8822e(
 	RF_DBG(dm, DBG_RF_DPK, "[DPK] S1 DPK bypass !!!\n");
 
 	odm_set_bb_reg(dm, R_0x1b00, BIT(2) | BIT(1), 0x0); /*subpage 0*/
+}
+
+void dpk_backup_8822e(struct dm_struct *dm)
+{
+	struct dm_dpk_info *dpk_info = &dm->dpk_info;
+
+    odm_set_bb_reg(dm, R_0x1b00, MASKDWORD, 0x8);
+    dpk_info->dpk_data[0] = odm_get_bb_reg(dm, 0x1b58, MASKDWORD);
+    dpk_info->dpk_data[1] = odm_get_bb_reg(dm, 0x1b64, MASKDWORD);
+    odm_set_bb_reg(dm, R_0x1b00, MASKDWORD, 0xa);
+    dpk_info->dpk_data[2] = odm_get_bb_reg(dm, 0x1b58, MASKDWORD);
+    dpk_info->dpk_data[3] = odm_get_bb_reg(dm, 0x1b64, MASKDWORD);
+    odm_set_bb_reg(dm, R_0x1b00, MASKDWORD, 0xc);
+    dpk_info->dpk_data[4] = odm_get_bb_reg(dm, 0x1b04, MASKDWORD);
+    dpk_info->dpk_data[5] = odm_get_bb_reg(dm, 0x1b08, MASKDWORD);
+    dpk_info->dpk_data[6] = odm_get_bb_reg(dm, 0x1b5c, MASKDWORD);
+    dpk_info->dpk_data[7] = odm_get_bb_reg(dm, 0x1b60, MASKDWORD);
+    dpk_info->dpk_data[8] = odm_get_bb_reg(dm, 0x1bb4, MASKDWORD);
+    dpk_info->dpk_data[9] = odm_get_bb_reg(dm, 0x1bd4, MASKDWORD);
+    dpk_info->dpk_data[10] = odm_get_bb_reg(dm, 0x1bf4, MASKDWORD);
+
+    dpk_backup_coef_8822e(dm, 0);
+    dpk_backup_coef_8822e(dm, 1);
+
 }
 
 void do_dpk_8822e(
@@ -1580,6 +1681,8 @@ void do_dpk_8822e(
 	_dpk_afe_setting_8822e(dm, false);
 
 	dpk_enable_disable_8822e(dm);
+
+	dpk_backup_8822e(dm);
 
 	_reload_kip_registers_8822e(dm, kip_reg, kip_reg_backup);
 	_reload_rf_registers_8822e(dm, rf_reg, rf_reg_backup);
@@ -1757,6 +1860,9 @@ void dpk_info_by_8822e(
 		 "S1 Corr (idx/val)", dpk_info->corr_idx[1], dpk_info->corr_val[1]);
 
 	PDM_SNPF(out_len, used, output + used, out_len - used, " %-25s = 0x%x / 0x%x\n",
+		 "DPK LMS error (path)", dpk_info->dpk_lms_err[0], dpk_info->dpk_lms_err[1]);
+
+	PDM_SNPF(out_len, used, output + used, out_len - used, " %-25s = 0x%x / 0x%x\n",
 		 "DPK TxAGC (path)", dpk_info->dpk_txagc[0], dpk_info->dpk_txagc[1]);
 
 	PDM_SNPF(out_len, used, output + used, out_len - used, " %-25s = 0x%x / 0x%x\n",
@@ -1770,10 +1876,10 @@ void dpk_info_by_8822e(
 	
 		if (path == RF_PATH_A) {
 			odm_set_bb_reg(dm, R_0x1bb4, BIT(24), 0x0);
-			odm_set_bb_reg(dm, R_0x1b04, BIT(29) | BIT(28), 0x3);
+			odm_set_bb_reg(dm, R_0x1b04, BIT(29) | BIT(28), 0x2);
 		} else if (path == RF_PATH_B) {
 			odm_set_bb_reg(dm, R_0x1bb4, BIT(24), 0x1);
-			odm_set_bb_reg(dm, R_0x1b5c, BIT(29) | BIT(28), 0x3);
+			odm_set_bb_reg(dm, R_0x1b5c, BIT(29) | BIT(28), 0x2);
 		}
 
 		odm_set_bb_reg(dm, R_0x1bd4, MASKDWORD, 0x000400F0);
@@ -1849,7 +1955,13 @@ void dpk_info_rsvd_page_8822e(
 {
 	struct dm_struct *dm = (struct dm_struct *)dm_void;
 	struct dm_dpk_info *dpk_info = &dm->dpk_info;
+	u32 i;
 
+	if (buf) {
+		odm_move_memory(dm, buf, dpk_info->dpk_data, 44);
+		odm_move_memory(dm, buf + 44, dpk_info->coef, 160);
+	}
+#if 0
 	if (buf) {
 		odm_move_memory(dm, buf, &(dpk_info->dpk_path_ok), 2);
 		odm_move_memory(dm, buf + 2, dpk_info->dpk_txagc, 2);
@@ -1859,7 +1971,18 @@ void dpk_info_rsvd_page_8822e(
 		odm_move_memory(dm, buf + 169, dpk_info->result, 2);
 		odm_move_memory(dm, buf + 171, dpk_info->dpk_rf18, 8);
 	}
+#endif
 
+	for (i = 0; i<11; i++) {
+	RF_DBG(dm, DBG_RF_DPK, "[DPK] dpk_data %d=0x%x!!!\n", i, dpk_info->dpk_data[i]);
+	}
+
+	for (i = 0; i<20; i++) {
+	RF_DBG(dm, DBG_RF_DPK, "[DPK] S0 c%d=0x%x!!!\n", i, dpk_info->coef[0][i]);
+	}
+	for (i = 0; i<20; i++) {
+	RF_DBG(dm, DBG_RF_DPK, "[DPK] S1 c%d=0x%x!!!\n", i, dpk_info->coef[1][i]);
+	}
 	if (buf_size)
 		*buf_size = DPK_INFO_RSVD_LEN_8822E;
 }

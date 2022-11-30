@@ -602,6 +602,7 @@ s32 rtl8822es_hal_mgmt_xmit_enqueue(PADAPTER adapter, struct xmit_frame *pxmitfr
 
 	ret = rtw_mgmt_xmitframe_enqueue(adapter, pxmitframe);
 	if (ret != _SUCCESS) {
+		rtw_free_xmitbuf(pxmitpriv, pxmitframe->pxmitbuf);
 		rtw_free_xmitframe(pxmitpriv, pxmitframe);
 		pxmitpriv->tx_drop++;
 		return _FALSE;

@@ -2677,6 +2677,20 @@ u8 rtl8822e_sethwreg(PADAPTER adapter, u8 variable, u8 *val)
 	}
 		break;
 #endif
+#if defined(CONFIG_CHANGE_DTIM_PERIOD) && defined(CONFIG_AP_MODE)
+	case HW_VAR_DTIM:
+		/* DTIM COUNTER: dtim_period - 1 ~ 0*/
+		if (*val == _TRUE) {
+			rtw_write8(adapter, REG_DTIM_COUNTER_ROOT_8822E, (adapter->registrypriv.dtim_period - 1));
+			rtw_write32(adapter, REG_TCR_8822E,
+				rtw_read32(adapter, REG_TCR_8822E) | BIT_WMAC_TCR_UPD_TIMIE_8822E);
+		} else {
+			rtw_write32(adapter, REG_TCR_8822E,
+				rtw_read32(adapter, REG_TCR_8822E) & (~BIT_WMAC_TCR_UPD_TIMIE_8822E));
+			rtw_write8(adapter, REG_DTIM_COUNTER_ROOT_8822E, 0);
+		}
+		break;
+#endif
 	default:
 		ret = SetHwReg(adapter, variable, val);
 		break;

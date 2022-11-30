@@ -1511,8 +1511,10 @@ void WMMOnAssocRsp(_adapter *padapter)
 #ifdef CONFIG_WMMPS_STA
 	struct mlme_priv	*pmlmepriv = &(padapter->mlmepriv);
 	struct qos_priv	*pqospriv = &pmlmepriv->qospriv;
-#endif /* CONFIG_WMMPS_STA */	
-
+#endif /* CONFIG_WMMPS_STA */
+#ifdef CONFIG_NARROWBAND_SUPPORTING
+	struct registry_priv *regsty = adapter_to_regsty(padapter);
+#endif /* CONFIG_NARROWBAND_SUPPORTING */
 	acm_mask = 0;
 
 	if (is_supported_5g(pmlmeext->cur_wireless_mode) ||
@@ -1520,6 +1522,13 @@ void WMMOnAssocRsp(_adapter *padapter)
 		aSifsTime = 16;
 	else
 		aSifsTime = 10;
+
+#ifdef CONFIG_NARROWBAND_SUPPORTING
+        if (regsty->rtw_nb_config == RTW_NB_CONFIG_WIDTH_10)
+                aSifsTime = 32;
+        else if (regsty->rtw_nb_config == RTW_NB_CONFIG_WIDTH_5)
+                aSifsTime = 64;
+#endif /* CONFIG_NARROWBAND_SUPPORTING */
 
 	if (pmlmeinfo->WMM_enable == 0) {
 		padapter->mlmepriv.acm_mask = 0;
@@ -3539,7 +3548,9 @@ void update_capinfo(PADAPTER Adapter, u16 updateCap)
 	struct mlme_ext_priv	*pmlmeext = &Adapter->mlmeextpriv;
 	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
 	BOOLEAN		ShortPreamble;
-
+#ifdef CONFIG_NARROWBAND_SUPPORTING
+	struct registry_priv *regsty = adapter_to_regsty(Adapter);
+#endif /* CONFIG_NARROWBAND_SUPPORTING */
 	/* Check preamble mode, 2005.01.06, by rcnjko. */
 	/* Mark to update preamble value forever, 2008.03.18 by lanhsin */
 	/* if( pMgntInfo->RegPreambleMode == PREAMBLE_AUTO ) */
@@ -3582,6 +3593,12 @@ void update_capinfo(PADAPTER Adapter, u16 updateCap)
 			pmlmeinfo->slotTime = NON_SHORT_SLOT_TIME;
 		}
 	}
+#ifdef CONFIG_NARROWBAND_SUPPORTING
+	if (regsty->rtw_nb_config == RTW_NB_CONFIG_WIDTH_10)
+		pmlmeinfo->slotTime = SLOT_TIME_10M;
+	else if (regsty->rtw_nb_config == RTW_NB_CONFIG_WIDTH_5)
+		pmlmeinfo->slotTime = SLOT_TIME_5M;
+#endif /* CONFIG_NARROWBAND_SUPPORTING */
 
 	rtw_hal_set_hwreg(Adapter, HW_VAR_SLOT_TIME, &pmlmeinfo->slotTime);
 

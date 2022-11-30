@@ -372,11 +372,7 @@ reg_r16_sdio_8822e(struct halmac_adapter *adapter, u32 offset)
 
 	if ((offset & 0xFFFF0000) == 0 &&
 	    adapter->halmac_state.mac_pwr == HALMAC_MAC_POWER_OFF) {
-		value16.byte[0] = (u8)r_indir_sdio_88xx(adapter, offset,
-							HALMAC_IO_BYTE);
-		value16.byte[1] = (u8)r_indir_sdio_88xx(adapter, offset + 1,
-							HALMAC_IO_BYTE);
-		return rtk_le16_to_cpu(value16.word);
+		return (u16)r_indir_sdio_88xx(adapter, offset, HALMAC_IO_WORD);
 	} else if ((offset & 0xFFFF0000) != 0 &&
 		   adapter->halmac_state.mac_pwr == HALMAC_MAC_POWER_OFF) {
 		value16.byte[0] = PLTFM_SDIO_CMD52_R(offset);
@@ -472,15 +468,7 @@ reg_r32_sdio_8822e(struct halmac_adapter *adapter, u32 offset)
 
 	if (((offset & 0xFFFF0000) == 0) &&
 	    adapter->halmac_state.mac_pwr == HALMAC_MAC_POWER_OFF) {
-		value32.byte[0] = (u8)r_indir_sdio_88xx(adapter, offset,
-							HALMAC_IO_BYTE);
-		value32.byte[1] = (u8)r_indir_sdio_88xx(adapter, offset + 1,
-							HALMAC_IO_BYTE);
-		value32.byte[2] = (u8)r_indir_sdio_88xx(adapter, offset + 2,
-							HALMAC_IO_BYTE);
-		value32.byte[3] = (u8)r_indir_sdio_88xx(adapter, offset + 3,
-							HALMAC_IO_BYTE);
-		return rtk_le32_to_cpu(value32.dword);
+		return r_indir_sdio_88xx(adapter, offset, HALMAC_IO_DWORD);
 	} else if (((offset & 0xFFFF0000) != 0) &&
 		   adapter->halmac_state.mac_pwr == HALMAC_MAC_POWER_OFF) {
 		value32.byte[0] = PLTFM_SDIO_CMD52_R(offset);

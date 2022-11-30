@@ -223,6 +223,9 @@ typedef enum _HW_VARIABLES {
 #ifdef CONFIG_WAKE_ON_BT
 	HW_VAR_WAKE_ON_BT_GPIO_SWITCH,
 #endif
+#if defined(CONFIG_CHANGE_DTIM_PERIOD) && defined(CONFIG_AP_MODE)
+	HW_VAR_DTIM,
+#endif
 } HW_VARIABLES;
 
 typedef enum _HAL_DEF_VARIABLE {

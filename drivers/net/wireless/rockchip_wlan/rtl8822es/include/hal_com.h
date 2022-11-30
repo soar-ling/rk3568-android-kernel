@@ -315,6 +315,12 @@ void dump_chip_info(HAL_VERSION	ChipVersion);
 #define TBTT_PROHIBIT_HOLD_TIME 0x80 /* 4ms, unit is 32us*/
 #define TBTT_PROHIBIT_HOLD_TIME_STOP_BCN 0x64 /* 3.2ms unit is 32us*/
 
+/*  TBTT hold time for 10M */
+#define TBTT_PROHIBIT_HOLD_TIME_10M 0xc8
+
+/*  TBTT hold time for 5M */
+#define TBTT_PROHIBIT_HOLD_TIME_5M 0x190
+
 int hal_spec_init(_adapter *adapter);
 void dump_hal_spec(void *sel, _adapter *adapter);
 

@@ -23,7 +23,7 @@
  *
  *****************************************************************************/
 
-/*Image2HeaderVersion: R3 1.5.16*/
+/*Image2HeaderVersion: R3 1.5.17*/
 #if (RTL8822E_SUPPORT == 1)
 #ifndef __INC_MP_BB_HW_IMG_8822E_H
 #define __INC_MP_BB_HW_IMG_8822E_H

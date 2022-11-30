@@ -38,7 +38,7 @@
 
 #define SS_8822E 2
 
-#define IQK_INFO_RSVD_LEN_8822E	568
+#define IQK_INFO_RSVD_LEN_8822E 616
 /*---------------------------End Define Parameters-------------------------------*/
 #if !(DM_ODM_SUPPORT_TYPE & ODM_AP)
 void do_iqk_8822e(

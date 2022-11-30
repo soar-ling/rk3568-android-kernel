@@ -196,7 +196,7 @@
 #define DPK_VER_8197G "0x0b"
 #define DPK_VER_8814C "0x01"
 #define DPK_VER_8735B "0x0b"
-#define DPK_VER_8822E "0x04"
+#define DPK_VER_8822E "0x06"
 
 /*RFK_INIT version*/
 #define RFK_INIT_VER_8822B "0x8"
@@ -966,4 +966,6 @@ void halrf_txgapk_info(void *dm_void, u32 *_used, char *output, u32 *_out_len);
 u8 halrf_get_thermal(void *dm_void, u8 path);
 
 void halrf_ex_dac_fifo_rst(void *dm_void);
+
+void halrf_kip_rsvd_page(void *dm_void, u8 *buf, u32 *buf_size);
 #endif /*__HALRF_H__*/

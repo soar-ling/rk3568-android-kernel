@@ -3330,7 +3330,7 @@ void phydm_tdma_high_dig(void *dm_void)
 		} else if (*dm->bb_op_mode == PHYDM_PERFORMANCE_MODE) {
 		/*service 1 devices*/
 			if (*dm->edcca_mode == PHYDM_EDCCA_ADAPT_MODE &&
-			   (dm->support_ic_type & ODM_RTL8192F)) {
+			   (dm->support_ic_type & (ODM_RTL8192F | ODM_RTL8822E))) {
 			/*dig_max shouldn't be too high becaus of adaptivity*/
 				dig_t->dm_dig_max = MIN_2((adapt->th_l2h + 30),
 						    DIG_MAX_PERFORMANCE_MODE);

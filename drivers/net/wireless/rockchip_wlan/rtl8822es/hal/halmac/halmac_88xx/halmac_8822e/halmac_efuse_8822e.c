@@ -32,6 +32,7 @@
 
 static u8 bt_switch = 0;
 static u16 efuse_ctrl_reg = REG_EFUSE_CTRL;
+static u8 efuse_c2h_part = EFUSE_C2H_PART_1;
 
 static enum halmac_cmd_construct_state
 efuse_cmd_cnstr_state_8822e(struct halmac_adapter *adapter);
@@ -318,13 +319,15 @@ write_efuse_bt_8822e(struct halmac_adapter *adapter, u32 offset, u8 value,
 	}
 	bt_switch = 1;
 
+	enable_efuse_sw_pwr_cut(adapter, 1);
 	status = write_hw_efuse_8822e(adapter, offset + BT_START_OFFSET, value);
 	if (status != HALMAC_RET_SUCCESS) {
 		bt_switch = 0;
 		PLTFM_MSG_ERR("[ERR]write efuse\n");
 		return status;
 	}
-	
+	disable_efuse_sw_pwr_cut(adapter, 1);
+
 	status = switch_efuse_bank_8822e(adapter, HALMAC_EFUSE_BANK_WIFI);
 	if (status != HALMAC_RET_SUCCESS) {
 		bt_switch = 0;
@@ -394,7 +397,8 @@ read_efuse_bt_8822e(struct halmac_adapter *adapter, u32 offset, u8 *value,
 	}
 	bt_switch = 1;
 
-	status = read_efuse_8822e(adapter, offset + BT_START_OFFSET, 1, value);
+	status =
+	read_hw_efuse_8822e(adapter, offset + BT_START_OFFSET, 1, value);
 	if (status != HALMAC_RET_SUCCESS) {
 		bt_switch = 0;
 		PLTFM_MSG_ERR("[ERR]read efuse\n");
@@ -817,14 +821,26 @@ pg_efuse_by_map_8822e(struct halmac_adapter *adapter,
 {
 	enum halmac_ret_status status = HALMAC_RET_SUCCESS;
 	enum halmac_cmd_process_status *proc_status;
+	u32 size = adapter->hw_cfg_info.eeprom_size;
 
 	proc_status = &adapter->halmac_state.efuse_state.proc_status;
 
 	PLTFM_MSG_TRACE("[TRACE]%s ===>\n", __func__);
 
-	if (info->efuse_map_size != adapter->hw_cfg_info.eeprom_size) {
-		PLTFM_MSG_ERR("[ERR]map size error\n");
-		return HALMAC_RET_EFUSE_SIZE_INCORRECT;
+	if (info->efuse_map_size != size) {
+		if (adapter->intf == HALMAC_INTERFACE_PCIE)
+			size = LIM_LOG_SIZE_PCIE_8822E;
+		else if (adapter->intf == HALMAC_INTERFACE_USB)
+			size = LIM_LOG_SIZE_USB_8822E;
+		else if (adapter->intf == HALMAC_INTERFACE_SDIO)
+			size = LIM_LOG_SIZE_SDIO_8822E;
+		else
+			return HALMAC_RET_CHIP_NOT_SUPPORT;
+
+		if (info->efuse_map_size != size) {
+			PLTFM_MSG_ERR("[ERR]map size error\n");
+			return HALMAC_RET_EFUSE_SIZE_INCORRECT;
+		}
 	}
 
 	if ((info->efuse_map_size & 0xF) > 0) {
@@ -1042,6 +1058,11 @@ read_hw_efuse_8822e(struct halmac_adapter *adapter, u32 offset, u32 size,
 
 	enable_efuse_sw_pwr_cut(adapter, 0);
 
+	//Enable OTP Burst mode
+	tmp32 = HALMAC_REG_R32(REG_EFUSE_CTRL_1);
+	tmp32 = tmp32 | BIT_EF_BURST;
+	HALMAC_REG_W32(REG_EFUSE_CTRL_1, tmp32);
+
 	for (addr = offset; addr < offset + size; addr++) {
 		HALMAC_REG_W32(efuse_ctrl_reg,
 			       BIT_EF_ADDR_V1(addr) & ~BIT_EF_RDY);
@@ -1059,6 +1080,11 @@ read_hw_efuse_8822e(struct halmac_adapter *adapter, u32 offset, u32 size,
 
 		*(map + addr - offset) = (u8)(BIT_GET_EF_DATA_V1(tmp32));
 	}
+
+	//Disable OTP Burst mode
+	tmp32 = HALMAC_REG_R32(REG_EFUSE_CTRL_1);
+	tmp32 = tmp32 & (~BIT_EF_BURST);
+	HALMAC_REG_W32(REG_EFUSE_CTRL_1, tmp32);
 
 	disable_efuse_sw_pwr_cut(adapter, 0);
 
@@ -1346,9 +1372,11 @@ proc_pg_efuse_by_map_8822e(struct halmac_adapter *adapter,
 {
 	u8 *updated_mask = NULL;
 	u8 *updated_map = NULL;
-	u32 map_size = adapter->hw_cfg_info.eeprom_size;
-	u32 mask_size = adapter->hw_cfg_info.eeprom_size >> 4;
+	u32 map_size, mask_size;
 	enum halmac_ret_status status = HALMAC_RET_SUCCESS;
+
+	map_size = adapter->hw_cfg_info.eeprom_size;
+	mask_size = map_size >> 4;
 
 	status = compare_version(adapter, info, PG_VER_LEN_8822E);
 	if (status != HALMAC_RET_SUCCESS) {
@@ -1722,8 +1750,7 @@ static enum halmac_ret_status
 update_eeprom_mask_8822e(struct halmac_adapter *adapter,
 			struct halmac_pg_efuse_info *info, u8 *updated_mask)
 {
-	u8 *map = NULL;
-	u8 *mask_map = NULL;
+	u8 *map = NULL, *mask_map = NULL;
 	u8 clr_bit = 0;
 	u32 eeprom_size = adapter->hw_cfg_info.eeprom_size;
 	u8 *map_pg;
@@ -1741,8 +1768,6 @@ update_eeprom_mask_8822e(struct halmac_adapter *adapter,
 		return HALMAC_RET_MALLOC_FAIL;
 	}
 	PLTFM_MEMSET(map, 0xFF, eeprom_size);
-
-	PLTFM_MEMSET(updated_mask, 0x00, info->efuse_mask_size);
 
 	status = read_log_efuse_map_8822e(adapter, map);
 
@@ -1825,12 +1850,8 @@ static enum halmac_ret_status
 check_efuse_enough_8822e(struct halmac_adapter *adapter,
 			struct halmac_pg_efuse_info *info, u8 *updated_mask)
 {
-	u8 pre_word_en;
-	u16 i;
-	u16 j;
-	u16 efuse_map_size = (u16)info->efuse_map_size;
-	u32 eeprom_offset;
-	u32 pg_num = 0;
+	u8 pre_word_en, j;
+	u32 i, eeprom_offset, pg_num = 0;
 	enum halmac_ret_status status = HALMAC_RET_SUCCESS;
 
 	for (i = 0; i < info->efuse_map_size; i = i + 8) {
@@ -1916,16 +1937,13 @@ static enum halmac_ret_status
 program_efuse_8822e(struct halmac_adapter *adapter,
 		   struct halmac_pg_efuse_info *info, u8 *updated_mask)
 {
-	u8 pre_word_en;
-	u8 word_en;
-	u16 i;
-	u16 efuse_map_size = (u16)info->efuse_map_size;
-	u32 eeprom_offset;
+	u8 pre_word_en, word_en;
+	u32 i, eeprom_offset;
 	enum halmac_ret_status status = HALMAC_RET_SUCCESS;
 
 	enable_efuse_sw_pwr_cut(adapter, 1);
 
-	for (i = 0; i < efuse_map_size; i = i + 8) {
+	for (i = 0; i < info->efuse_map_size; i += 8) {
 		eeprom_offset = i;
 
 		if (((eeprom_offset >> 3) & 1) > 0) {
@@ -1993,6 +2011,8 @@ get_efuse_data_8822e(struct halmac_adapter *adapter, u8 *buf, u32 size)
 	u8 seq_num;
 	u8 fw_rc;
 	u8 *map = NULL;
+	u32 seg_offset;
+	u32 efuse_size = adapter->hw_cfg_info.efuse_size;
 	u32 eeprom_size = adapter->hw_cfg_info.eeprom_size;
 	struct halmac_efuse_state *state = &adapter->halmac_state.efuse_state;
 	enum halmac_cmd_process_status proc_status;
@@ -2023,14 +2043,38 @@ get_efuse_data_8822e(struct halmac_adapter *adapter, u8 *buf, u32 size)
 	}
 	PLTFM_MEMSET(map, 0xFF, eeprom_size);
 
+	seg_offset = (u32)(seg_id * adapter->efuse_seg_size);
+
 	PLTFM_MUTEX_LOCK(&adapter->efuse_mutex);
-	PLTFM_MEMCPY(adapter->efuse_map + seg_id * adapter->efuse_seg_size,
-		     buf + C2H_DATA_OFFSET_88XX, seg_size);
+	if (efuse_c2h_part == EFUSE_C2H_PART_1) {
+		PLTFM_MEMCPY(adapter->efuse_map + seg_offset,
+			     buf + C2H_DATA_OFFSET_88XX, seg_size);
+	} else {
+		seg_offset += EFUSE_PART_1_END;
+		if ((seg_offset + seg_size) <= efuse_size) {
+			PLTFM_MEMCPY(adapter->efuse_map + seg_offset,
+				     buf + C2H_DATA_OFFSET_88XX, seg_size);
+		} else if (seg_offset < efuse_size &&
+			   (seg_offset + seg_size) > efuse_size){
+			PLTFM_MEMCPY(adapter->efuse_map + seg_offset,
+				     buf + C2H_DATA_OFFSET_88XX,
+				     efuse_size - seg_offset);
+		}
+	}
 	PLTFM_MUTEX_UNLOCK(&adapter->efuse_mutex);
 
 	if (EFUSE_DATA_GET_END_SEGMENT(buf) == 0) {
 		PLTFM_FREE(map, eeprom_size);
 		return HALMAC_RET_SUCCESS;
+	} else {
+		if (efuse_c2h_part == EFUSE_C2H_PART_1) {
+			efuse_c2h_part = EFUSE_C2H_PART_2;
+
+			PLTFM_FREE(map, eeprom_size);
+			return HALMAC_RET_SUCCESS;
+		} else {
+			efuse_c2h_part = EFUSE_C2H_PART_1;
+		}
 	}
 
 	fw_rc = state->fw_rc;

@@ -578,6 +578,9 @@ struct registry_priv {
 #if defined(CONFIG_CONCURRENT_MODE) && defined(CONFIG_AP_MODE)
 	u8 ap_csa_cnt;
 #endif
+#if defined(CONFIG_CHANGE_DTIM_PERIOD) && defined(CONFIG_AP_MODE)
+	u8 dtim_period;
+#endif
 };
 
 /* For registry parameters */

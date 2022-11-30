@@ -749,7 +749,7 @@ u32	rtw_free_stainfo(_adapter *padapter , struct sta_info *psta)
 
 #ifdef CONFIG_RTW_MGMT_QUEUE
 	/* mgmt */
-	rtw_free_xmitframe_queue(pxmitpriv, &pstaxmitpriv->mgmt_q.sta_pending);
+	rtw_free_mgmt_xmitframe_queue(pxmitpriv, &pstaxmitpriv->mgmt_q.sta_pending);
 	rtw_list_delete(&(pstaxmitpriv->mgmt_q.tx_pending));
 	phwxmit = pxmitpriv->hwxmits + 4;
 	phwxmit->accnt -= pstaxmitpriv->mgmt_q.qcnt;

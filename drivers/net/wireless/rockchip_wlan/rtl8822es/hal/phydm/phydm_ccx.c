@@ -660,11 +660,16 @@ void phydm_nhm_set(void *dm_void, enum nhm_option_txon_all include_tx,
 	}
 
 	/*Set NHM period*/
+	if (*dm->band_width == CHANNEL_WIDTH_10)
+		period >>= 1;
+	else if (*dm->band_width == CHANNEL_WIDTH_5)
+		period >>= 2;
+
 	if (period != ccx->nhm_period) {
 		pdm_set_reg(dm, reg2, MASKHWORD, period);
 		PHYDM_DBG(dm, DBG_ENV_MNTR,
-			  "Update NHM period ((%d)) -> ((%d))\n",
-			  ccx->nhm_period, period);
+			  "Update NHM period ((%d)) -> ((%d)), bw = %d\n",
+			  ccx->nhm_period, period, *dm->band_width);
 
 		ccx->nhm_period = period;
 	}
@@ -1234,6 +1239,11 @@ void phydm_clm_setting(void *dm_void, u16 clm_period /*@4us sample 1 time*/)
 	struct dm_struct *dm = (struct dm_struct *)dm_void;
 	struct ccx_info *ccx = &dm->dm_ccx_info;
 
+	if (*dm->band_width == CHANNEL_WIDTH_10)
+		clm_period >>= 1;
+	else if (*dm->band_width == CHANNEL_WIDTH_5)
+		clm_period >>= 2;
+
 	if (ccx->clm_period != clm_period) {
 		if (dm->support_ic_type & ODM_IC_11AC_SERIES)
 			odm_set_bb_reg(dm, R_0x990, MASKLWORD, clm_period);
@@ -1246,12 +1256,12 @@ void phydm_clm_setting(void *dm_void, u16 clm_period /*@4us sample 1 time*/)
 
 		ccx->clm_period = clm_period;
 		PHYDM_DBG(dm, DBG_ENV_MNTR,
-			  "Update CLM period ((%d)) -> ((%d))\n",
-			  ccx->clm_period, clm_period);
+			  "Update CLM period ((%d)) -> ((%d)), bw = %d\n",
+			  ccx->clm_period, clm_period, *dm->band_width);
 	}
 
-	PHYDM_DBG(dm, DBG_ENV_MNTR, "Set CLM period=%d * 4us\n",
-		  ccx->clm_period);
+	PHYDM_DBG(dm, DBG_ENV_MNTR, "Set CLM period = %d, bw = %d\n",
+		  ccx->clm_period, *dm->band_width);
 }
 
 void phydm_clm_trigger(void *dm_void)
@@ -2257,6 +2267,11 @@ void phydm_fahm_set(void *dm_void, u8 numer_opt, u8 denom_opt,
 	}
 
 	/*Set FAHM period*/
+	if (*dm->band_width == CHANNEL_WIDTH_10)
+		period >>= 1;
+	else if (*dm->band_width == CHANNEL_WIDTH_5)
+		period >>= 2;
+
 	if (period != ccx->fahm_period) {
 		switch (dm->ic_ip_series) {
 		case PHYDM_IC_AC:
@@ -2272,8 +2287,8 @@ void phydm_fahm_set(void *dm_void, u8 numer_opt, u8 denom_opt,
 		}
 
 		PHYDM_DBG(dm, DBG_ENV_MNTR,
-			  "Update FAHM period ((%d)) -> ((%d))\n",
-			  ccx->fahm_period, period);
+			  "Update FAHM period ((%d)) -> ((%d)), bw = %d\n",
+			  ccx->fahm_period, period, *dm->band_width);
 
 		ccx->fahm_period = period;
 	}
@@ -2829,8 +2844,8 @@ void phydm_ifs_clm_set(void *dm_void, enum ifs_clm_application ifs_clm_app,
 	if (ctrl_unit != ccx->ifs_clm_ctrl_unit) {
 		odm_set_bb_reg(dm, R_0x1ee4, 0xc0000000, ctrl_unit);
 		PHYDM_DBG(dm, DBG_ENV_MNTR,
-			  "Update IFS_CLM unit ((%d)) -> ((%d))\n",
-			  ccx->ifs_clm_ctrl_unit, ctrl_unit);
+			  "Update IFS_CLM unit ((%d)) -> ((%d)), bw = %d\n",
+			  ccx->ifs_clm_ctrl_unit, ctrl_unit, *dm->band_width);
 		ccx->ifs_clm_ctrl_unit = ctrl_unit;
 	}
 
@@ -2844,8 +2859,8 @@ void phydm_ifs_clm_set(void *dm_void, enum ifs_clm_application ifs_clm_app,
 		odm_set_bb_reg(dm, R_0x1ef8, 0x3e000000, ((period >> 11) &
 			       0x1f));
 		PHYDM_DBG(dm, DBG_ENV_MNTR,
-			  "Update IFS_CLM period ((%d)) -> ((%d))\n",
-			  ccx->ifs_clm_period, period);
+			  "Update IFS_CLM period ((%d)) -> ((%d)), bw = %d\n",
+			  ccx->ifs_clm_period, period, *dm->band_width);
 		ccx->ifs_clm_period = period;
 	}
 
@@ -2886,6 +2901,11 @@ phydm_ifs_clm_mntr_set(void *dm_void, struct ifs_clm_para_info *ifs_clm_para)
 
 	if (phydm_ifs_clm_racing_ctrl(dm, ifs_clm_para->ifs_clm_lv) == PHYDM_SET_FAIL)
 		return false;
+
+	if (*dm->band_width == CHANNEL_WIDTH_10)
+		ifs_clm_para->mntr_time >>= 1;
+	else if (*dm->band_width == CHANNEL_WIDTH_5)
+		ifs_clm_para->mntr_time >>= 2;
 
 	if (ifs_clm_para->mntr_time >= 1048) {
 		unit = IFS_CLM_16;

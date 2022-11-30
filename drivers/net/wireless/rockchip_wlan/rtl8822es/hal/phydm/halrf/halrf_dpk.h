@@ -108,6 +108,8 @@ struct dm_dpk_info {
 	u32	coef[2][20];			/*path/MDPD coefficient*/
 	u16	dpk_gs[2];			/*MDPD coef gs*/
 	u8	thermal_dpk_delta[2];		/*path*/
+	u32	dpk_lms_err[2];			/*path*/
+	u32	dpk_data[11];			/*path/MDPD coefficient*/
 #endif
 
 #if (RTL8198F_SUPPORT == 1 || RTL8192F_SUPPORT == 1 || RTL8197F_SUPPORT == 1 ||\

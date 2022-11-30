@@ -1298,6 +1298,29 @@ void configure_txpower_track_8822e(struct txpwrtrack_cfg *config)
 	config->get_delta_swing_table = get_delta_swing_table_8822e;
 }
 
+void halrf_kip_rsvd_page_8822e(
+	void *dm_void,
+	u8 *buf,
+	u32 *buf_size)
+{
+	struct dm_struct *dm = (struct dm_struct *)dm_void;
+	u32 c = 0;
+	u32 array_len;
+
+	while (c < 10000) {
+		c++;
+		if (array_mp_8822e_cal_init[c * 2] == 0x1b80)
+			break;
+	}
+	c++;
+
+	if (buf)
+		odm_move_memory(dm, buf, array_mp_8822e_cal_init, c * 4);
+
+	if (buf_size)
+		*buf_size = (c * 4);
+}
+
 #if ((DM_ODM_SUPPORT_TYPE & ODM_AP) || (DM_ODM_SUPPORT_TYPE == ODM_CE))
 void phy_set_rf_path_switch_8822e(struct dm_struct *dm, boolean is_main)
 #else
