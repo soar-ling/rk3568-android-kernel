@@ -3716,8 +3716,8 @@ static void rtw_auto_scan_handler(_adapter *padapter)
 	    || rtw_get_passing_time_ms(pmlmepriv->scan_start_time) < pmlmepriv->auto_scan_int_ms)
 		goto exit;
 
-do_scan:
-	rtw_drv_scan_by_self(padapter, reason);
+//do_scan:
+//	rtw_drv_scan_by_self(padapter, reason);
 
 exit:
 	return;
