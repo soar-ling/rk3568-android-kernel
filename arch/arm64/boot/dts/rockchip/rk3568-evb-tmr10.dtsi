@@ -12,7 +12,6 @@
 #include <dt-bindings/sensor-dev.h>
 
 / {
-
 	adc_keys: adc-keys {
 		compatible = "adc-keys";
 		io-channels = <&saradc 0>;
@@ -33,14 +32,14 @@
 		};
 
 		menu-key {
-			label = "menu";
-			linux,code = <KEY_MENU>;
+			label = "brightness up";
+			linux,code = <KEY_BRIGHTNESSUP>;
 			press-threshold-microvolt = <803000>;
 		};
 
 		back-key {
-			label = "back";
-			linux,code = <KEY_BACK>;
+			label = "brightness down";
+			linux,code = <KEY_BRIGHTNESSDOWN>;
 			press-threshold-microvolt = <1200000>;
 		};
 	};
