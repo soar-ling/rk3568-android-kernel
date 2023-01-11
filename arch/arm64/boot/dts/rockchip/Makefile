@@ -91,6 +91,7 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3566-rk817-eink-w6.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3566-rk817-eink-w103.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3566-rk817-tablet.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3566-rk817-tablet-k108.dtb
+dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3566-rk817-tablet-xf8.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3566-rk817-tablet-rkg11.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3566-rk817-tablet-v10.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3568-evb1-ddr4-v10.dtb

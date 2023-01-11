@@ -54,8 +54,8 @@
 #define GTP_DRIVER_SEND_CFG   1	/* send config to TP while initializing (for no config built in TP's flash) */
 #define GTP_CUSTOM_CFG        0	/* customize resolution & interrupt trigger mode */
 
-#define GTP_CHANGE_X2Y        0	/* exchange xy */
-#define GTP_WARP_X_ON         0
+#define GTP_CHANGE_X2Y        1	/* exchange xy */
+#define GTP_WARP_X_ON         1
 #define GTP_WARP_Y_ON         0
 
 #define GTP_GESTURE_WAKEUP    0	/* gesture wakeup module */
