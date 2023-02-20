@@ -6,7 +6,7 @@
 #include "rk3399-android.dtsi"
 
 / {
-	model = "skysi tmr12 (Android)";
+	model = "skysi tmr12 android";
 	compatible = "rockchip,android", "rockchip,rk3399-evb-lp4x-tmr12-v10", "rockchip,rk3399";
 
 	chosen: chosen {
@@ -217,9 +217,10 @@
 		enable-gpios = <&gpio1 RK_PB5 GPIO_ACTIVE_HIGH>;
 		enable-delay-ms = <100>;
 		prepare-delay-ms = <100>;
-		//reset-gpios = <&gpio2 RK_PA6 GPIO_ACTIVE_LOW>;
-		reset-gpios = <&gpio4 RK_PD0 GPIO_ACTIVE_LOW>;
+		reset-gpios = <&gpio2 RK_PA6 GPIO_ACTIVE_LOW>;
+		reset1-gpios = <&gpio4 RK_PD0 GPIO_ACTIVE_LOW>;
 		reset-delay-ms = <200>;
+		reset1-delay-ms = <200>;
 		init-delay-ms = <10>;
 		
 		

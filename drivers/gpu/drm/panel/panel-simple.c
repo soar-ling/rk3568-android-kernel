@@ -95,6 +95,7 @@ struct panel_desc {
 		unsigned int disable;
 		unsigned int unprepare;
 		unsigned int reset;
+		unsigned int reset1;
 		unsigned int init;
 	} delay;
 
@@ -121,6 +122,7 @@ struct panel_simple {
 
 	struct gpio_desc *enable_gpio;
 	struct gpio_desc *reset_gpio;
+	struct gpio_desc *reset1_gpio;
 	int cmd_type;
 
 	struct gpio_desc *spi_sdi_gpio;
@@ -551,6 +553,8 @@ static int panel_simple_unprepare(struct drm_panel *panel)
 	}
 
 	gpiod_direction_output(p->reset_gpio, 1);
+	gpiod_direction_output(p->reset1_gpio, 1);
+	
 
 	gpiod_direction_output(p->enable_gpio, 0);
 
@@ -589,6 +593,15 @@ static int panel_simple_prepare(struct drm_panel *panel)
 		panel_simple_sleep(p->desc->delay.reset);
 
 	gpiod_direction_output(p->reset_gpio, 0);
+
+
+	gpiod_direction_output(p->reset1_gpio, 1);
+
+	if (p->desc->delay.reset1)
+		panel_simple_sleep(p->desc->delay.reset1);
+
+	gpiod_direction_output(p->reset1_gpio, 0);
+
 
 	if (p->desc->delay.init)
 		panel_simple_sleep(p->desc->delay.init);
@@ -726,6 +739,15 @@ static int panel_simple_probe(struct device *dev, const struct panel_desc *desc)
 		return err;
 	}
 
+	panel->reset1_gpio = devm_gpiod_get_optional(dev, "reset1", GPIOD_ASIS);
+	if (IS_ERR(panel->reset1_gpio)) {
+		err = PTR_ERR(panel->reset1_gpio);
+		if (err != -EPROBE_DEFER)
+			dev_err(dev, "failed to get reset GPIO: %d\n", err);
+		return err;
+	}
+
+
 	if (of_property_read_string(dev->of_node, "rockchip,cmd-type",
 				    &cmd_type))
 		panel->cmd_type = CMD_TYPE_DEFAULT;
@@ -848,6 +870,7 @@ static void panel_simple_shutdown(struct device *dev)
 
 	if (panel->prepared) {
 		gpiod_direction_output(panel->reset_gpio, 1);
+		gpiod_direction_output(panel->reset1_gpio, 1);
 		gpiod_direction_output(panel->enable_gpio, 0);
 		panel_simple_regulator_disable(panel);
 	}
@@ -3111,6 +3134,7 @@ static int panel_simple_of_get_desc_data(struct device *dev,
 	of_property_read_u32(np, "disable-delay-ms", &desc->delay.disable);
 	of_property_read_u32(np, "unprepare-delay-ms", &desc->delay.unprepare);
 	of_property_read_u32(np, "reset-delay-ms", &desc->delay.reset);
+	of_property_read_u32(np, "reset1-delay-ms", &desc->delay.reset1);
 	of_property_read_u32(np, "init-delay-ms", &desc->delay.init);
 
 	data = of_get_property(np, "panel-init-sequence", &len);
