@@ -51,6 +51,15 @@ config SGI_MBCS
 source "drivers/tty/serial/Kconfig"
 source "drivers/tty/serdev/Kconfig"
 
+config GPIO_TEST
+	bool "GPIO TEST driver"
+	default y
+	---help---
+	  If you say Y here, the support for writing user messages (i.e.
+	  console messages) via printk is available.
+
+
+
 config TTY_PRINTK
 	tristate "TTY driver to output user messages via printk"
 	depends on EXPERT && TTY
