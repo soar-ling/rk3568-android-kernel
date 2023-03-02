@@ -21,7 +21,7 @@
 
 	backlight: backlight {
 		compatible = "pwm-backlight";
-		pwms = <&pwm8 0 25000 0>;
+		pwms = <&pwm15 0 25000 0>;
 		brightness-levels = <
 			  0  20  20  21  21  22  22  23
 			 23  24  24  25  25  26  26  27
@@ -197,32 +197,6 @@
 		tsgpio70-en-gpios = <&gpio2 RK_PA0 GPIO_ACTIVE_HIGH>; 
 		tsgpio71-en-gpios = <&gpio2 RK_PA1 GPIO_ACTIVE_HIGH>; 
 		tsgpio72-en-gpios = <&gpio2 RK_PA2 GPIO_ACTIVE_HIGH>; 
-		
-		
-		
-		
-		
-		
-		
-		
-
-		
-		
-
-
-		
-		
-		
-
-		
-		
-		
-
-
-
-		
-		
-	
 	};
 };
 
@@ -968,9 +942,9 @@
 	status = "okay";
 };
 
-&pwm8 {
+&pwm15 {
 	status = "okay";
-	pinctrl-0 = <&pwm8m1_pins>;
+	pinctrl-0 = <&pwm15m0_pins>;
 };
 
 
