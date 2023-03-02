@@ -86,6 +86,16 @@
 		};
 	};
 
+	dc_12v: dc-12v {
+		compatible = "regulator-fixed";
+		regulator-name = "dc_12v";
+		regulator-always-on;
+		regulator-boot-on;
+		regulator-min-microvolt = <12000000>;
+		regulator-max-microvolt = <12000000>;
+	};  
+
+
 	vcc5v0_sys: vcc5v0-sys {
 		compatible = "regulator-fixed";
 		regulator-name = "vcc5v0_sys";
@@ -93,6 +103,17 @@
 		regulator-boot-on;
 		regulator-min-microvolt = <5000000>;
 		regulator-max-microvolt = <5000000>;
+		vin-supply = <&dc_12v>;
+	};
+
+	vcc3v3_sys: vcc3v3-sys {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc3v3_sys";
+		regulator-always-on;
+		regulator-boot-on;
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		vin-supply = <&dc_12v>;
 	};
       
 	vcc_camera: vcc-camera-regulator {
@@ -371,7 +392,8 @@
 };
 
 &hdmi {
-	status = "okay";
+	status = "disabled";
+	connect = <&vp0_out_hdmi>;
 };
 
 &hdmi_in_vp0 {
@@ -383,7 +405,7 @@
 };
 
 &hdmi_sound {
-	status = "disabled";
+	status = "okay";
 };
 
 
@@ -692,7 +714,7 @@
 			hp-volume = <20>;
 			spk-volume = <0x6f>;
 			out-l2spk-r2hp;
-			spk-ctl-gpios = <&gpio3 RK_PB7 GPIO_ACTIVE_LOW>;
+			spk-ctl-gpios = <&gpio3 RK_PB7 GPIO_ACTIVE_HIGH>;
 			status = "okay";
 		};
 	};
@@ -1069,37 +1091,6 @@
 			<2 RK_PA0 RK_FUNC_GPIO &pcfg_pull_up>,
 			<2 RK_PA1 RK_FUNC_GPIO &pcfg_pull_up>,
 			<2 RK_PA2 RK_FUNC_GPIO &pcfg_pull_up>;
-			
-			
-		
-			
-			
-			
-			
-			
-
-			
-			
-			
-			
-
-
-
-			
-			
-			
-
-			
-		
-			
-			
-
-			
-			
-			
-			
-			
-		
 		};
 	};
 
