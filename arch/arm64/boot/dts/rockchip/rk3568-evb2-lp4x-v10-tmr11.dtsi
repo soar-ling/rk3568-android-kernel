@@ -12,7 +12,7 @@
 #include "rk3568-evb-tmr11.dtsi"
 
 / {
-	model = "Rockchip RK3568 EVB2 LP4X V10 TMR11";
+	model = "Rockchip RK3568 EVB2 LP4X V10 TMR11 5";
 	compatible = "rockchip,rk3568-evb2-lp4x-v10-tmr11", "rockchip,rk3568";
 
 	rk_headset: rk-headset {
@@ -40,15 +40,6 @@
 			label = "sleep";
 			default-state = "off";
 		};
-	};
-	
-	wifi_3v3_enable: wifi-enable-regulator {
-		compatible = "regulator-fixed";
-		gpio = <&gpio0 RK_PC1 GPIO_ACTIVE_LOW>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&wifi_pwr_pin>;
-		regulator-name = "wifi-pwr";
-		regulator-always-on;
 	};
 };
 
@@ -160,17 +151,7 @@
 	pinctrl-0 = <&uart1m0_xfer &uart1m0_ctsn>;
 };
 
-&wireless_wlan {
-	wifi_chip_type = "RTL8822ES";
-	sdio_vref = <1800>;
-	rockchip,grf = <&rk809 1>;
-	clocks = <&rk809 1>;
-	pinctrl-names = "default";
-	pinctrl-0 = <&wifi_host_wake_irq>;
-	WIFI,host_wake_irq = <&gpio2 RK_PB2 GPIO_ACTIVE_HIGH>;
-	
-	status = "okay";
-};
+
 
 &wireless_bluetooth {
 	compatible = "bluetooth-platdata";
@@ -204,14 +185,6 @@
         };
      };
 
-	wireless-wlan {
-		wifi_host_wake_irq: wifi-host-wake-irq {
-			rockchip,pins = <2 RK_PB2 RK_FUNC_GPIO &pcfg_pull_down>;
-		};
-		wifi_pwr_pin: wifi-pwr {
-			rockchip,pins = <0 RK_PC1 RK_FUNC_GPIO &pcfg_pull_down>;
-		};
-	};
 
 	wireless-bluetooth {
 		uart1_gpios: uart1-gpios {
