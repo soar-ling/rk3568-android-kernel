@@ -126,6 +126,15 @@
 		pinctrl-0 = <&vcc5v0_host2_en>;
 	};
 
+	wifi_3v3_enable: wifi-enable-regulator {
+		compatible = "regulator-fixed";
+		gpio = <&gpio0 RK_PB0 GPIO_ACTIVE_LOW>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&wifi_pwr_pin>;
+		regulator-name = "wifi-pwr";
+		regulator-always-on;
+	};
+
 	spdif-sound {
 		status = "disabled";
 	};
@@ -136,6 +145,36 @@
 
 	test-power {
 		status = "okay";
+	};
+
+	sdio_pwrseq: sdio-pwrseq {
+		clocks = <&pmucru CLK_RTC_32K>;
+		clock-names = "ext_clock";
+		reset-gpios = <&gpio2 RK_PB1 GPIO_ACTIVE_LOW>;
+		pinctrl-0 = <&wifi_enable_h &wifi_32k>;
+	};
+
+	wireless_wlan: wireless-wlan {
+		sdio_vref = <1800>;
+		/delete-property/ clocks;
+		/delete-property/ clock-names;
+		pinctrl-names = "default";
+		pinctrl-0 = <&wifi_host_wake_irq>;
+		WIFI,host_wake_irq = <&gpio2 RK_PB2 GPIO_ACTIVE_HIGH>;
+	};
+
+	wireless_bluetooth: wireless-bluetooth {
+		compatible = "bluetooth-platdata";
+		clocks = <&pmucru CLK_RTC_32K>;
+		clock-names = "ext_clock";
+		//wifi-bt-power-toggle;
+		uart_rts_gpios = <&gpio2 RK_PB5 GPIO_ACTIVE_LOW>;
+		pinctrl-names = "default", "rts_gpio";
+		pinctrl-0 = <&uart1m0_rtsn>;
+		pinctrl-1 = <&uart1_gpios>;
+		BT,reset_gpio    = <&gpio2 RK_PB7 GPIO_ACTIVE_HIGH>;
+		BT,wake_gpio     = <&gpio2 RK_PC1 GPIO_ACTIVE_HIGH>;
+		BT,wake_host_irq = <&gpio2 RK_PC0 GPIO_ACTIVE_HIGH>;
 	};
 };
 
@@ -242,6 +281,32 @@
 			rockchip,pins = <1 RK_PB0 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
+
+	sdio-pwrseq {
+		wifi_enable_h: wifi-enable-h {
+			rockchip,pins = <2 RK_PB1 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		wifi_32k: wifi-32k {
+			rockchip,pins = <2 RK_PC6 1 &pcfg_pull_none>;
+		};
+	};
+
+	wireless-wlan {
+		wifi_host_wake_irq: wifi-host-wake-irq {
+			rockchip,pins = <2 RK_PB2 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		wifi_pwr_pin: wifi-pwr {
+			rockchip,pins = <0 RK_PB0 RK_FUNC_GPIO &pcfg_pull_down>;
+		};
+	};
+
+	wireless-bluetooth {
+		uart1_gpios: uart1-gpios {
+			rockchip,pins = <2 RK_PB5 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
 };
 
  /*
@@ -311,6 +376,22 @@
     spk-ctl-gpio = <&gpio3 RK_PC3 GPIO_ACTIVE_HIGH>;
 };
 
+&sdmmc1 {
+	max-frequency = <150000000>;
+	supports-sdio;
+	bus-width = <4>;
+	disable-wp;
+	cap-sd-highspeed;
+	//cap-sdio-irq;
+	keep-power-in-suspend;
+	mmc-pwrseq = <&sdio_pwrseq>;
+	non-removable;
+	pinctrl-names = "default";
+	pinctrl-0 = <&sdmmc1_bus4 &sdmmc1_cmd &sdmmc1_clk>;
+	sd-uhs-sdr104;
+	status = "okay";
+};
+
 &usb2phy1 {
 	reset-gpios = <&gpio2 RK_PD0 GPIO_ACTIVE_LOW>;
 	status = "okay";
@@ -325,6 +406,10 @@
 };
 
 &combphy2_psq {
+	status = "okay";
+};
+
+&uart1 {
 	status = "okay";
 };
 
