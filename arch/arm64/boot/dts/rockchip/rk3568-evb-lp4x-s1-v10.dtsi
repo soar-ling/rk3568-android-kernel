@@ -307,6 +307,10 @@
 	/delete-node/ ir_key3;
 };
 
+&rk809_codec {
+    spk-ctl-gpio = <&gpio3 RK_PC3 GPIO_ACTIVE_HIGH>;
+};
+
 &usb2phy1 {
 	reset-gpios = <&gpio2 RK_PD0 GPIO_ACTIVE_LOW>;
 	status = "okay";
