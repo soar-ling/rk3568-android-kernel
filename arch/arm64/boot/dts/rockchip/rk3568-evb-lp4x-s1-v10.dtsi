@@ -17,9 +17,10 @@
 
 	rk_headset: rk-headset {
 		compatible = "rockchip_headset";
-		headset_gpio = <&gpio3 RK_PC2 GPIO_ACTIVE_LOW>;
+		headset_gpio = <&gpio3 RK_PC2 GPIO_ACTIVE_HIGH>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&hp_det>;
+		io-channels = <&saradc 2>;
 	};
 
 	backlight: backlight {
@@ -166,7 +167,7 @@
 &pinctrl {
 	headphone {
 		hp_det: hp-det {
-			rockchip,pins = <3 RK_PC2 RK_FUNC_GPIO &pcfg_pull_down>;
+			rockchip,pins = <3 RK_PC2 RK_FUNC_GPIO &pcfg_pull_up>;
 		};
 	};
 
