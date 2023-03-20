@@ -135,6 +135,30 @@
 	};
 };
 
+&video_phy0 {
+	status = "okay";
+};
+
+&video_phy1 {
+	status = "disabled";
+};
+
+&hdmi_sound {
+	status = "disabled";
+};
+
+&hdmi {
+	status = "disabled";
+};
+
+&hdmi_in_vp0 {
+	status = "disabled";
+};
+
+&hdmi_in_vp1 {
+	status = "okay";
+};
+
 &i2c1 {
 	status = "okay";
 
