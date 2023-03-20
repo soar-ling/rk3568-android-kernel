@@ -229,6 +229,10 @@
 	status = "okay";
 };
 
+&combphy0_us {
+	status = "okay";
+};
+
 &uart4 {
 	status = "okay";
 	pinctrl-names = "default";
