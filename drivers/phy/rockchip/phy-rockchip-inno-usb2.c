@@ -310,6 +310,7 @@ struct rockchip_usb2phy {
 	struct extcon_dev	*edev;
 	const struct rockchip_usb2phy_cfg	*phy_cfg;
 	struct rockchip_usb2phy_port	ports[USB2PHY_NUM_PORTS];
+	struct gpio_desc *reset_gpio;
 };
 
 static inline struct regmap *get_reg_base(struct rockchip_usb2phy *rphy)
@@ -1975,6 +1976,17 @@ static int rockchip_usb2phy_probe(struct platform_device *pdev)
 		ret = rphy->phy_cfg->phy_tuning(rphy);
 		if (ret)
 			goto disable_clks;
+	}
+
+	rphy->reset_gpio = devm_gpiod_get_optional(dev, "reset", GPIOD_ASIS);
+	if (IS_ERR(rphy->reset_gpio)) {
+		printk("no reset gpio\n");
+	} else {
+		gpiod_direction_output(rphy->reset_gpio, 0);
+		mdelay(20);
+		gpiod_direction_output(rphy->reset_gpio, 1);
+		mdelay(100);
+		gpiod_direction_output(rphy->reset_gpio, 0);
 	}
 
 	index = 0;
