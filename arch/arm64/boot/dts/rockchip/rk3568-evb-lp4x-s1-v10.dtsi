@@ -239,10 +239,32 @@
 	remote_support_psci = <0>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pwm3_pins>;
+
+	ir_key1 {
+		rockchip,usercode = <0xdf20>;
+		rockchip,key_table =
+			<0xb5	KEY_OK>,
+			<0xf5	KEY_BACK>,
+			<0xb8	KEY_UP>,
+			<0xb2	KEY_DOWN>,
+			<0xb6	KEY_LEFT>,
+			<0xb4	KEY_RIGHT>,
+			<0xe5	KEY_HOME>,
+			<0xfc	KEY_VOLUMEUP>,
+			<0xbe	KEY_VOLUMEDOWN>,
+			<0xa0	KEY_SEARCH>,
+			<0xad	KEY_POWER>,
+			<0xac	KEY_MUTE>,
+			<0xf9	KEY_MENU>,
+			<0xfd	KEY_CHANNELUP>,
+			<0xf6	KEY_CHANNELDOWN>,
+			<0xa1 KEY_SETTINGS>,
+			<0xbf KEY_TV_INPUT>;
+	};
 };
 
 &pwm7 {
-	status = "okay";
+	status = "disabled";
 
 	/delete-node/ ir_key1;
 	/delete-node/ ir_key2;
