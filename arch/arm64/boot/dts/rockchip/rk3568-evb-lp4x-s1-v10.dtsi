@@ -23,6 +23,10 @@
 		io-channels = <&saradc 2>;
 	};
 
+	vcc3v3_lcd1_n: vcc3v3-lcd1-n {
+		gpio = <&gpio2 RK_PD3 GPIO_ACTIVE_HIGH>;
+	};
+
 	backlight: backlight {
 		brightness-levels = <
 			  0   1   2   3   4   5   6   7
@@ -309,6 +313,14 @@
 };
 
 &combphy0_us {
+	status = "okay";
+};
+
+&combphy1_usq {
+	status = "okay";
+};
+
+&combphy2_psq {
 	status = "okay";
 };
 
