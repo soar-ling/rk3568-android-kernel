@@ -426,7 +426,8 @@
 	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart7m1_xfer>;
-	uart-rs485-gpio = <&gpio3 RK_PB5 GPIO_ACTIVE_LOW>;
+	rs485-enable = <1>;
+	rs485-gpio = <&gpio3 RK_PB5 GPIO_ACTIVE_LOW>;
 };
 
 &uart8 {

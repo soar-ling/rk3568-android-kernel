@@ -27,6 +27,8 @@
 
 #include <asm/byteorder.h>
 
+#include <linux/of_gpio.h>
+
 #include "8250.h"
 
 /* Offsets for the DesignWare specific registers */
@@ -545,6 +547,7 @@ static int dw8250_probe(struct platform_device *pdev)
 	struct uart_port *p = &uart.port;
 	struct device *dev = &pdev->dev;
 	struct dw8250_data *data;
+	struct device_node *np;
 	int err;
 	u32 val;
 
@@ -693,6 +696,24 @@ static int dw8250_probe(struct platform_device *pdev)
 		data->dma.txconf.dst_maxburst = p->fifosize / 4;
 		uart.dma = &data->dma;
 	}
+
+
+    np = p->dev->of_node;
+    of_property_read_u32(np, "rs485-enable",&(uart.rs485_enable));
+    if(uart.rs485_enable == 1)
+    {
+        uart.rs485_gpio = of_get_named_gpio(np, "rs485-gpio", 0);
+		if (gpio_is_valid(uart.rs485_gpio)) {
+			err = devm_gpio_request(p->dev, uart.rs485_gpio, "rs485-gpio");
+			if (err < 0)
+				goto err_pclk;
+			err = gpio_direction_output(uart.rs485_gpio, 0); // rx enable
+			if (err < 0)
+				goto err_pclk;
+		}
+    }
+
+    printk("uartline: %d (rs485en = %d, rs485gpio = %d)\n", p->line, uart.rs485_enable, uart.rs485_gpio);
 
 	data->line = serial8250_register_8250_port(&uart);
 	if (data->line < 0) {

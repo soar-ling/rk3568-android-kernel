@@ -138,6 +138,9 @@ struct uart_8250_port {
 	/* Serial port overrun backoff */
 	struct delayed_work overrun_backoff;
 	u32 overrun_backoff_time_ms;
+
+	int rs485_gpio;
+	int rs485_enable;
 };
 
 static inline struct uart_8250_port *up_to_u8250p(struct uart_port *up)

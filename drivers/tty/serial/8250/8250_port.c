@@ -38,6 +38,8 @@
 #include <asm/io.h>
 #include <asm/irq.h>
 
+#include <linux/gpio.h>
+
 #include "8250.h"
 
 /*
@@ -1805,6 +1807,16 @@ void serial8250_tx_chars(struct uart_8250_port *up)
 	}
 
 	count = up->tx_loadsz;
+
+    if(count > 0)
+    {
+        if(up->rs485_enable == 1)
+        {
+            //printk("ttyS%d start\n",up->port.line);
+            gpio_set_value(up->rs485_gpio,1);
+        }
+	}
+
 	do {
 		serial_out(up, UART_TX, xmit->buf[xmit->tail]);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
@@ -1828,8 +1840,15 @@ void serial8250_tx_chars(struct uart_8250_port *up)
 	 * HW can go idle. So we get here once again with empty FIFO and disable
 	 * the interrupt and RPM in __stop_tx()
 	 */
-	if (uart_circ_empty(xmit) && !(up->capabilities & UART_CAP_RPM))
+	if (uart_circ_empty(xmit) && !(up->capabilities & UART_CAP_RPM)) {
 		__stop_tx(up);
+		if(up->rs485_enable == 1)
+    	{
+			while(!((up->port.serial_in(&(up->port), UART_LSR)) & 0x40));
+			//printk("ttyS%d: done \n",up->port.line);
+        	gpio_set_value(up->rs485_gpio,0);
+    	}
+	}
 }
 EXPORT_SYMBOL_GPL(serial8250_tx_chars);
 

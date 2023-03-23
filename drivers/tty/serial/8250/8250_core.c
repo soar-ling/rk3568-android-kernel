@@ -1012,6 +1012,8 @@ int serial8250_register_8250_port(struct uart_8250_port *up)
 		uart->dma		= up->dma;
 #ifdef CONFIG_ARCH_ROCKCHIP
 		uart->port.line		= up->port.line;
+		uart->rs485_enable  = up->rs485_enable;
+		uart->rs485_gpio    = up->rs485_gpio;
 #endif
 		/* Take tx_loadsz from fifosize if it wasn't set separately */
 		if (uart->port.fifosize && !uart->tx_loadsz)
