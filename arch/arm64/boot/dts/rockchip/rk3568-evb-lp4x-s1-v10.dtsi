@@ -195,14 +195,6 @@
 	status = "disabled";
 };
 
-&hdmi_in_vp0 {
-	status = "disabled";
-};
-
-&hdmi_in_vp1 {
-	status = "okay";
-};
-
 &i2c1 {
 	status = "okay";
 
@@ -345,7 +337,7 @@
 	ir_key1 {
 		rockchip,usercode = <0xdf20>;
 		rockchip,key_table =
-			<0xb5	KEY_ENTER>,
+			<0xb5	KEY_REPLY>,
 			<0xf5	KEY_BACK>,
 			<0xb8	KEY_UP>,
 			<0xb2	KEY_DOWN>,
