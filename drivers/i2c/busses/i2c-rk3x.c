@@ -1477,7 +1477,7 @@ static struct platform_driver rk3x_i2c_driver = {
 	},
 };
 
-#ifdef CONFIG_ROCKCHIP_THUNDER_BOOT
+#ifdef CONFIG_ROCKCHIP_THUNDER_BOOT_RK628
 static int __init rk3x_i2c_driver_init(void)
 {
 	return platform_driver_register(&rk3x_i2c_driver);

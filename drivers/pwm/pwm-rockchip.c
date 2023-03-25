@@ -475,7 +475,7 @@ static struct platform_driver rockchip_pwm_driver = {
 	.probe = rockchip_pwm_probe,
 	.remove = rockchip_pwm_remove,
 };
-#ifdef CONFIG_ROCKCHIP_THUNDER_BOOT
+#ifdef CONFIG_ROCKCHIP_THUNDER_BOOT_RK628
 static int __init rockchip_pwm_driver_init(void)
 {
 	return platform_driver_register(&rockchip_pwm_driver);
