@@ -208,12 +208,17 @@ static const struct drm_display_mode dw_hdmi_default_modes[] = {
 		DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC),
 	.vrefresh = 60, .picture_aspect_ratio =HDMI_PICTURE_ASPECT_64_27, },*/
 
-	/* 16 - 1920x1080@60Hz 16:9 */
+	/* 16 - 1920x1080@60Hz 16:9
 	{ DRM_MODE("1920x1080", DRM_MODE_TYPE_DRIVER, 148500, 1920, 2008,
 		   2052, 2200, 0, 1080, 1084, 1089, 1125, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC),
-	  .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },
+	  .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },*/
 
+	/* 107 - 3840x2160@60Hz 64:27 */
+	{ DRM_MODE("3840x2160", DRM_MODE_TYPE_DRIVER, 594000, 3840, 4016,
+		4104, 4400, 0, 2160, 2168, 2178, 2250, 0,
+		DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC),
+	.picture_aspect_ratio = HDMI_PICTURE_ASPECT_64_27, },
 };
 
 struct hdmi_vmode {
@@ -2802,8 +2807,8 @@ static int dw_hdmi_connector_get_modes(struct drm_connector *connector)
 				ret++;
 			}
 		}
-		info->edid_hdmi_dc_modes = 0;
-		info->hdmi.y420_dc_modes = 0;
+		info->edid_hdmi_dc_modes = 1;
+		info->hdmi.y420_dc_modes = 1;
 		info->color_formats = 0;
 
 		dev_info(hdmi->dev, "failed to get edid\n");
@@ -3963,7 +3968,8 @@ __dw_hdmi_probe(struct platform_device *pdev,
 
 	hdmi->initialized = false;
 	ret = hdmi_readb(hdmi, HDMI_PHY_STAT0);
-	if (((ret & HDMI_PHY_TX_PHY_LOCK) && (ret & HDMI_PHY_HPD) &&
+	//if (((ret & HDMI_PHY_TX_PHY_LOCK) && (ret & HDMI_PHY_HPD) &&
+	if (((ret & HDMI_PHY_TX_PHY_LOCK) && 
 	     hdmi_readb(hdmi, HDMI_FC_EXCTRLDUR)) || hdmi->force_logo) {
 		hdmi->mc_clkdis = hdmi_readb(hdmi, HDMI_MC_CLKDIS);
 		hdmi->disabled = false;

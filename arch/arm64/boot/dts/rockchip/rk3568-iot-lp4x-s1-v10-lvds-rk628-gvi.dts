@@ -167,6 +167,7 @@
 		clock-names = "soc_24M";
 
 		rk628,hdmi-in;
+		src-mode-4k-yuv420;
 
 		rk628-gvi {
 			/* "rgb666"

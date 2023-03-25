@@ -622,11 +622,13 @@ dw_hdmi_rockchip_mode_valid(struct drm_connector *connector,
 	 * YCbCr420.
 	 */
 	if (!hdmi->skip_check_420_mode) {
+		#if 0
 		if (mode->clock > 340000 &&
 		    connector->display_info.max_tmds_clock < 340000 &&
 		    (!drm_mode_is_420(&connector->display_info, mode) ||
 		     !connector->ycbcr_420_allowed))
 			return MODE_BAD;
+         #endif
 
 		if (hdmi->max_tmdsclk <= 340000 && mode->clock > 340000 &&
 		    !drm_mode_is_420(&connector->display_info, mode))
@@ -795,6 +797,8 @@ dw_hdmi_rockchip_select_output(struct drm_connector_state *conn_state,
 	default:
 		break;
 	}
+
+	*color_format = DRM_HDMI_OUTPUT_YCBCR420;
 
 	if (*color_format == DRM_HDMI_OUTPUT_DEFAULT_RGB &&
 	    info->edid_hdmi_dc_modes & DRM_EDID_HDMI_DC_30)
