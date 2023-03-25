@@ -98,6 +98,33 @@ static ssize_t modem_status_store(struct class *cls,
 	return count;
 }
 
+static ssize_t modem_reset_store(struct class *cls,
+				  struct class_attribute *attr,
+				  const char *buf, size_t count)
+{
+	int new_state, ret;
+	struct lte_data *pdata = gpdata;
+
+	ret = kstrtoint(buf, 10, &new_state);
+	if (ret) {
+		LOG("%s: kstrtoint error return %d\n", __func__, ret);
+		return ret;
+	}
+
+	if (new_state == 1) {
+		if (pdata->reset_gpio) {
+			LOG("%s, c(%d), reset modem.\n", __func__, new_state);
+			gpiod_direction_output(pdata->reset_gpio, 0);
+			msleep(500);
+			gpiod_direction_output(pdata->reset_gpio, 1);
+		}
+	} else {
+		LOG("%s, invalid parameter.\n", __func__);
+	}
+
+	return count;
+}
+
 static ssize_t modem_status_show(struct class *cls,
 				 struct class_attribute *attr,
 				 char *buf)
@@ -106,6 +133,7 @@ static ssize_t modem_status_show(struct class *cls,
 }
 
 static CLASS_ATTR_RW(modem_status);
+static CLASS_ATTR_WO(modem_reset);
 
 static int modem_platdata_parse_dt(struct device *dev,
 				   struct lte_data *data)
@@ -165,7 +193,7 @@ static int lte_probe(struct platform_device *pdev)
 	pdata->dev = &pdev->dev;
 
 	if (pdata->reset_gpio)
-		gpiod_direction_output(pdata->reset_gpio, 0);
+		gpiod_direction_output(pdata->reset_gpio, 1);
 	kthread = kthread_run(modem_power_on_thread, NULL,
 			      "modem_power_on_thread");
 	if (IS_ERR(kthread)) {
@@ -230,6 +258,9 @@ static int __init rm310_init(void)
 	ret =  class_create_file(modem_class, &class_attr_modem_status);
 	if (ret)
 		LOG("Fail to create class modem_status.\n");
+	ret =  class_create_file(modem_class, &class_attr_modem_reset);
+	if (ret)
+		LOG("Fail to create class modem_reset.\n");
 	return platform_driver_register(&rm310_driver);
 }
 
