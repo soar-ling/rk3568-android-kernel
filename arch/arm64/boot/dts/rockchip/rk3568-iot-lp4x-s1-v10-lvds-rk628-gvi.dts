@@ -8,7 +8,7 @@
 #include "rk3568-android.dtsi"
 /{
 	model = "Rockchip RK3568 LP4X SKYSI IOT V10 Board";
-	compatible = "rockchip,rk3568-iot-lp4x-s1-v10-lvds", "rockchip,rk3568";
+	compatible = "rockchip,rk3568-iot-lp4x-s1-v10-lvds-rk628-gvi", "rockchip,rk3568";
 };
 
 &backlight {
