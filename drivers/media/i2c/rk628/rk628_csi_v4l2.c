@@ -43,7 +43,7 @@
 #include "rk628_v4l2_controls.h"
 #include "rk628_mipi_dphy.h"
 
-static int debug=3;
+static int debug;
 module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "debug level (0-3)");
 
@@ -702,8 +702,7 @@ static void rk628_dsi_set_scs(struct rk628_csi *csi)
 
 	rk628_i2c_read(csi->rk628, HDMI_RX_PDEC_AVI_PB, &val);
 	video_fmt = (val & VIDEO_FORMAT_MASK) >> 5;
-	printk("%s PDEC_AVI_PB:%#x, video format:%d\n",
-			__func__, val, video_fmt);
+	//printk("%s PDEC_AVI_PB:%#x, video format:%d\n",__func__, val, video_fmt);
 	if (video_fmt) {
 		if (csi->dsi.vid_mode == VIDEO_MODE)
 			rk628_i2c_write(csi->rk628, GRF_CSC_CTRL_CON,
@@ -1351,7 +1350,7 @@ static int rk628_csi_g_input_status(struct v4l2_subdev *sd, u32 *status)
 {
 	struct rk628_csi *csi = to_csi(sd);
 	static u8 cnt;
- printk("zc:%s", __func__);
+    //printk("zc:%s", __func__);
 	*status = 0;
 	*status |= no_signal(sd) ? V4L2_IN_ST_NO_SIGNAL : 0;
 
@@ -1522,7 +1521,7 @@ static int rk628_csi_g_mbus_config(struct v4l2_subdev *sd,
 static int rk628_csi_s_stream(struct v4l2_subdev *sd, int enable)
 {
 	struct rk628_csi *csi = to_csi(sd);
- printk("zc:%s", __func__);
+ 
 	if (csi->plat_data->tx_mode == CSI_MODE)
 		enable_stream(sd, enable);
 	else
@@ -1569,7 +1568,7 @@ static int rk628_csi_enum_frame_sizes(struct v4l2_subdev *sd,
 				   struct v4l2_subdev_frame_size_enum *fse)
 {
 	struct rk628_csi *csi = to_csi(sd);
-    printk("zc:%s", __func__);
+   // printk("zc:%s", __func__);
 	v4l2_dbg(1, debug, sd, "%s:\n", __func__);
 
 	if (fse->index >= ARRAY_SIZE(supported_modes))
@@ -1591,7 +1590,7 @@ static int rk628_csi_enum_frame_interval(struct v4l2_subdev *sd,
 		struct v4l2_subdev_frame_interval_enum *fie)
 {
 	struct rk628_csi *csi = to_csi(sd);
-    printk("zc:%s", __func__);
+    //("zc:%s", __func__);
 	if (fie->index >= ARRAY_SIZE(supported_modes))
 		return -EINVAL;
 
@@ -1609,7 +1608,7 @@ static int rk628_csi_get_fmt(struct v4l2_subdev *sd,
 		struct v4l2_subdev_format *format)
 {
 	struct rk628_csi *csi = to_csi(sd);
-     printk("zc:%s", __func__);
+   //  printk("zc:%s", __func__);
 	mutex_lock(&csi->confctl_mutex);
 
 	format->format.code = csi->mbus_fmt_code;
@@ -2222,7 +2221,7 @@ static int rk628_csi_probe(struct i2c_client *client,
 	struct rk628 *rk628;
 	unsigned long irq_flags;
 	const struct of_device_id *match;
-    printk("zc:%s", __func__);
+   // printk("zc:%s", __func__);
 	dev_info(dev, "RK628 I2C driver version: %02x.%02x.%02x",
 		DRIVER_VERSION >> 16,
 		(DRIVER_VERSION & 0xff00) >> 8,
