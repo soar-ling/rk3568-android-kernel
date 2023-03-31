@@ -172,6 +172,10 @@
 		interrupts = <RK_PC3 IRQ_TYPE_LEVEL_LOW>;   
 		pinctrl-names = "default";
 		pinctrl-0 = <&rk628_irq &rk628_det>;
+		assigned-clocks = <&pmucru CLK_WIFI>;
+		assigned-clock-rates = <24000000>;
+		clocks = <&pmucru CLK_WIFI>;
+		clock-names = "soc_24M";
 		//hdcp-enable = <1>;
 		//power-gpios = <&gpio0 RK_PD5 GPIO_ACTIVE_HIGH>;
 		enable-gpios = <&gpio0 RK_PD6 GPIO_ACTIVE_HIGH>;
