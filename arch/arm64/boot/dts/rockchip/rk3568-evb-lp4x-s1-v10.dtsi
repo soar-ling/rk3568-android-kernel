@@ -187,6 +187,33 @@
 		4G,reset-gpio = <&gpio3 RK_PA1 GPIO_ACTIVE_HIGH>;
 		status = "okay";
 	};
+
+	rk628_dc: rk628-dc {
+		compatible = "rockchip,dummy-codec";
+		#sound-dai-cells = <0>;
+	};
+
+	hdmiin-sound {
+		compatible = "simple-audio-card";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,name = "rockchip,hdmiin";
+		simple-audio-card,bitclock-master = <&dailink0_master>;
+		simple-audio-card,frame-master = <&dailink0_master>;
+		status = "okay";
+
+	simple-audio-card,cpu {
+		sound-dai = <&i2s3_2ch>;
+		};
+
+	dailink0_master: simple-audio-card,codec {
+		sound-dai = <&rk628_dc>;
+		};
+	};
+};
+
+
+&i2s3_2ch {
+	status = "okay";
 };
 
 &video_phy0 {
@@ -266,65 +293,6 @@
 	};
 };
 
-&pinctrl {
-	headphone {
-		hp_det: hp-det {
-			rockchip,pins = <3 RK_PC2 RK_FUNC_GPIO &pcfg_pull_up>;
-		};
-	};
-
-	rtc {
-		rtc_int: rtc-int {
-			rockchip,pins = <0 RK_PD3 RK_FUNC_GPIO &pcfg_pull_up>;
-		};
-	};
-
-	usb {
-		vcc5v0_host2_en: vcc5v0-host2-en {
-			rockchip,pins = <1 RK_PB0 RK_FUNC_GPIO &pcfg_pull_none>;
-		};
-	};
-
-	sdio-pwrseq {
-		wifi_enable_h: wifi-enable-h {
-			rockchip,pins = <2 RK_PB1 RK_FUNC_GPIO &pcfg_pull_none>;
-		};
-
-		wifi_32k: wifi-32k {
-			rockchip,pins = <2 RK_PC6 1 &pcfg_pull_none>;
-		};
-	};
-
-	wireless-wlan {
-		wifi_host_wake_irq: wifi-host-wake-irq {
-			rockchip,pins = <2 RK_PB2 RK_FUNC_GPIO &pcfg_pull_none>;
-		};
-
-		wifi_pwr_pin: wifi-pwr {
-			rockchip,pins = <0 RK_PB0 RK_FUNC_GPIO &pcfg_pull_down>;
-		};
-	};
-
-	wireless-bluetooth {
-		uart1_gpios: uart1-gpios {
-			rockchip,pins = <2 RK_PB5 RK_FUNC_GPIO &pcfg_pull_none>;
-		};
-	};
-
-	rk-modem {
-		lte_vbat: lte-vbat {
-			rockchip,pins = <3 RK_PC6 RK_FUNC_GPIO &pcfg_pull_none>;
-		};
-
-		lte_power_en: lte-power-en {
-			rockchip,pins = <2 RK_PD6 RK_FUNC_GPIO &pcfg_pull_none>;
-		};
-
-		lte_reset: lte-reset {
-			rockchip,pins = <3 RK_PA1 RK_FUNC_GPIO &pcfg_pull_none>;
-		};
-	};
-};
 
  /*
   * There are 10 independent IO domains in RK3566/RK3568, including PMUIO[0:2] and VCCIO[1:7].
@@ -456,4 +424,228 @@
 	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart9m1_xfer>;
+};
+
+
+&i2c3 {
+	clock-frequency = <100000>;
+	status = "okay";
+
+    rk628_csi_v4l2: rk628_csi_v4l2@50 {
+		/* csi->csi:rk628-csi-v4l2 dsi->csi:rk628-dsi-v4l2 */
+		compatible = "rockchip,rk628-csi-v4l2";
+		reg = <0x50>;
+		//clocks = <&ext_cam_clk>;
+		//clock-names = "xvclk";
+		interrupt-parent = <&gpio4>;
+		interrupts = <RK_PC3 IRQ_TYPE_LEVEL_LOW>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&rk628_irq &rk628_det>;
+		assigned-clocks = <&pmucru CLK_WIFI>;
+		assigned-clock-rates = <24000000>;
+		clocks = <&pmucru CLK_WIFI>;
+		clock-names = "soc_24M";
+		//hdcp-enable = <1>;
+		//power-gpios = <&gpio0 RK_PD5 GPIO_ACTIVE_HIGH>;
+		enable-gpios = <&gpio0 RK_PD6 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpio4 RK_PD2 GPIO_ACTIVE_LOW>;
+		plugin-det-gpios = <&gpio3 RK_PD0 GPIO_ACTIVE_LOW>;
+		rockchip,camera-module-index = <0>;
+		rockchip,camera-module-facing = "back";
+		rockchip,camera-module-name = "RK628-CSI";
+		rockchip,camera-module-lens-name = "NC";
+		port {
+			rk628_out: endpoint {
+				remote-endpoint = <&hdmi2mipi_in>;
+				data-lanes = <1 2 3 4>;
+			};
+		};
+	};
+};
+
+
+&mipi_csi2 {
+	status = "okay";
+
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port@0 {
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			mipi_csi2_input: endpoint@1 {
+				reg = <1>;
+				remote-endpoint = <&csidphy_out>;
+				data-lanes = <1 2 3 4>;
+			};
+		};
+
+		port@1 {
+			reg = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			mipi_csi2_output: endpoint@0 {
+				reg = <0>;
+				remote-endpoint = <&cif_mipi_in>;
+				data-lanes = <1 2 3 4>;
+			};
+		};
+	};
+};
+
+&rkcif_mipi_lvds {
+	status = "okay";
+
+	port {
+		cif_mipi_in: endpoint {
+			remote-endpoint = <&mipi_csi2_output>;
+			data-lanes = <1 2 3 4>;
+		};
+	};
+};
+
+
+
+&rkcif_mmu {
+	status = "okay";
+};
+
+&rkcif_dvp_sditf {
+	status = "disabled";
+};
+
+&rkcif {
+	status = "okay";
+};
+
+&csi2_dphy_hw {
+	status = "okay";
+};
+
+&csi2_dphy0 {
+	status = "okay";
+
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port@0 {
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			hdmi2mipi_in: endpoint@0 {
+				reg = <1>;
+				remote-endpoint = <&rk628_out>;
+				data-lanes = <1 2 3 4>;
+			};
+		};
+
+		port@1 {
+			reg = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			csidphy_out: endpoint@0 {
+				reg = <0>;
+				remote-endpoint = <&mipi_csi2_input>;
+			};
+		};
+	};
+};
+
+&rkisp {
+	status = "disabled";
+};
+
+&rkisp_mmu {
+	status = "disabled";
+};
+
+&rkisp_vir0 {
+	status = "disabled";
+
+	port {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		isp0_in: endpoint@0 {
+			reg = <0>;
+			remote-endpoint = <&csidphy_out>;
+		};
+	};
+};
+
+
+
+&pinctrl {
+	headphone {
+		hp_det: hp-det {
+			rockchip,pins = <3 RK_PC2 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
+	rtc {
+		rtc_int: rtc-int {
+			rockchip,pins = <0 RK_PD3 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
+	usb {
+		vcc5v0_host2_en: vcc5v0-host2-en {
+			rockchip,pins = <1 RK_PB0 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	sdio-pwrseq {
+		wifi_enable_h: wifi-enable-h {
+			rockchip,pins = <2 RK_PB1 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		wifi_32k: wifi-32k {
+			rockchip,pins = <2 RK_PC6 1 &pcfg_pull_none>;
+		};
+	};
+
+	wireless-wlan {
+		wifi_host_wake_irq: wifi-host-wake-irq {
+			rockchip,pins = <2 RK_PB2 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		wifi_pwr_pin: wifi-pwr {
+			rockchip,pins = <0 RK_PB0 RK_FUNC_GPIO &pcfg_pull_down>;
+		};
+	};
+
+	wireless-bluetooth {
+		uart1_gpios: uart1-gpios {
+			rockchip,pins = <2 RK_PB5 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	rk-modem {
+		lte_vbat: lte-vbat {
+			rockchip,pins = <3 RK_PC6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		lte_power_en: lte-power-en {
+			rockchip,pins = <2 RK_PD6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		lte_reset: lte-reset {
+			rockchip,pins = <3 RK_PA1 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	rk628-csi {
+		rk628_irq: rk628-irq {
+			rockchip,pins = <4 RK_PC3 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+		rk628_det: rk628-det {
+			rockchip,pins = <3 RK_PD0 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
 };
