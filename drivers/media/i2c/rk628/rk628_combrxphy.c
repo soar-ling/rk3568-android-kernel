@@ -84,7 +84,7 @@ static int rk628_combrxphy_try_clk_detect(struct rk628 *rk628)
 		rk628_i2c_read(rk628, COMBRX_REG(0x6654), &val);
 		if ((val & 0xf0000000) == 0x80000000) {
 			ret = 0;
-			dev_info(rk628->dev, "clock detected!\n");
+			//dev_info(rk628->dev, "clock detected!\n");
 			break;
 		}
 	}
@@ -164,8 +164,7 @@ rk628_combrxphy_max_zero_of_round(struct rk628 *rk628,
 
 	max_zero[n] = max_cnt;
 	max_val[n] = max_v;
-	dev_info(rk628->dev, "channel:%d, round:%d, max_zero_cnt:%d, max_val:%#x\n",
-		 ch, n, max_zero[n], max_val[n]);
+	//dev_info(rk628->dev, "channel:%d, round:%d, max_zero_cnt:%d, max_val:%#x\n",ch, n, max_zero[n], max_val[n]);
 }
 
 static int rk628_combrxphy_chose_round_for_ch(struct rk628 *rk628,
@@ -187,7 +186,7 @@ static int rk628_combrxphy_chose_round_for_ch(struct rk628 *rk628,
             rd = i;
         }
     }
-    dev_info(rk628->dev, "%s channel:%d, rd:%d\n", __func__, ch, rd);
+  //  dev_info(rk628->dev, "%s channel:%d, rd:%d\n", __func__, ch, rd);
 
     return rd;
 }
@@ -302,8 +301,8 @@ static void rk628_combrxphy_sample_edge_procedure_for_cable(struct rk628 *rk628,
 		edge = 2200 * 1125;
 	}
 
-	dev_info(rk628->dev, "cdr_mode:%d, dc_gain:%d, rd_offset:%d, edge:%#x\n",
-		 cdr_mode, dc_gain, rd_offset, edge);
+	//dev_info(rk628->dev, "cdr_mode:%d, dc_gain:%d, rd_offset:%d, edge:%#x\n",cdr_mode, dc_gain, rd_offset, edge);
+
 	for (ch = 0; ch < MAX_CHANNEL; ch++) {
 		rk628_combrxphy_select_channel(rk628, ch);
 		rk628_i2c_write(rk628, COMBRX_REG(0x6708), edge);
@@ -336,8 +335,7 @@ static void rk628_combrxphy_sample_edge_procedure_for_cable(struct rk628 *rk628,
 		ch_round[ch] = rk628_combrxphy_chose_round_for_ch(rk628, round_max_zero[ch], round_max_value[ch], ch)
 			+ rd_offset;
 	}
-	dev_info(rk628->dev, "last equ gain ch0:%d, ch1:%d, ch2:%d\n",
-		 ch_round[0], ch_round[1], ch_round[2]);
+	//dev_info(rk628->dev, "last equ gain ch0:%d, ch1:%d, ch2:%d\n",ch_round[0], ch_round[1], ch_round[2]);
 
 	/* step10: write result to sample edge round value  */
 	rk628_combrxphy_set_sample_edge_round(rk628, ch_round[0], ch_round[1], ch_round[2]);
@@ -402,13 +400,13 @@ static int rk628_combrxphy_set_hdmi_mode_for_cable(struct rk628 *rk628, int f)
 		mdelay(1);
 	}
 	rk628_i2c_read(rk628, COMBRX_REG(0x6654), &val);
-	dev_info(rk628->dev, "clk det over cnt:%d, reg_0x6654:%#x\n", i, val);
+	//dev_info(rk628->dev, "clk det over cnt:%d, reg_0x6654:%#x\n", i, val);
 	state = (val >> 28) & 0xf;
 	if (state == 5) {
-		dev_info(rk628->dev, "Clock detection anomaly\n");
+		//dev_info(rk628->dev, "Clock detection anomaly\n");
 	} else if (state == 4) {
 		channel_st = (val >> 21) & 0x7f;
-		dev_info(rk628->dev, "%s%s%s%s%s%s%s%s level detection anomaly\n",
+	/*	dev_info(rk628->dev, "%s%s%s%s%s%s%s%s level detection anomaly\n",
 			 channel_st & 0x40 ? "|clk_p|" : "",
 			 channel_st & 0x20 ? "|clk_n|" : "",
 			 channel_st & 0x10 ? "|d0_p|" : "",
@@ -416,7 +414,7 @@ static int rk628_combrxphy_set_hdmi_mode_for_cable(struct rk628 *rk628, int f)
 			 channel_st & 0x04 ? "|d1_p|" : "",
 			 channel_st & 0x02 ? "|d1_n|" : "",
 			 channel_st & 0x01 ? "|d2_p|" : "",
-			 channel_st ? "" : "|d2_n|");
+			 channel_st ? "" : "|d2_n|"); */
 	}
 
 	rk628_i2c_read(rk628, COMBRX_REG(0x6620), &val);
@@ -425,7 +423,7 @@ static int rk628_combrxphy_set_hdmi_mode_for_cable(struct rk628 *rk628, int f)
             ((val & 0x007f0000) == 0) ||
             ((val & 0x00007f00) == 0) ||
             ((val & 0x0000007f) == 0)) {
-	        dev_info(rk628->dev, "clock detected failed, cfg resistance manual!\n");
+	      //  dev_info(rk628->dev, "clock detected failed, cfg resistance manual!\n");
 	        rk628_i2c_write(rk628, COMBRX_REG(0x6620), 0x66666666);
 	        rk628_i2c_update_bits(rk628, COMBRX_REG(0x6604), BIT(31), BIT(31));
 	        mdelay(1);
@@ -479,7 +477,7 @@ static int rk628_combrxphy_set_hdmi_mode_for_cable(struct rk628 *rk628, int f)
 
 	cdr_mode = (val >> 16) & 0x1f;
 	cdr_data =  val & 0xffff;
-	dev_info(rk628->dev, "cdr_mode:%d, cdr_data:%d\n", cdr_mode, cdr_data);
+	//dev_info(rk628->dev, "cdr_mode:%d, cdr_data:%d\n", cdr_mode, cdr_data);
 
 	/* step5: manually configure PLL
 	* cfg reg 66a8 tmds clock div2 for rgb/yuv444 as default
@@ -512,7 +510,7 @@ static int rk628_combrxphy_set_hdmi_mode_for_cable(struct rk628 *rk628, int f)
 	else
 		pll_man = 0x7f0c8;
 
-	dev_info(rk628->dev, "cdr_mode:%d, pll_man:%#x\n", cdr_mode, pll_man);
+	//dev_info(rk628->dev, "cdr_mode:%d, pll_man:%#x\n", cdr_mode, pll_man);
 	rk628_i2c_write(rk628, COMBRX_REG(0x6630), pll_man);
 
 	/* step6: EQ and SAMPLE cfg */
@@ -545,14 +543,14 @@ static int rk628_combrxphy_set_hdmi_mode_for_cable(struct rk628 *rk628, int f)
 	}
 
 	if (count >= CHECK_CNT) {
-		dev_info(rk628->dev, "channel alignment done\n");
-		dev_info(rk628->dev, "rx initial done\n");
+		//dev_info(rk628->dev, "channel alignment done\n");
+		//dev_info(rk628->dev, "rx initial done\n");
 		ret = 0;
 	} else if (count > 0) {
-		dev_info(rk628->dev, "link not stable, count:%d of 100\n", count);
+		//dev_info(rk628->dev, "link not stable, count:%d of 100\n", count);
 		ret = 0;
 	} else {
-		dev_err(rk628->dev, "channel alignment failed!\n");
+		//dev_err(rk628->dev, "channel alignment failed!\n");
 		ret = -EINVAL;
 	}
 

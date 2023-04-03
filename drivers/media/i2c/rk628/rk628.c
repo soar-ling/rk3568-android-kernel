@@ -614,10 +614,10 @@ void rk628_post_process_en(struct rk628 *rk628,
 	dst->pixelclock = dst_rate;
 	*dst_pclk = dst->pixelclock;
 
-	dev_info(rk628->dev, "src %dx%d clock:%lu\n",
-		 src->hactive, src->vactive, src->pixelclock);
-	dev_info(rk628->dev, "dst %dx%d clock:%lu\n",
-		 dst->hactive, dst->vactive, dst->pixelclock);
+	//dev_info(rk628->dev, "src %dx%d clock:%lu\n",src->hactive, src->vactive, src->pixelclock);
+	//dev_info(rk628->dev, "dst %dx%d clock:%lu\n",dst->hactive, dst->vactive, dst->pixelclock);
+
+
 	dst->flags = 0;
 
 	rk628_control_assert(rk628, RGU_DECODER);

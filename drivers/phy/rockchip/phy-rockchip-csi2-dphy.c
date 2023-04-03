@@ -92,8 +92,7 @@ static int csi2_dphy_get_sensor_data_rate(struct v4l2_subdev *sd)
 	}
 	dphy->data_rate_mbps = qm.value * 2;
 	do_div(dphy->data_rate_mbps, 1000 * 1000);
-	v4l2_info(sd, "dphy%d, data_rate_mbps %lld\n",
-		  dphy->phy_index, dphy->data_rate_mbps);
+	//v4l2_info(sd, "dphy%d, data_rate_mbps %lld\n",dphy->phy_index, dphy->data_rate_mbps);
 	return 0;
 }
 
@@ -166,8 +165,7 @@ static int csi2_dphy_s_stream_stop(struct v4l2_subdev *sd)
 
 	dphy->is_streaming = false;
 
-	dev_info(dphy->dev, "%s stream stop, dphy%d\n",
-		 __func__, dphy->phy_index);
+	//dev_info(dphy->dev, "%s stream stop, dphy%d\n",__func__, dphy->phy_index);
 
 	return 0;
 }
@@ -184,8 +182,7 @@ static int csi2_dphy_s_stream(struct v4l2_subdev *sd, int on)
 		ret = csi2_dphy_s_stream_stop(sd);
 	mutex_unlock(&dphy->mutex);
 
-	dev_info(dphy->dev, "%s stream on:%d, dphy%d\n",
-		 __func__, on, dphy->phy_index);
+	//dev_info(dphy->dev, "%s stream on:%d, dphy%d\n",__func__, on, dphy->phy_index);
 
 	return ret;
 }
@@ -333,8 +330,7 @@ rockchip_csi2_dphy_notifier_bound(struct v4l2_async_notifier *notifier,
 	sensor->mbus = s_asd->mbus;
 	sensor->sd = sd;
 
-	dev_info(dphy->dev, "dphy%d matches %s:bus type %d\n",
-		 dphy->phy_index, sd->name, s_asd->mbus.type);
+	//dev_info(dphy->dev, "dphy%d matches %s:bus type %d\n",dphy->phy_index, sd->name, s_asd->mbus.type);
 
 	for (pad = 0; pad < sensor->sd->entity.num_pads; pad++)
 		if (sensor->sd->entity.pads[pad].flags & MEDIA_PAD_FL_SOURCE)
@@ -600,7 +596,7 @@ static int rockchip_csi2_dphy_probe(struct platform_device *pdev)
 
 	pm_runtime_enable(&pdev->dev);
 
-	dev_info(dev, "csi2 dphy%d probe successfully!\n", csi2dphy->phy_index);
+	//dev_info(dev, "csi2 dphy%d probe successfully!\n", csi2dphy->phy_index);
 
 	return 0;
 

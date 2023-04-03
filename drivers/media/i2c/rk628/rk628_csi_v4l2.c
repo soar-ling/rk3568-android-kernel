@@ -1075,17 +1075,18 @@ static int rk628_hdmirx_phy_setup(struct v4l2_subdev *sd)
 			frame_height = val & 0xffff;
 			rk628_i2c_read(csi->rk628, HDMI_RX_SCDC_REGS1, &val);
 			status = val;
-			v4l2_dbg(1, debug, sd, "%s read wxh:%dx%d, total:%dx%d,"
+			
+			/*v4l2_dbg(1, debug, sd, "%s read wxh:%dx%d, total:%dx%d,"
 					" SCDC_REGS1:%#x, cnt:%d\n", __func__,
 					width, height, frame_width,
-					frame_height, status, cnt);
+					frame_height, status, cnt); */
 
 			rk628_i2c_read(csi->rk628, HDMI_RX_PDEC_STS, &val);
 			if (val & DVI_DET)
-				dev_info(csi->dev, "DVI mode detected\n");
+				//dev_info(csi->dev, "DVI mode detected\n");
 
 			if (!tx_5v_power_present(sd)) {
-				v4l2_info(sd, "HDMI pull out, return!\n");
+				//v4l2_info(sd, "HDMI pull out, return!\n");
 				return -1;
 			}
 
@@ -1895,7 +1896,7 @@ static int mipi_dphy_power_on(struct rk628_csi *csi)
 	mask = DPHY_PLL_LOCK;
 	rk628_i2c_read(csi->rk628, CSITX_CSITX_STATUS1, &val);
 	if ((val & mask) != mask) {
-		dev_err(csi->dev, "PHY is not locked\n");
+		//dev_err(csi->dev, "PHY is not locked\n");
 		return -1;
 	}
 
@@ -2040,7 +2041,7 @@ static irqreturn_t plugin_detect_irq(int irq, void *dev_id)
 {
 	struct rk628_csi *csi = dev_id;
 	struct v4l2_subdev *sd = &csi->sd;
-    printk("zc:plugin_detect_irq");
+   // printk("zc:plugin_detect_irq");
 	/* control hpd after 50ms */
 	schedule_delayed_work(&csi->delayed_work_enable_hotplug, HZ / 20);
 	tx_5v_power_present(sd);
@@ -2221,11 +2222,11 @@ static int rk628_csi_probe(struct i2c_client *client,
 	struct rk628 *rk628;
 	unsigned long irq_flags;
 	const struct of_device_id *match;
-   // printk("zc:%s", __func__);
+   /* printk("zc:%s", __func__);
 	dev_info(dev, "RK628 I2C driver version: %02x.%02x.%02x",
 		DRIVER_VERSION >> 16,
 		(DRIVER_VERSION & 0xff00) >> 8,
-		DRIVER_VERSION & 0x00ff);
+		DRIVER_VERSION & 0x00ff); */
 
 	if (!of_device_is_available(dev->of_node))
 		return -ENODEV;
