@@ -187,33 +187,6 @@
 		4G,reset-gpio = <&gpio3 RK_PA1 GPIO_ACTIVE_HIGH>;
 		status = "okay";
 	};
-
-	rk628_dc: rk628-dc {
-		compatible = "rockchip,dummy-codec";
-		#sound-dai-cells = <0>;
-	};
-
-	hdmiin-sound {
-		compatible = "simple-audio-card";
-		simple-audio-card,format = "i2s";
-		simple-audio-card,name = "rockchip,hdmiin";
-		simple-audio-card,bitclock-master = <&dailink0_master>;
-		simple-audio-card,frame-master = <&dailink0_master>;
-		status = "okay";
-
-	simple-audio-card,cpu {
-		sound-dai = <&i2s3_2ch>;
-		};
-
-	dailink0_master: simple-audio-card,codec {
-		sound-dai = <&rk628_dc>;
-		};
-	};
-};
-
-
-&i2s3_2ch {
-	status = "okay";
 };
 
 &video_phy0 {
