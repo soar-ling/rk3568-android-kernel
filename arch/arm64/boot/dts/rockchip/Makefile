@@ -119,3 +119,4 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3568-iot-lp4x-s1-v10-lvds.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3568-iot-lp4x-s1-v10-lvds-rk628-gvi.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3568-iot-lp4x-s1-v10-edp.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3568-iot-lp4x-s1-v10-mipi.dtb
+dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3568-iot-lp4x-s1-v11-lvds.dtb
