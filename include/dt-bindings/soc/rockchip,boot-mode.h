@@ -20,5 +20,11 @@
 #define BOOT_CHARGING		(REBOOT_FLAG + 11)
 /* enter usb mass storage mode */
 #define BOOT_UMS		(REBOOT_FLAG + 12)
+/* enter wake on IR mode */
+#define BOOT_WAKEONIR		(REBOOT_FLAG + 16)
+/* delete wake on IR mode */
+#define BOOT_DELWAKEONIR	(REBOOT_FLAG + 17)
+/* enter wake on IR once mode */
+#define BOOT_WAKEONIRONCE	(REBOOT_FLAG + 18)
 
 #endif

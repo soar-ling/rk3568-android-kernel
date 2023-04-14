@@ -289,6 +289,12 @@
 	vccio6-supply = <&vcc_1v8>;
 };
 
+&reboot_mode {
+	mode-wakeonir = <BOOT_WAKEONIR>;
+	mode-delwakeonir = <BOOT_DELWAKEONIR>;
+	mode-wakeonironce = <BOOT_WAKEONIRONCE>;
+};
+
 &pwm3 {
 	status = "okay";
 
