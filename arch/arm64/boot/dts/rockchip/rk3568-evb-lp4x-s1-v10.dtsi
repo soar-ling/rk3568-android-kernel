@@ -338,6 +338,7 @@
 
 &rk809_codec {
     spk-ctl-gpio = <&gpio3 RK_PC3 GPIO_ACTIVE_HIGH>;
+    extcon = <&rk_headset>;
 };
 
 &sdmmc1 {
