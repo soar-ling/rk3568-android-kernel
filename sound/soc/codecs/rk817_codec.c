@@ -15,6 +15,7 @@
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/delay.h>
+#include <linux/extcon.h>
 #include <linux/mfd/rk808.h>
 #include <linux/module.h>
 #include <linux/of.h>
@@ -61,6 +62,8 @@
 
 #define CODEC_SET_SPK 1
 #define CODEC_SET_HP 2
+#define BIT_HEADSET             BIT(0)
+#define BIT_HEADSET_NO_MIC      BIT(1)
 
 struct rk817_codec_priv {
 	struct snd_soc_component *component;
@@ -89,6 +92,10 @@ struct rk817_codec_priv {
 	int spk_mute_delay;
 	int hp_mute_delay;
 	int chip_ver;
+	struct extcon_dev *edev;
+	struct notifier_block extcon_nb;
+	struct notifier_block extcon_nb_mic;
+	int headset_status;
 };
 
 static const struct reg_default rk817_reg_defaults[] = {
@@ -997,8 +1004,13 @@ static int rk817_digital_mute(struct snd_soc_dai *dai, int mute)
 						PWD_DACBIAS_ON | PWD_DACD_DOWN |
 						PWD_DACL_ON | PWD_DACR_ON);
 			}
-			rk817_codec_ctl_gpio(rk817, CODEC_SET_SPK, 1);
-			rk817_codec_ctl_gpio(rk817, CODEC_SET_HP, 0);
+			if (rk817->headset_status == false) {
+				rk817_codec_ctl_gpio(rk817, CODEC_SET_SPK, 1);
+				rk817_codec_ctl_gpio(rk817, CODEC_SET_HP, 0);
+			} else {
+				rk817_codec_ctl_gpio(rk817, CODEC_SET_SPK, 0);
+				rk817_codec_ctl_gpio(rk817, CODEC_SET_HP, 1);
+			}
 			break;
 		case HP_PATH:
 		case HP_NO_MIC:
@@ -1015,7 +1027,11 @@ static int rk817_digital_mute(struct snd_soc_dai *dai, int mute)
 			snd_soc_component_write(component, RK817_CODEC_ADAC_CFG1,
 					PWD_DACBIAS_ON | PWD_DACD_ON |
 					PWD_DACL_ON | PWD_DACR_ON);
-			rk817_codec_ctl_gpio(rk817, CODEC_SET_SPK, 1);
+			if (rk817->headset_status == false) {
+				rk817_codec_ctl_gpio(rk817, CODEC_SET_SPK, 1);
+			} else {
+				rk817_codec_ctl_gpio(rk817, CODEC_SET_SPK, 0);
+			}
 			rk817_codec_ctl_gpio(rk817, CODEC_SET_HP, 1);
 			break;
 		default:
@@ -1024,6 +1040,50 @@ static int rk817_digital_mute(struct snd_soc_dai *dai, int mute)
 	}
 
 	return 0;
+}
+
+static int rk817_extcon_notifier(struct notifier_block *self, unsigned long event, void *ptr)
+{
+	struct rk817_codec_priv *rk817 = container_of(self, struct rk817_codec_priv,
+						  extcon_nb);
+
+	DBG("%s %d\n", __func__, !!event);
+	if (event) {
+		rk817->headset_status = BIT_HEADSET_NO_MIC;
+		rk817_codec_ctl_gpio(rk817, CODEC_SET_SPK, 0);
+
+		if (!snd_soc_component_test_bits(rk817->component,
+					      RK817_CODEC_DDAC_MUTE_MIXCTL,
+					      DACMT_ENABLE, DACMT_DISABLE)) {
+			rk817_codec_ctl_gpio(rk817, CODEC_SET_HP, 1);
+		}
+	} else {
+		rk817->headset_status = false;
+		rk817_codec_ctl_gpio(rk817, CODEC_SET_HP, 0);
+	}
+	return NOTIFY_DONE;
+}
+
+static int rk817_extcon_notifier_mic(struct notifier_block *self, unsigned long event, void *ptr)
+{
+	struct rk817_codec_priv *rk817 = container_of(self, struct rk817_codec_priv,
+						  extcon_nb_mic);
+
+	DBG("%s %d\n", __func__, !!event);
+	if (event) {
+		rk817->headset_status = BIT_HEADSET;
+		rk817_codec_ctl_gpio(rk817, CODEC_SET_SPK, 0);
+
+		if (!snd_soc_component_test_bits(rk817->component,
+					      RK817_CODEC_DDAC_MUTE_MIXCTL,
+					      DACMT_ENABLE, DACMT_DISABLE)) {
+			rk817_codec_ctl_gpio(rk817, CODEC_SET_HP, 1);
+		}
+	} else {
+		rk817->headset_status = false;
+		rk817_codec_ctl_gpio(rk817, CODEC_SET_HP, 0);
+	}
+	return NOTIFY_DONE;
 }
 
 #define RK817_PLAYBACK_RATES (SNDRV_PCM_RATE_8000 |\
@@ -1256,6 +1316,14 @@ static int rk817_codec_parse_dt_property(struct device *dev,
 	rk817->adc_for_loopback =
 			of_property_read_bool(node, "adc-for-loopback");
 
+
+	if (of_property_read_bool(node, "extcon")) {
+		rk817->edev = extcon_get_edev_by_phandle(dev, 0);
+		if (IS_ERR(rk817->edev)) {
+			dev_err(dev, "Invalid or missing extcon\n");
+		}
+	}
+
 	return 0;
 }
 
@@ -1323,6 +1391,34 @@ static int rk817_platform_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "%s() register codec error %d\n",
 			__func__, ret);
 		goto err_;
+	}
+
+	if (!IS_ERR(rk817_codec_data->edev)) {
+		rk817_codec_data->extcon_nb.notifier_call = rk817_extcon_notifier;
+		ret = devm_extcon_register_notifier(&pdev->dev, rk817_codec_data->edev,
+						EXTCON_JACK_HEADPHONE,
+						&rk817_codec_data->extcon_nb);
+		if (ret < 0) {
+			dev_err(&pdev->dev, "register notifier fail\n");
+			return ret;
+		}
+
+		rk817_codec_data->extcon_nb_mic.notifier_call = rk817_extcon_notifier_mic;
+		ret = devm_extcon_register_notifier(&pdev->dev, rk817_codec_data->edev,
+						EXTCON_JACK_MICROPHONE,
+						&rk817_codec_data->extcon_nb_mic);
+		if (ret < 0) {
+			dev_err(&pdev->dev, "register notifier fail\n");
+			return ret;
+		}
+
+		if (extcon_get_state(rk817_codec_data->edev, EXTCON_JACK_MICROPHONE)) {
+			rk817_codec_data->headset_status = BIT_HEADSET;
+		} else if (extcon_get_state(rk817_codec_data->edev, EXTCON_JACK_HEADPHONE)) {
+			rk817_codec_data->headset_status = BIT_HEADSET_NO_MIC;
+		} else {
+			rk817_codec_data->headset_status = false;
+		}
 	}
 
 	return 0;

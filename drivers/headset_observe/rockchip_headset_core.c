@@ -204,7 +204,8 @@ static void __exit rockchip_headset_exit(void)
 {
 	platform_driver_unregister(&rockchip_headset_driver);
 }
-late_initcall(rockchip_headset_init);
+//late_initcall(rockchip_headset_init);
+fs_initcall(rockchip_headset_init);
 module_exit(rockchip_headset_exit);
 
 MODULE_DESCRIPTION("Rockchip Headset Core Driver");
