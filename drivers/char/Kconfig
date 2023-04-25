@@ -7,6 +7,13 @@ menu "Character devices"
 
 source "drivers/tty/Kconfig"
 
+config SKYSI_KEY
+	tristate "vendor key driver"
+	default n
+	help
+	  vendor key driver
+
+
 config DEVMEM
 	bool "/dev/mem virtual device support"
 	default y

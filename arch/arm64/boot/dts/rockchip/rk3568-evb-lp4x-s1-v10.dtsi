@@ -22,6 +22,11 @@
 		pinctrl-0 = <&hp_det>;
 		io-channels = <&saradc 2>;
 	};
+    
+	sky_key: sky-key {
+		compatible = "sky,key";
+		status = "okay";
+	};
 
 	vcc3v3_lcd1_n: vcc3v3-lcd1-n {
 		gpio = <&gpio2 RK_PD3 GPIO_ACTIVE_HIGH>;
