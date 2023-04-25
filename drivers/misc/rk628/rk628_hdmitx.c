@@ -655,7 +655,7 @@ static int rk628_hdmi_connector_get_modes(struct drm_connector *connector)
 		info->hdmi.y420_dc_modes = 0;
 		info->color_formats = 0;
 
-		//dev_info(hdmi->dev, "failed to get edid\n");
+		dev_info(hdmi->dev, "failed to get edid\n");
 	}
 
 	return ret;
@@ -1169,7 +1169,7 @@ static struct i2c_adapter *rk628_hdmi_i2c_adapter(struct rk628_hdmi *hdmi)
 
 	hdmi->i2c = i2c;
 
-	//dev_info(hdmi->dev, "registered %s I2C bus driver\n", adap->name);
+	dev_info(hdmi->dev, "registered %s I2C bus driver\n", adap->name);
 
 	return adap;
 }

@@ -16,7 +16,7 @@
 #define MODETCLK_HZ				49500000
 #define RXPHY_CFG_MAX_TIMES			1
 
-u8 debug = 1;
+u8 debug = 0;
 
 static u8 edid_init_data[] = {
 	0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00,

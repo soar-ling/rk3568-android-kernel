@@ -936,7 +936,7 @@ static void testif_write(struct rk628 *rk628, const struct rk628_dsi *dsi,
         testif_test_code_write(rk628, dsi, reg);
         testif_test_data_write(rk628, dsi, value);
         monitor_data = testif_get_data(rk628, dsi);
-        //dev_info(rk628->dev, "monitor_data: 0x%x\n", monitor_data);
+        dev_info(rk628->dev, "monitor_data: 0x%x\n", monitor_data);
 }
 
 static void mipi_dphy_init(struct rk628 *rk628, const struct rk628_dsi *dsi)
@@ -1259,7 +1259,7 @@ void rk628_mipi_dsi_pre_enable(struct rk628 *rk628)
 	rk628_mipi_dsi_dcs_read(rk628, MIPI_DCS_GET_POWER_MODE,
 				&mode, sizeof(mode));
 
-	//dev_info(rk628->dev, "dsi: mode: 0x%x\n", mode);
+	dev_info(rk628->dev, "dsi: mode: 0x%x\n", mode);
 #endif
 
 	dev_info(rk628->dev, "rk628_dsi final DSI-Link bandwidth: %d x %d\n",
