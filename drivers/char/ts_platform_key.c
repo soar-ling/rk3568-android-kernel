@@ -56,8 +56,17 @@
 
 struct skykey_priv {
 	char orientation[DATA_LENGTH]; 
+	const char	*dpi;
+	const char	*firstscreen;
+	const char	*secondscreen;
+	const char	*firstbufsize;
+	const char	*secondbufsize;
+	
 	struct platform_device *pdev;
 };
+
+ 
+	
 
 static struct skykey_priv  *sky_data;
 
@@ -144,7 +153,6 @@ static int write_key(struct skykey_priv *sData, int id, const char *buff)
 	return ret;
 }
  
-
 static ssize_t sky_key_store(struct device *dev,
 		struct device_attribute *attr,
 		const char *buf, size_t count)
@@ -180,12 +188,111 @@ static ssize_t sky_key_show(struct device *dev,
 		return sprintf(buf, "%s\n","null");
 	} 
 }
-
-
 static DEVICE_ATTR(key,0664,sky_key_show, sky_key_store);
 
+
+
+
+static ssize_t sky_dpi_store(struct device *dev,
+		struct device_attribute *attr,
+		const char *buf, size_t count)
+{ 
+	unsigned long enable;	
+	enable = simple_strtoul(buf, NULL, 10);
+	printk("ts:%s",buf);
+    return count;
+}
+
+static ssize_t sky_dpi_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+  return sprintf(buf, "%s\n", sky_data->dpi);
+}
+
+static DEVICE_ATTR(dpi,0664,sky_dpi_show, sky_dpi_store);
+
+static ssize_t sky_firstscreen_store(struct device *dev,
+		struct device_attribute *attr,
+		const char *buf, size_t count)
+{ 
+	unsigned long enable;	
+	enable = simple_strtoul(buf, NULL, 10);
+	printk("ts:%s",buf);
+    return count;
+}
+
+static ssize_t sky_firstscreen_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+  return sprintf(buf, "%s\n", sky_data->firstscreen);
+}
+
+static DEVICE_ATTR(firstscreen,0664,sky_firstscreen_show, sky_firstscreen_store);
+
+static ssize_t sky_secondscreen_store(struct device *dev,
+		struct device_attribute *attr,
+		const char *buf, size_t count)
+{ 
+	unsigned long enable;	
+	enable = simple_strtoul(buf, NULL, 10);
+	printk("ts:%s",buf);
+    return count;
+}
+
+static ssize_t sky_secondscreen_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+  return sprintf(buf, "%s\n", sky_data->secondscreen);
+}
+
+static DEVICE_ATTR(secondscreen,0664,sky_secondscreen_show, sky_secondscreen_store);
+
+static ssize_t sky_firstbufsize_store(struct device *dev,
+		struct device_attribute *attr,
+		const char *buf, size_t count)
+{ 
+	unsigned long enable;	
+	enable = simple_strtoul(buf, NULL, 10);
+	printk("ts:%s",buf);
+    return count;
+}
+
+static ssize_t sky_firstbufsize_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+  return sprintf(buf, "%s\n", sky_data->firstbufsize);
+}
+
+static DEVICE_ATTR(firstbufsize,0664,sky_firstbufsize_show, sky_firstbufsize_store);
+
+	
+static ssize_t sky_secondbufsize_store(struct device *dev,
+		struct device_attribute *attr,
+		const char *buf, size_t count)
+{ 
+	unsigned long enable;	
+	enable = simple_strtoul(buf, NULL, 10);
+	printk("ts:%s",buf);
+    return count;
+}
+
+static ssize_t sky_secondbufsize_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+  return sprintf(buf, "%s\n", sky_data->secondbufsize);
+}
+
+static DEVICE_ATTR(secondbufsize,0664,sky_secondbufsize_show, sky_secondbufsize_store);
+
+
+
 static struct attribute *skykey_sysfs_entries[] = {    
-    &dev_attr_key.attr,   
+    &dev_attr_key.attr,     
+	&dev_attr_dpi.attr,   
+	&dev_attr_firstscreen.attr,
+	&dev_attr_secondscreen.attr,
+	&dev_attr_firstbufsize.attr,
+	&dev_attr_secondbufsize.attr,
     NULL,
 };
 
@@ -200,7 +307,7 @@ static int skykey_probe(struct platform_device *pdev)
 
 	struct skykey_priv *ts;
 	
-   
+	struct device_node *np = pdev->dev.of_node;
 	ts = devm_kzalloc(&pdev->dev, sizeof(*ts), GFP_KERNEL);
 	if (!ts) {
 		ret = -ENOMEM;
@@ -225,9 +332,31 @@ static int skykey_probe(struct platform_device *pdev)
         kobject_del(kobj);        
         return 0;    
         }
-
-
+    
+	ret = of_property_read_string(np, "sky,screendpi", &sky_data->dpi);
+	if (ret) {
+		return -1;
+	}
+    
+    ret = of_property_read_string(np, "sky,firstscreen", &sky_data->firstscreen);
+	if (ret) {
+		return -1;
+	}
+	ret = of_property_read_string(np, "sky,secondscreen", &sky_data->secondscreen);
+	if (ret) {
+		return -1;
+	}
 	
+	ret = of_property_read_string(np, "sky,firstbufsize", &sky_data->firstbufsize);
+	if (ret) {
+		return -1;
+	}
+
+	ret = of_property_read_string(np, "sky,secondbufsize", &sky_data->secondbufsize);
+	if (ret) {
+		return -1;
+	}
+
 	return 0;
 	
 err0:
