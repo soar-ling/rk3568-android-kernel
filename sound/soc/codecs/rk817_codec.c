@@ -111,7 +111,7 @@ static const struct reg_default rk817_reg_defaults[] = {
 	{ RK817_CODEC_DADC_RVOLR, 0xff },
 	{ RK817_CODEC_AMIC_CFG0, 0x70 },
 	{ RK817_CODEC_AMIC_CFG1, 0x00 },
-	{ RK817_CODEC_DMIC_PGA_GAIN, 0x66 },
+	{ RK817_CODEC_DMIC_PGA_GAIN, 0xaf },
 	{ RK817_CODEC_DMIC_LMT1, 0x00 },
 	{ RK817_CODEC_DMIC_LMT2, 0x00 },
 	{ RK817_CODEC_DMIC_NG1, 0x00 },
@@ -340,7 +340,7 @@ static struct rk817_reg_val_typ capture_power_up_list[] = {
 	{RK817_CODEC_DI2S_TXCR3_TXCMD, 0x88},
 	{RK817_CODEC_DDAC_POPD_DACST, 0x02},
 	/* 0x29: -18db to 27db */
-	{RK817_CODEC_DMIC_PGA_GAIN, 0xaa},
+	{RK817_CODEC_DMIC_PGA_GAIN, 0xaf},
 };
 
 #define RK817_CODEC_CAPTURE_POWER_UP_LIST_LEN \
@@ -742,7 +742,7 @@ static int rk817_capture_path_config(struct snd_soc_component *component,
 						      0x0);
 			snd_soc_component_write(component,
 						RK817_CODEC_DMIC_PGA_GAIN,
-						0x66);
+						0xaf);
 			snd_soc_component_write(component,
 						RK817_CODEC_DADC_VOLL,
 						0x00);
@@ -777,7 +777,7 @@ static int rk817_capture_path_config(struct snd_soc_component *component,
 						      0x0);
 			snd_soc_component_write(component,
 						RK817_CODEC_DMIC_PGA_GAIN,
-						0x66);
+						0xaf);
 			snd_soc_component_write(component,
 						RK817_CODEC_DADC_VOLL,
 						0x00);
