@@ -333,26 +333,26 @@ static int skykey_probe(struct platform_device *pdev)
         return 0;    
         }
     
-	ret = of_property_read_string(np, "sky,screendpi", &sky_data->dpi);
+	ret = of_property_read_string(np, "sky,dpi", &sky_data->dpi);
 	if (ret) {
 		return -1;
 	}
     
-    ret = of_property_read_string(np, "sky,firstscreen", &sky_data->firstscreen);
+    ret = of_property_read_string(np, "sky,vendor.hwc.device.primary", &sky_data->firstscreen);
 	if (ret) {
 		return -1;
 	}
-	ret = of_property_read_string(np, "sky,secondscreen", &sky_data->secondscreen);
+	ret = of_property_read_string(np, "sky,vendor.hwc.device.extend", &sky_data->secondscreen);
 	if (ret) {
 		return -1;
 	}
 	
-	ret = of_property_read_string(np, "sky,firstbufsize", &sky_data->firstbufsize);
+	ret = of_property_read_string(np, "sky,persist.vendor.framebuffer.main", &sky_data->firstbufsize);
 	if (ret) {
 		return -1;
 	}
 
-	ret = of_property_read_string(np, "sky,secondbufsize", &sky_data->secondbufsize);
+	ret = of_property_read_string(np, "sky,persist.vendor.framebuffer.aux", &sky_data->secondbufsize);
 	if (ret) {
 		return -1;
 	}
@@ -363,7 +363,6 @@ err0:
 	return ret;
 	
 }
-
 static int skykey_remove(struct platform_device *pdev)
 {
 	
