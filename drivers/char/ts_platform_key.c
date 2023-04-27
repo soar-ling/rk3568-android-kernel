@@ -169,7 +169,7 @@ static ssize_t sky_key_store(struct device *dev,
 		return -1;
 	}
 	
-	ret = write_key(sky_data, PLAYREADY_ROOT_KEY_1_ID, buf);
+	ret = write_key(sky_data, COMMON_DRM_KEY, buf);
 	
 	if(ret!=0){
 		return ret;
@@ -182,7 +182,7 @@ static ssize_t sky_key_store(struct device *dev,
 static ssize_t sky_key_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
-  	if(read_key(sky_data, PLAYREADY_ROOT_KEY_1_ID) > 0){
+  	if(read_key(sky_data, COMMON_DRM_KEY) > 0){
 		return sprintf(buf, "%s\n", sky_data->orientation);
 	} else {
 		return sprintf(buf, "%s\n","null");
