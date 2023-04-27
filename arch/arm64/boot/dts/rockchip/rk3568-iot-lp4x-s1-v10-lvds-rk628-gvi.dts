@@ -12,17 +12,17 @@
 };
 /******
 *screendpi取值为3位数例如180   
-*firstscreen： DSI/ HDMI-A  vendor.hwc.device.primary 主屏
-*secondscreen：DSI/ HDMI-A  vendor.hwc.device.extend  副屏
-*firstbufsize：persist.vendor.framebuffer.main   1：1280x720@60     2:1920x1080@60  3:3840x2160@60  主屏buf大小(取值1,2,3)
-*secondbufsize：persist.vendor.framebuffer.aux   1：1280x720@60     2:1920x1080@60  3:3840x2160@60  副屏buf大小(取值1,2,3)
+*firstscreen： DSI/ HDMI-A /eDP  vendor.hwc.device.primary 主屏
+*secondscreen：DSI/ HDMI-A  /eDP vendor.hwc.device.extend  副屏
+*firstbufsize：persist.vendor.framebuffer.main  1280x720@60     1920x1080@60 3840x2160@60  主屏buf大小
+*secondbufsize：persist.vendor.framebuffer.aux   1280x720@60     1920x1080@60  3840x2160@60  副屏buf大小
 *******/
 &sky_key{
     sky,screendpi = "420"; 
     sky,firstscreen="HDMI-A";
 	sky,secondscreen="DSI";
-	sky,firstbufsize = "3";   
-	sky,secondbufsize = "2";
+	sky,firstbufsize = "3840x2160@60";   
+	sky,secondbufsize = "1920x1080@60";
 	status = "okay";
 };
 
