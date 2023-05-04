@@ -212,7 +212,8 @@ void panel_prepare(struct rk628 *rk628)
 }
 
 void panel_enable(struct rk628 *rk628)
-{
+{    
+	mdelay(500);
 	if (rk628->panel->backlight)
 		backlight_enable(rk628->panel->backlight);
 }
