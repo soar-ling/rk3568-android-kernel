@@ -1584,6 +1584,9 @@ static int lt9211_pm_resume(struct device *dev)
 {
 	//struct i2c_client *client = to_i2c_client(dev);
 	//struct lt9211_data* lt9211 = dev_get_drvdata(dev);
+
+	lt9211_init_config();
+
 	return 0;
 }
 #endif
