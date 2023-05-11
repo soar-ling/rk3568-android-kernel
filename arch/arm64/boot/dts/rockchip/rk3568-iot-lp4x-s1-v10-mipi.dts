@@ -155,3 +155,15 @@
 	status = "okay";
 	connect = <&vp1_out_dsi1>;
 };
+
+&i2c1 {
+	status = "okay";
+
+	egalax_i2c@2a {
+		compatible = "eeti,egalax_i2c";
+		reg = <0x2a>;
+		interrupt-parent = <&gpio0>;
+		interrupts = <RK_PB5 IRQ_TYPE_LEVEL_LOW>;
+		int-gpios = <&gpio0 RK_PB5 GPIO_ACTIVE_LOW>;
+	};
+};
