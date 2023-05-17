@@ -478,7 +478,7 @@ static void rk628_display_work(struct work_struct *work)
 	u8 ret = 0;
 	struct rk628 *rk628 =
 		container_of(work, struct rk628, delay_work.work);
-	int delay = msecs_to_jiffies(2000);
+	int delay = msecs_to_jiffies(1000);
 
 	if (rk628->input_mode == INPUT_MODE_HDMI) {
 		ret = rk628_hdmirx_detect(rk628);
@@ -1053,7 +1053,7 @@ rk628_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	struct dentry *debug_dir;
 
 	dev_info(dev, "RK628 misc driver version: %s\n", DRIVER_VERSION);
-
+	printk("%s %d\n",__func__,__LINE__);
 	rk628 = devm_kzalloc(dev, sizeof(*rk628), GFP_KERNEL);
 	if (!rk628)
 		return -ENOMEM;
@@ -1062,7 +1062,7 @@ rk628_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	rk628->client = client;
 	i2c_set_clientdata(client, rk628);
 	rk628->hdmirx_irq = client->irq;
-
+printk("%s %d\n",__func__,__LINE__);
 	ret = rk628_display_route_info_parse(rk628);
 	if (ret) {
 		dev_err(dev, "display route err\n");
@@ -1114,13 +1114,12 @@ rk628_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	}
 
 	gpiod_set_value(rk628->enable_gpio, 1);
-	usleep_range(10000, 11000);
 	gpiod_set_value(rk628->reset_gpio, 0);
-	usleep_range(10000, 11000);
+	usleep_range(5000, 6000);
 	gpiod_set_value(rk628->reset_gpio, 1);
-	usleep_range(10000, 11000);
+	usleep_range(5000, 6000);
 	gpiod_set_value(rk628->reset_gpio, 0);
-	usleep_range(10000, 11000);
+	usleep_range(5000, 6000);
 
 	for (i = 0; i < RK628_DEV_MAX; i++) {
 		const struct regmap_config *config = &rk628_regmap_config[i];

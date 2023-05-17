@@ -202,23 +202,17 @@ static const u16 csc_coeff_full_to_limited[3][4] = {
 };
 
 static const struct drm_display_mode dw_hdmi_default_modes[] = {
-	/* 108 - 1080x1920@60Hz
-	{ DRM_MODE("1080x1920", DRM_MODE_TYPE_DRIVER, 148500, 1080, 1120,
-		1140, 1220, 0, 1920, 1920+20, 1920+20+10, 1920+20+10+20, 0,
-		DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC),
-	.vrefresh = 60, .picture_aspect_ratio =HDMI_PICTURE_ASPECT_64_27, },*/
-
-	/* 16 - 1920x1080@60Hz 16:9
-	{ DRM_MODE("1920x1080", DRM_MODE_TYPE_DRIVER, 148500, 1920, 2008,
-		   2052, 2200, 0, 1080, 1084, 1089, 1125, 0,
+	/* 97 - 3840x2160@60Hz 16:9 */
+	{ DRM_MODE("3840x2160", DRM_MODE_TYPE_DRIVER, 594000, 3840, 4004,
+		   4092, 4400, 0, 2160, 2168, 2178, 2250, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC),
-	  .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },*/
+	  .vrefresh = 60, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },
 
-	/* 107 - 3840x2160@60Hz 64:27 */
-	{ DRM_MODE("3840x2160", DRM_MODE_TYPE_DRIVER, 594000, 3840, 4016,
-		4104, 4400, 0, 2160, 2168, 2178, 2250, 0,
-		DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC),
-	.picture_aspect_ratio = HDMI_PICTURE_ASPECT_64_27, },
+	/* 16 - 1920x1080@60Hz 16:9 */
+	// { DRM_MODE("1920x1080", DRM_MODE_TYPE_DRIVER, 148500, 1920, 2008,
+	// 	   2052, 2200, 0, 1080, 1084, 1089, 1125, 0,
+	// 	   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC),
+	//   .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },   
 };
 
 struct hdmi_vmode {
