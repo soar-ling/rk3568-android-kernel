@@ -15,405 +15,277 @@
 #include <linux/hrtimer.h>
 #include <linux/ioport.h>
 #include <linux/file.h>
-#include <linux/slab.h>
-#include <linux/kobject.h>
-#include <linux/kthread.h>
-#include <linux/of_device.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <asm/uaccess.h>
-#include <linux/types.h>
-#include <linux/serio.h>
-#include <linux/delay.h>
-#include <linux/clk.h>
-#include <linux/fs.h>
-#include <linux/io.h>
-#include <linux/uaccess.h>
-
 #include <linux/miscdevice.h>
 #include <linux/of_device.h>
 #include <linux/of_address.h>
 #include <linux/of_platform.h>
 #include <linux/of_gpio.h>
-#include <asm/io.h>
-#include <linux/cdev.h>
-#include <linux/interrupt.h>
-#include <linux/workqueue.h>
 #include <linux/device.h>
 #include <linux/uaccess.h>
 #include <linux/soc/rockchip/rk_vendor_storage.h>
 #include <linux/string.h>
 
+static int dbg_enable;
+module_param_named(dbg_level, dbg_enable, int, 0644);
 
+#define DBG(args...) \
+    do { \
+        if (dbg_enable) { \
+            pr_info(args); \
+        } \
+    } while (0)
 
+#define DRIVER_NAME	"fdt_key"
+#define DEVICE_NAME	"key"
+#define DATA_LENGTH	32 /* vendor page size */
+static struct platform_device *pdev;
 
-
-#define TS_DEVICE_NAME	"skykey"
-
-
-#define DATA_LENGTH 32 /* 定义数据大小 */
-
-
-struct skykey_priv {
-	char orientation[DATA_LENGTH]; 
-	const char	*dpi;
-	const char	*firstscreen;
-	const char	*secondscreen;
-	const char	*firstbufsize;
-	const char	*secondbufsize;
-	
-	struct platform_device *pdev;
+struct fdt_info_priv {
+    char orientation[DATA_LENGTH];
+    const char	*dpi;
+    const char	*default_orientation;
+    const char	*firstscreen;
+    const char	*secondscreen;
+    const char	*firstbufsize;
+    const char	*secondbufsize;
 };
 
- 
-	
-
-static struct skykey_priv  *sky_data;
-
-static struct kobject *kobj = NULL;
-
-
-int skykey_open(struct inode *inode,struct file *filp)
+static int vendor_key_read(struct fdt_info_priv *priv, int id)
 {
-    printk(KERN_INFO "ts open gpio==\n");
-	
-	return 0;
+    char str[DATA_LENGTH] = {0};
+    int ret = -1;
+
+    memset(str, 0, DATA_LENGTH);
+
+    ret = rk_vendor_read(id, str, (DATA_LENGTH-1));
+    if (ret && strlen(str)) {
+        strcpy(priv->orientation, str);
+    } else if (!strlen(str)) {
+	strcpy(priv->orientation, priv->default_orientation);
+    }
+    DBG("%s: %s\n", __func__, priv->orientation);
+
+    return ret;
 }
 
-int skykey_release(struct inode *inode,struct file *filp){
-	
-    return 0;
-}
-
-	
-static long skykey_ioctl(struct file *file, unsigned int cmd, unsigned long  arg){
-   printk("skykey Default %d\n",cmd);
-   return 0;
-
-}
-
-
-static struct file_operations skykey_ops = {	
-	.owner 	= THIS_MODULE,	
-	.open 	= skykey_open,
-	.release= skykey_release,
-	.unlocked_ioctl = skykey_ioctl,
-};
-
-
-static struct miscdevice skykey_dev = {
-	.minor	= DMAPI_MINOR,		
-	.name	= TS_DEVICE_NAME,
-	.fops	= &skykey_ops,
-};
-
-
-static int read_key(struct skykey_priv *sData, int id)
+static int vendor_key_write(struct fdt_info_priv *priv, int id, const char *buff)
 {
-	char str[DATA_LENGTH] = {0};
-	int ret = -1;
- 
-	memset(str, 0, DATA_LENGTH);
-	ret = rk_vendor_read(id, str, (DATA_LENGTH-1));
- 
-	if (ret > 0) {
-		strcpy(sky_data->orientation, str);
-		if(strlen(sky_data->orientation) <= 0 ){
-			strcpy(sky_data->orientation, "null");
-		}
-		printk("%s: Read key data: %s\n",__func__,sky_data->orientation);
-	}else {
-		goto set_null;
-	}
- 
-	return ret;
- 
-set_null:
-	strcpy(sky_data->orientation, "null");
-	
-	return ret;
-}
- 
+    char str[DATA_LENGTH];
+    int ret = -1;
 
-static int write_key(struct skykey_priv *sData, int id, const char *buff)
+    memset(str, 0, DATA_LENGTH);
+
+    strcpy(str, buff);
+    ret = rk_vendor_write(id, str, (DATA_LENGTH-1));
+    if (ret == 0) {
+        DBG("%s: %s\n",__func__,str);
+    } else {
+        DBG("%s: failed %s\n",__func__,str);
+    }
+
+    return ret;
+}
+
+static ssize_t fdt_info_show(struct device *dev,
+                            struct device_attribute *attr, char *buf)
 {
-	char str[DATA_LENGTH];
-	int ret = -1;
- 
-	memset(str, 0, DATA_LENGTH);
-	strcpy(str, buff);
-	ret = rk_vendor_write(id, str, (DATA_LENGTH-1));
-	
-	if (ret == 0) {
-		printk("%s: Data key succeeded: %s\n",__func__,str);
+    struct fdt_info_priv * priv = dev_get_drvdata(dev);
+
+    if(vendor_key_read(priv, COMMON_DRM_KEY) > 0) {
+        return sprintf(buf, "%s\n", priv->orientation);
+    } if(strlen(priv->default_orientation)) {
+		return sprintf(buf, "%s\n", priv->default_orientation);
 	} else {
-		printk("%s: Data key failure: %s\n",__func__,str);
-	}
-	
-	return ret;
+        return sprintf(buf, "%s\n","null");
+    }
 }
- 
-static ssize_t sky_key_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t count)
-{ 
-    
-	int ret = -1;
-	unsigned long enable;	
-	enable = simple_strtoul(buf, NULL, 10);
-	printk("ts:%s",buf);
-	
-   
-	
-	if(sky_data==NULL){
-		return -1;
-	}
-	
-	ret = write_key(sky_data, COMMON_DRM_KEY, buf);
-	
-	if(ret!=0){
-		return ret;
-	}
-	
-         
+
+static ssize_t fdt_info_store(struct device *dev,
+                             struct device_attribute *attr,
+                             const char *buf, size_t count)
+{
+    struct fdt_info_priv * priv = dev_get_drvdata(dev);
+    int ret = -1;
+    unsigned long enable;
+
+    enable = simple_strtoul(buf, NULL, 10);
+
+    ret = vendor_key_write(priv, COMMON_DRM_KEY, buf);
+    if(ret) {
+        DBG("%s vendor key write failed.\n", __func__);
+    }
+
     return count;
 }
+static DEVICE_ATTR(key, 0664, fdt_info_show, fdt_info_store);
 
-static ssize_t sky_key_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
+static ssize_t dpi_show(struct device *dev,
+                        struct device_attribute *attr, char *buf)
 {
-  	if(read_key(sky_data, COMMON_DRM_KEY) > 0){
-		return sprintf(buf, "%s\n", sky_data->orientation);
-	} else {
-		return sprintf(buf, "%s\n","null");
-	} 
+    struct fdt_info_priv * priv = dev_get_drvdata(dev);
+
+    return sprintf(buf, "%s\n", priv->dpi);
 }
-static DEVICE_ATTR(key,0664,sky_key_show, sky_key_store);
+static DEVICE_ATTR(dpi, 0444, dpi_show, NULL);
 
-
-
-
-static ssize_t sky_dpi_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t count)
-{ 
-	unsigned long enable;	
-	enable = simple_strtoul(buf, NULL, 10);
-	printk("ts:%s",buf);
-    return count;
-}
-
-static ssize_t sky_dpi_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
+static ssize_t firstscreen_show(struct device *dev,
+                                struct device_attribute *attr, char *buf)
 {
-  return sprintf(buf, "%s\n", sky_data->dpi);
+    struct fdt_info_priv * priv = dev_get_drvdata(dev);
+
+    return sprintf(buf, "%s\n", priv->firstscreen);
 }
+static DEVICE_ATTR(firstscreen, 0444, firstscreen_show, NULL);
 
-static DEVICE_ATTR(dpi,0664,sky_dpi_show, sky_dpi_store);
-
-static ssize_t sky_firstscreen_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t count)
-{ 
-	unsigned long enable;	
-	enable = simple_strtoul(buf, NULL, 10);
-	printk("ts:%s",buf);
-    return count;
-}
-
-static ssize_t sky_firstscreen_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
+static ssize_t secondscreen_show(struct device *dev,
+                                 struct device_attribute *attr, char *buf)
 {
-  return sprintf(buf, "%s\n", sky_data->firstscreen);
+    struct fdt_info_priv * priv = dev_get_drvdata(dev);
+
+    return sprintf(buf, "%s\n", priv->secondscreen);
 }
+static DEVICE_ATTR(secondscreen, 0444, secondscreen_show, NULL);
 
-static DEVICE_ATTR(firstscreen,0664,sky_firstscreen_show, sky_firstscreen_store);
-
-static ssize_t sky_secondscreen_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t count)
-{ 
-	unsigned long enable;	
-	enable = simple_strtoul(buf, NULL, 10);
-	printk("ts:%s",buf);
-    return count;
-}
-
-static ssize_t sky_secondscreen_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
+static ssize_t firstbufsize_show(struct device *dev,
+                                 struct device_attribute *attr, char *buf)
 {
-  return sprintf(buf, "%s\n", sky_data->secondscreen);
+    struct fdt_info_priv * priv = dev_get_drvdata(dev);
+
+    return sprintf(buf, "%s\n", priv->firstbufsize);
 }
+static DEVICE_ATTR(firstbufsize, 0444, firstbufsize_show, NULL);
 
-static DEVICE_ATTR(secondscreen,0664,sky_secondscreen_show, sky_secondscreen_store);
-
-static ssize_t sky_firstbufsize_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t count)
-{ 
-	unsigned long enable;	
-	enable = simple_strtoul(buf, NULL, 10);
-	printk("ts:%s",buf);
-    return count;
-}
-
-static ssize_t sky_firstbufsize_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
+static ssize_t secondbufsize_show(struct device *dev,
+                                  struct device_attribute *attr, char *buf)
 {
-  return sprintf(buf, "%s\n", sky_data->firstbufsize);
+    struct fdt_info_priv * priv = dev_get_drvdata(dev);
+
+    return sprintf(buf, "%s\n", priv->secondbufsize);
 }
+static DEVICE_ATTR(secondbufsize, 0444, secondbufsize_show, NULL);
 
-static DEVICE_ATTR(firstbufsize,0664,sky_firstbufsize_show, sky_firstbufsize_store);
-
-	
-static ssize_t sky_secondbufsize_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t count)
-{ 
-	unsigned long enable;	
-	enable = simple_strtoul(buf, NULL, 10);
-	printk("ts:%s",buf);
-    return count;
-}
-
-static ssize_t sky_secondbufsize_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-  return sprintf(buf, "%s\n", sky_data->secondbufsize);
-}
-
-static DEVICE_ATTR(secondbufsize,0664,sky_secondbufsize_show, sky_secondbufsize_store);
-
-
-
-static struct attribute *skykey_sysfs_entries[] = {    
-    &dev_attr_key.attr,     
-	&dev_attr_dpi.attr,   
-	&dev_attr_firstscreen.attr,
-	&dev_attr_secondscreen.attr,
-	&dev_attr_firstbufsize.attr,
-	&dev_attr_secondbufsize.attr,
+static struct attribute *fdt_info_sysfs_entries[] = {
+    &dev_attr_key.attr,
+    &dev_attr_dpi.attr,
+    &dev_attr_firstscreen.attr,
+    &dev_attr_secondscreen.attr,
+    &dev_attr_firstbufsize.attr,
+    &dev_attr_secondbufsize.attr,
     NULL,
 };
 
-static struct attribute_group  skykey_attr_group = 
-{ 
-  .attrs =(struct attribute **) skykey_sysfs_entries,
+static struct attribute_group  fdt_info_attr_group = {
+    .attrs =(struct attribute **) fdt_info_sysfs_entries,
 };
 
-static int skykey_probe(struct platform_device *pdev)
+static int fdt_info_probe(struct platform_device *pdev)
 {
-	int ret = -1;
+    struct device *dev = &pdev->dev;
+    struct device_node *np = dev->of_node;
+    struct fdt_info_priv *priv;
+    int ret = -1;
 
-	struct skykey_priv *ts;
-	
-	struct device_node *np = pdev->dev.of_node;
-	ts = devm_kzalloc(&pdev->dev, sizeof(*ts), GFP_KERNEL);
-	if (!ts) {
-		ret = -ENOMEM;
-		goto err0;
-	}
+    priv = devm_kzalloc(&pdev->dev, sizeof(struct fdt_info_priv), GFP_KERNEL);
+    if (!priv) {
+        ret = -ENOMEM;
+        goto err;
+    }
 
-	ts->pdev = pdev;
-	platform_set_drvdata(pdev, ts);
-	sky_data=ts;
-	
+    platform_set_drvdata(pdev, priv);
 
-    kobj = kobject_create_and_add("skykey",&platform_bus.kobj);
-    if (!kobj) 
-        {        
-        printk(KERN_ERR "Fail, ts kobject for key ...\n");    
-        return 0;
-         }    
-    ret = sysfs_create_group(kobj, &skykey_attr_group);
-    if (ret<0) 
-        {
-        printk(KERN_ERR "Fail, create sysfs group for  skykey...\n");
-        kobject_del(kobj);        
-        return 0;    
-        }
-    
-	ret = of_property_read_string(np, "sky,dpi", &sky_data->dpi);
-	if (ret) {
-		return -1;
-	}
-    
-    ret = of_property_read_string(np, "sky,vendor.hwc.device.primary", &sky_data->firstscreen);
-	if (ret) {
-		return -1;
-	}
-	ret = of_property_read_string(np, "sky,vendor.hwc.device.extend", &sky_data->secondscreen);
-	if (ret) {
-		return -1;
-	}
-	
-	ret = of_property_read_string(np, "sky,persist.vendor.framebuffer.main", &sky_data->firstbufsize);
-	if (ret) {
-		return -1;
-	}
+    if (of_property_read_string(np, "dpi", &priv->dpi)) {
+        DBG("Invalid or missing dpi!\n");
+    }
 
-	ret = of_property_read_string(np, "sky,persist.vendor.framebuffer.aux", &sky_data->secondbufsize);
-	if (ret) {
-		return -1;
-	}
+    if (of_property_read_string(np, "orientation", &priv->default_orientation)) {
+        DBG("Invalid or missing orientation!\n");
+    }
 
-	return 0;
-	
-err0:
-	return ret;
-	
-}
-static int skykey_remove(struct platform_device *pdev)
-{
-	
-	sysfs_remove_group(kobj, &skykey_attr_group);
-	return 0;
+    if (of_property_read_string(np, "vendor.hwc.device.primary", &priv->firstscreen)) {
+        DBG("Invalid or missing vendor.hwc.device.primary!\n");
+    }
+
+    if (of_property_read_string(np, "vendor.hwc.device.extend", &priv->secondscreen)) {
+        DBG("Invalid or missing vendor.hwc.device.extend!\n");
+    }
+
+    if (of_property_read_string(np, "persist.vendor.framebuffer.main", &priv->firstbufsize)) {
+        DBG("Invalid or missing persist.vendor.framebuffer.main!\n");
+    }
+
+    if (of_property_read_string(np, "persist.vendor.framebuffer.aux", &priv->secondbufsize)) {
+        DBG("Invalid or missing persist.vendor.framebuffer.aux!\n");
+    }
+
+    ret = sysfs_create_group(&pdev->dev.kobj, &fdt_info_attr_group);
+    if (ret) {
+        dev_err(&pdev->dev, "failed to create sysfs group\n");
+        return ret;
+    }
+
+    return 0;
+
+err:
+    return ret;
 }
 
-static const struct of_device_id skykey_dt_ids[] = {
-	{ .compatible = "sky,key", },
-	{},
+static int fdt_info_remove(struct platform_device *pdev)
+{
+    sysfs_remove_group(&pdev->dev.kobj, &fdt_info_attr_group);
+
+    return 0;
+}
+
+static const struct of_device_id fdt_info_dt_ids[] = {
+    { .compatible = "info,lcd", },
+    {},
 };
-MODULE_DEVICE_TABLE(of, skykey_dt_ids);
+MODULE_DEVICE_TABLE(of, fdt_info_dt_ids);
 
-static struct platform_driver skykey_device_driver = {
-	.probe		= skykey_probe,
-	.remove		= skykey_remove,
-	.driver		= {
-		.name	= "skykey",
-		.of_match_table = skykey_dt_ids,
-	}
+static struct platform_driver fdt_info_device_driver = {
+    .probe		= fdt_info_probe,
+    .remove		= fdt_info_remove,
+    .driver		= {
+        .name		= DRIVER_NAME,
+        .of_match_table	= fdt_info_dt_ids,
+    }
 };
 
-static int __init skykey_init(void)
+static int __init fdt_info_init(void)
 {
+    int ret;
 
-  int ret=0;
-  platform_driver_register(&skykey_device_driver);
-  
-  ret = misc_register(&skykey_dev);//注册混杂设备
-  if(ret<0)
-  {
-	printk(KERN_ERR "misc register error!!!\n");  
-  }
-  
-  
+    /*pdev = platform_device_alloc(DEVICE_NAME, -1);
+    if (!pdev) {
+        pr_err("failed to allocate platform device\n");
+        return -ENOMEM;
+    }
 
-  return  ret; 
+    ret = platform_device_add(pdev);
+    if (ret) {
+        pr_err("failed to add platform device\n");
+        platform_device_put(pdev);
+        return ret;
+    }*/
+
+    ret = platform_driver_register(&fdt_info_device_driver);
+    if (ret) {
+        pr_err("failed to register platform driver\n");
+        platform_device_unregister(pdev);
+        return ret;
+    }
+
+    return 0;
 }
+module_init(fdt_info_init);
 
-module_init(skykey_init);   //注册优先级为2
-
-static void __exit skykey_exit(void)
+static void __exit fdt_info_exit(void)
 {
-
-    misc_deregister(&skykey_dev);//注销设备
-	platform_driver_unregister(&skykey_device_driver);
+    platform_driver_unregister(&fdt_info_device_driver);
 }
-module_exit(skykey_exit);
+module_exit(fdt_info_exit);
 
-MODULE_AUTHOR("TS chengzheng");
-MODULE_DESCRIPTION("TS Mobile KEY Driver");
+MODULE_AUTHOR("skysi@skysi.com");
+MODULE_DESCRIPTION("DTS transfer LCD infomation to system");
 MODULE_LICENSE("GPL v2");
-
 
