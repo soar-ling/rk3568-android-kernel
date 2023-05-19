@@ -48,7 +48,7 @@
 
 
 
-static int debug=1;
+static int debug;
 module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "debug level (0-3)");
 
@@ -1457,8 +1457,7 @@ static int rk628_csi_query_dv_timings(struct v4l2_subdev *sd,
 		return ret;
 
 	if (debug)
-		v4l2_print_dv_timings(sd->name, "rk628_csi_query_dv_timings: ",
-				timings, false);
+		v4l2_print_dv_timings(sd->name, "rk628_csi_query_dv_timings: ",timings, false);
 
 	if (!v4l2_valid_dv_timings(timings, &rk628_csi_timings_cap, NULL,
 				NULL)) {
