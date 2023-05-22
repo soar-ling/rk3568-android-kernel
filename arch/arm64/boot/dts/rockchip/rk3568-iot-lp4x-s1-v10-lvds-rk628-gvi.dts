@@ -20,7 +20,7 @@
 *persist.vendor.framebuffer.aux    1280x720@60     1920x1080@60 3840x2160@60  副屏buf大小
 *******/
 &sky_key{
-	dpi = "160";
+	dpi = "240";
 	orientation = "Z0";
 	vendor.hwc.device.primary="HDMI-A";
 	vendor.hwc.device.extend="DSI";
