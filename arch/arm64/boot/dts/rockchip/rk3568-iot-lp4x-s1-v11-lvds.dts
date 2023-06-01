@@ -12,7 +12,6 @@
 };
 
 &sky_key{
-	orientation = "Z90";
 	status = "okay";
 };
 
