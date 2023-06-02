@@ -13,7 +13,7 @@
 
 &sky_key{
 	dpi = "240";
-	orientation = "Z0";
+	orientation = "Z180";
 	persist.vendor.framebuffer.main = "1920x1080@60";
 	status = "okay";
 };
