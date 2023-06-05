@@ -2061,7 +2061,7 @@ static irqreturn_t plugin_detect_irq(int irq, void *dev_id)
 	struct v4l2_subdev *sd = &csi->sd;
    // printk("zc:plugin_detect_irq");
 	/* control hpd after 50ms */
-	schedule_delayed_work(&csi->delayed_work_enable_hotplug, HZ / 20);
+	schedule_delayed_work(&csi->delayed_work_enable_hotplug, msecs_to_jiffies(10));
 	tx_5v_power_present(sd);
 
 	return IRQ_HANDLED;
