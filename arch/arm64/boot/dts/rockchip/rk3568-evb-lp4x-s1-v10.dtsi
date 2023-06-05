@@ -451,6 +451,7 @@
 		/* csi->csi:rk628-csi-v4l2 dsi->csi:rk628-dsi-v4l2 */
 		compatible = "rockchip,rk628-csi-v4l2";
 		reg = <0x50>;
+		i2s-enable-default;
 		//clocks = <&ext_cam_clk>;
 		//clock-names = "xvclk";
 		interrupt-parent = <&gpio4>;
