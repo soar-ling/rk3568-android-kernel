@@ -457,7 +457,7 @@
 		interrupt-parent = <&gpio4>;
 		interrupts = <RK_PC3 IRQ_TYPE_LEVEL_HIGH>;
 		pinctrl-names = "default";
-		pinctrl-0 = <&rk628_irq &rk628_det>;
+		pinctrl-0 = <&rk628_irq &rk628_det &refclk_pins>;
 		assigned-clocks = <&pmucru CLK_WIFI>;
 		assigned-clock-rates = <24000000>;
 		clocks = <&pmucru CLK_WIFI>;
