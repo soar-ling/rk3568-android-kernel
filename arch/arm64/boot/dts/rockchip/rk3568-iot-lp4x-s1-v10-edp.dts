@@ -68,3 +68,10 @@
 	status = "okay";
 };
 
+&i2c3 {
+	rk628_csi_v4l2: rk628_csi_v4l2@50 {
+		status = "okay";
+	    pinctrl-0 = <&rk628_irq &rk628_det &refclk_pins>;
+	};
+};
+
