@@ -314,7 +314,7 @@ static bool tx_5v_power_present(struct v4l2_subdev *sd)
 		val = gpiod_get_value(csi->plugin_det_gpio);
 		if (val > 0)
 			cnt++;
-		usleep_range(500, 600);
+	//	usleep_range(500, 600);
 	}
 
 	ret = (cnt >= 3) ? true : false;
@@ -2061,7 +2061,7 @@ static irqreturn_t plugin_detect_irq(int irq, void *dev_id)
 	struct v4l2_subdev *sd = &csi->sd;
    // printk("zc:plugin_detect_irq");
 	/* control hpd after 50ms */
-	schedule_delayed_work(&csi->delayed_work_enable_hotplug, msecs_to_jiffies(10));
+	schedule_delayed_work(&csi->delayed_work_enable_hotplug, msecs_to_jiffies(1));
 	tx_5v_power_present(sd);
 
 	return IRQ_HANDLED;
