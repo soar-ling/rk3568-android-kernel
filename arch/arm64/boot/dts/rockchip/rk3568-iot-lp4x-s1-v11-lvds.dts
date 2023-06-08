@@ -37,13 +37,13 @@
 
 &dsi0_panel {
 	power-supply = <&vcc3v3_lcd0_n>;
-	reset-gpios = <&gpio0 RK_PC0 GPIO_ACTIVE_LOW>;
+	//reset-gpios = <&gpio0 RK_PC0 GPIO_ACTIVE_HIGH>;
 	prepare-delay-ms = <2>;
 	reset-delay-ms = <5>;
 	init-delay-ms = <2>;
 
 		panel-init-sequence = [
-	/*	23 00 02 27 AA
+		23 00 02 27 AA
 		23 00 02 48 02
 		23 00 02 B6 20
 		23 00 02 01 80
@@ -89,7 +89,7 @@
 		23 00 02 6E 00
 		23 00 02 6F 8A
 		23 00 02 70 19
-		23 18 02 71 00  */
+		23 18 02 71 00
 	];
 
 	disp_timings0: display-timings {
@@ -136,7 +136,7 @@
 		reg = <0x2d>;
 		interrupt-parent = <&gpio2>;
 		interrupts = <RK_PD5 IRQ_TYPE_LEVEL_LOW>;
-		//reset-gpio = <&gpio0 RK_PC0 GPIO_ACTIVE_HIGH>;
+		reset-gpio = <&gpio0 RK_PC0 GPIO_ACTIVE_HIGH>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&lt9211c_int>;
 		lontium,mipi_lane = <4>;
