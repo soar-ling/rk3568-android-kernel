@@ -223,6 +223,8 @@ typedef 	unsigned int 		UINT, uint;
 
 struct lt9211_data {
     struct i2c_client *client;
+    bool power_invert;
+    struct regulator *supply;
     int pwr_gpio;
     int rst_gpio;
 

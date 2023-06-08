@@ -49,6 +49,7 @@
 #define RETRY_MAX_TIMES		 3
 #define lt9211_I2C_NAME	  "lt9211"
 #define lt9211_DRIVER_VERSION  "1.0.0"
+#define LT9211_READ_ID 1
 
 static struct lt9211_data *pdata = NULL;
 StructPcrPara g_stPcrPara;
@@ -220,6 +221,7 @@ unsigned char lt9211_read(struct i2c_client *client, unsigned char addr)
 
 //0xff 0x81 register bank
 //0x00 0x01 0x02 ID寄存器
+#ifdef LT9211_READ_ID
 static int lt9211_read_ID(void )
 {
 	unsigned char ID[3];
@@ -231,6 +233,7 @@ static int lt9211_read_ID(void )
 	PRINT_DEG("lt9211 read ID[0]=0x%2x ID[1]=0x%2x ID[2]=0x%2x\n", ID[0], ID[1], ID[2]);
 	return 0;
 }
+#endif
 
 //关闭lvds
 void Drv_LVDSTxPhy_PowerOff(void)
@@ -1244,6 +1247,16 @@ static int lt9211_parse_dt(struct device *dev, struct lt9211_data *pdata)
 {
 	int ret = 0;
 	struct device_node *np = dev->of_node;
+
+	pdata->supply = devm_regulator_get(dev, "power");
+	if (IS_ERR(pdata->supply)) {
+		dev_err(dev, "power requtest failed.\n");
+		//return PTR_ERR(pdata->supply);
+	} else {
+		pdata->power_invert =
+			of_property_read_bool(np, "power-invert");
+	}
+
 	pdata->pwr_gpio = of_get_named_gpio(np, "power-gpio", 0);
 	if(!gpio_is_valid(pdata->pwr_gpio)) {
 		dev_err(dev, "No valid pwr gpio");
@@ -1253,6 +1266,8 @@ static int lt9211_parse_dt(struct device *dev, struct lt9211_data *pdata)
 	if(!gpio_is_valid(pdata->rst_gpio)) {
 		dev_err(dev, "No valid rst gpio");
 		//return -1;
+	} else if(gpio_is_valid(pdata->rst_gpio)) {
+		gpio_direction_output(pdata->rst_gpio, false);
 	}
 
 	ret = of_property_read_u32(np, "lontium,mipi_lane", &pdata->mipi_lane);
@@ -1427,7 +1442,6 @@ EXPORT_SYMBOL_GPL(lt9211_init_config);
 static int lt9211_probe(struct i2c_client * client, const struct i2c_device_id * id)
 {
 	int ret = -1;
-	printk("%s\n",__func__);
 
 	PRINT_DEG("LT9211 I2C Address: 0x%02x\n", client->addr);
 	//g_stVidChk申请空间
@@ -1457,7 +1471,22 @@ static int lt9211_probe(struct i2c_client * client, const struct i2c_device_id *
 		dev_err(&client->dev, "Failed request IO port\n");
 		//goto exit_free_client_data;
 	}
-#if 1
+
+	if (pdata->power_invert) {
+		if (regulator_is_enabled(pdata->supply) > 0)
+			regulator_disable(pdata->supply);
+	} else {
+		ret = regulator_enable(pdata->supply);
+		if (ret < 0)
+			return ret;
+	}
+
+	if(gpio_is_valid(pdata->rst_gpio)) {
+		gpio_direction_output(pdata->rst_gpio, true);
+	}
+	mdelay(5);
+
+#ifdef LT9211_READ_ID
 	//读ID, 验证IIC正常
 	ret = lt9211_read_ID();
 	if(ret) {
@@ -1536,11 +1565,13 @@ out_init:
 
 	return 0;
 
+#ifdef LT9211_READ_ID
 exit_free_io_port:
 	if(gpio_is_valid(pdata->rst_gpio))
 		gpio_free(pdata->rst_gpio);
 	if(gpio_is_valid(pdata->pwr_gpio))
 		gpio_free(pdata->pwr_gpio);
+#endif
 exit_free_client_data:
 	devm_kfree(&client->dev, pdata);
 	i2c_set_clientdata(client, NULL);
@@ -1575,15 +1606,48 @@ static const struct i2c_device_id lt9211_device_id[] = {
 static int  lt9211_pm_suspend(struct device *dev)
 {
 	//struct i2c_client *client = to_i2c_client(dev);
-	//struct lt9211_data* lt9211 = dev_get_drvdata(dev);
+	struct lt9211_data* lt9211 = dev_get_drvdata(dev);
+	int err;
+
 	// lt9211_reset(0);
+	if(gpio_is_valid(lt9211->rst_gpio))
+		gpio_direction_output(lt9211->rst_gpio, false);
+	if(gpio_is_valid(lt9211->pwr_gpio))
+		gpio_direction_output(lt9211->rst_gpio, false);
+
+	if (lt9211->power_invert) {
+		if (!regulator_is_enabled(lt9211->supply)) {
+			err = regulator_enable(lt9211->supply);
+			if (err < 0)
+				return err;
+		}
+	} else {
+		regulator_disable(lt9211->supply);
+	}
+
 	return 0;
 }
 
 static int lt9211_pm_resume(struct device *dev)
 {
 	//struct i2c_client *client = to_i2c_client(dev);
-	//struct lt9211_data* lt9211 = dev_get_drvdata(dev);
+	struct lt9211_data* lt9211 = dev_get_drvdata(dev);
+	int err;
+
+	if(gpio_is_valid(lt9211->rst_gpio))
+		gpio_direction_output(lt9211->rst_gpio, true);
+	if(gpio_is_valid(lt9211->pwr_gpio))
+		gpio_direction_output(lt9211->rst_gpio, true);
+
+	if (lt9211->power_invert) {
+		if (regulator_is_enabled(lt9211->supply) > 0)
+			regulator_disable(lt9211->supply);
+	} else {
+		err = regulator_enable(lt9211->supply);
+		if (err < 0)
+			return err;
+	}
+	msleep(20);
 
 	lt9211_init_config();
 
