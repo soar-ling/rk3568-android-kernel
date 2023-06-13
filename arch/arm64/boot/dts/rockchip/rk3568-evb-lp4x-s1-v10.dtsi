@@ -155,15 +155,6 @@
 		pinctrl-0 = <&vcc5v0_host2_en>;
 	};
 
-	wifi_3v3_enable: wifi-enable-regulator {
-		compatible = "regulator-fixed";
-		gpio = <&gpio0 RK_PB0 GPIO_ACTIVE_LOW>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&wifi_pwr_pin>;
-		regulator-name = "wifi-pwr";
-		regulator-always-on;
-	};
-
 	spdif-sound {
 		status = "disabled";
 	};
@@ -187,9 +178,10 @@
 		sdio_vref = <1800>;
 		/delete-property/ clocks;
 		/delete-property/ clock-names;
-		wifi_chip_type = "ap6256";
+		wifi_chip_type = "rtl8821cs";
 		pinctrl-names = "default";
-		pinctrl-0 = <&wifi_host_wake_irq>;
+		pinctrl-0 = <&wifi_vbat &wifi_host_wake_irq>;
+		WIFI,vbat_gpio = <&gpio0 RK_PB0 GPIO_ACTIVE_LOW>;
 		WIFI,host_wake_irq = <&gpio2 RK_PB2 GPIO_ACTIVE_HIGH>;
 	};
 
@@ -244,6 +236,10 @@
 	gt1x: gt1x@14 {
 		status = "disabled";
 	};
+};
+
+&xin32k {
+       status = "disabled";
 };
 
 &i2c5 {
@@ -631,10 +627,10 @@
 		wifi_host_wake_irq: wifi-host-wake-irq {
 			rockchip,pins = <2 RK_PB2 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
-
-		wifi_pwr_pin: wifi-pwr {
-			rockchip,pins = <0 RK_PB0 RK_FUNC_GPIO &pcfg_pull_down>;
-		};
+        
+		wifi_vbat: wifi-vbat {
+            rockchip,pins = <0 RK_PB0 RK_FUNC_GPIO &pcfg_pull_up>;
+        };
 	};
 
 	wireless-bluetooth {
