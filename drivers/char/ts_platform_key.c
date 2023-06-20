@@ -119,6 +119,15 @@ static ssize_t fdt_info_store(struct device *dev,
 }
 static DEVICE_ATTR(key, 0664, fdt_info_show, fdt_info_store);
 
+static ssize_t orientation_show(struct device *dev,
+                        struct device_attribute *attr, char *buf)
+{
+    struct fdt_info_priv * priv = dev_get_drvdata(dev);
+
+    return sprintf(buf, "%s\n", priv->default_orientation);
+}
+static DEVICE_ATTR(orientation, 0444, orientation_show, NULL);
+
 static ssize_t dpi_show(struct device *dev,
                         struct device_attribute *attr, char *buf)
 {
@@ -166,6 +175,7 @@ static DEVICE_ATTR(secondbufsize, 0444, secondbufsize_show, NULL);
 
 static struct attribute *fdt_info_sysfs_entries[] = {
     &dev_attr_key.attr,
+    &dev_attr_orientation.attr,
     &dev_attr_dpi.attr,
     &dev_attr_firstscreen.attr,
     &dev_attr_secondscreen.attr,
