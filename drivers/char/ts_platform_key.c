@@ -43,6 +43,7 @@ static struct platform_device *pdev;
 struct fdt_info_priv {
     char orientation[DATA_LENGTH];
     const char	*dpi;
+    const char	*second_dpi;
     const char	*default_orientation;
     const char	*firstscreen;
     const char	*secondscreen;
@@ -133,6 +134,17 @@ static ssize_t dpi_show(struct device *dev,
 {
     struct fdt_info_priv * priv = dev_get_drvdata(dev);
 
+    if (priv->second_dpi) {
+        if (vendor_key_read(priv, COMMON_DRM_KEY) > 0) {
+            if (strstr(priv->orientation, "Z90") != NULL || \
+			    strstr(priv->orientation, "Z270") != NULL)
+                return sprintf(buf, "%s\n", priv->second_dpi);
+        } else if (strstr(priv->default_orientation, "Z90") != NULL || \
+			strstr(priv->default_orientation, "Z270") != NULL) {
+                return sprintf(buf, "%s\n", priv->second_dpi);
+        }
+    }
+
     return sprintf(buf, "%s\n", priv->dpi);
 }
 static DEVICE_ATTR(dpi, 0444, dpi_show, NULL);
@@ -205,6 +217,10 @@ static int fdt_info_probe(struct platform_device *pdev)
 
     if (of_property_read_string(np, "dpi", &priv->dpi)) {
         DBG("Invalid or missing dpi!\n");
+    }
+
+    if (of_property_read_string(np, "vertical-dpi", &priv->second_dpi)) {
+        DBG("Invalid or missing vertical dpi!\n");
     }
 
     if (of_property_read_string(np, "orientation", &priv->default_orientation)) {
