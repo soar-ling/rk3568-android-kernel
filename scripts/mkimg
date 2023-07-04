@@ -48,10 +48,10 @@ fi
 LOGO_PATH=${srctree}/logo.bmp
 [ -f ${LOGO_PATH} ] && LOGO=logo.bmp
 
-LOGO_KERNEL_PATH=${srctree}/logo_90.bmp
-[ -f ${LOGO_KERNEL_PATH} ] && LOGO_KERNEL=logo_90.bmp
+LOGO_90_PATH=${srctree}/logo_90.bmp
+[ -f ${LOGO_90_PATH} ] && LOGO_90=logo_90.bmp
 
-if [ ! -f ${LOGO_KERNEL_PATH} ]; then
+if [ ! -f ${LOGO_90_PATH} ]; then
 	LOGO_KERNEL_PATH=${srctree}/logo_kernel.bmp
 	[ -f ${LOGO_KERNEL_PATH} ] && LOGO_KERNEL=logo_kernel.bmp
 fi
@@ -244,6 +244,9 @@ if [ -x ${srctree}/scripts/bmpconvert ]; then
 	if [ -f ${LOGO_KERNEL_PATH} ]; then
 		${srctree}/scripts/bmpconvert ${LOGO_KERNEL_PATH};
 	fi
+	if [ -f ${LOGO_90_PATH} ]; then
+		${srctree}/scripts/bmpconvert ${LOGO_90_PATH};
+	fi
 	if [ -f ${LOGO_180_PATH} ]; then
 		${srctree}/scripts/bmpconvert ${LOGO_180_PATH};
 	fi
@@ -259,6 +262,9 @@ if [ "${srctree}" != "${objtree}" ]; then
 	if [ -f ${LOGO_KERNEL_PATH} ]; then
 		cp -a ${LOGO_KERNEL_PATH} ${objtree}/;
 	fi
+	if [ -f ${LOGO_90_PATH} ]; then
+		cp -a ${LOGO_90_PATH} ${objtree}/;
+	fi
 	if [ -f ${LOGO_180_PATH} ]; then
 		cp -a ${LOGO_180_PATH} ${objtree}/;
 	fi
@@ -272,7 +278,7 @@ if [ "${ARCH}" == "arm64" ]; then
 	${srctree}/scripts/io-domain.sh ${srctree}/arch/arm64/boot/dts/rockchip/.${DTB}
 fi
 
-echo "  Image:  resource.img (with ${DTB} ${LOGO} ${LOGO_KERNEL} ${LOGO_180} ${LOGO_270}) is ready"
+echo "  Image:  resource.img (with ${DTB} ${LOGO} ${LOGO_KERNEL} ${LOGO_90} ${LOGO_180} ${LOGO_270}) is ready"
 
 if [ -f "${BOOT_IMG}" ]; then
 	if file -L -p -b ${BOOT_IMG} | grep -q 'Device Tree Blob' ; then
