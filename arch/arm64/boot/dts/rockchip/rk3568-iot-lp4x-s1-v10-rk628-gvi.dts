@@ -13,7 +13,7 @@
 
 &sky_key{
 	dpi = "240";
-	orientation = "Z180";
+	vertical-dpi = "140";
 	persist.vendor.framebuffer.main = "1920x1080@60";
 	status = "okay";
 };
@@ -44,6 +44,8 @@
 
 &route_hdmi {
 	status = "okay";
+	logo,uboot = "logo.bmp";
+	logo,kernel = "logo.bmp";
 	connect = <&vp0_out_hdmi>;
 	force-bus-format = <0x2026>;
 	force-output;
