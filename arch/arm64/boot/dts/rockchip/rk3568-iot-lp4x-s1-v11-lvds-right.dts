@@ -4,7 +4,7 @@
  *
  */
 
-#include "rk3568-evb-lp4x-s1-v10.dtsi"
+#include "rk3568-evb-lp4x-s1-v11.dtsi"
 #include "rk3568-android.dtsi"
 /{
 	model = "Rockchip RK3568 LP4X SKYSI IOT V11 Board";

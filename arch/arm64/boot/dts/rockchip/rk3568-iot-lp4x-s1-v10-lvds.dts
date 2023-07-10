@@ -12,6 +12,8 @@
 };
 
 &sky_key{
+	dpi = "200";
+	vertical-dpi = "160";
 	status = "okay";
 };
 
@@ -114,13 +116,14 @@
 
 &route_dsi0 {
 	status = "okay";
+	logo,uboot = "logo.bmp";
+	logo,kernel = "logo.bmp";
 	connect = <&vp1_out_dsi0>;
 };
 
-
 &i2c3 {
 	rk628_csi_v4l2: rk628_csi_v4l2@50 {
-		status = "okay";
+	    status = "okay";
 	    pinctrl-0 = <&rk628_irq &rk628_det &refclk_pins>;
 	};
 };

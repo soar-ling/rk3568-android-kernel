@@ -4,7 +4,7 @@
  *
  */
 
-#include "rk3568-evb-lp4x-s1-v10.dtsi"
+#include "rk3568-evb-lp4x-s1-v11.dtsi"
 #include "rk3568-android.dtsi"
 /{
 	model = "Rockchip RK3568 LP4X SKYSI IOT V11 Board";
@@ -123,11 +123,10 @@
 
 &i2c3 {
 	rk628_csi_v4l2: rk628_csi_v4l2@50 {
-		status = "okay";
+	    status = "okay";
 	    pinctrl-0 = <&rk628_irq &rk628_det &refclk_pins>;
 	};
 };
-
 
 &i2c2 {
 	status = "okay";

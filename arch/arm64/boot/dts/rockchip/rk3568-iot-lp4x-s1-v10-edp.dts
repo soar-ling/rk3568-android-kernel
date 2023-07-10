@@ -64,6 +64,8 @@
 };
 
 &route_edp {
+	logo,uboot = "logo.bmp";
+	logo,kernel = "logo.bmp";
 	connect = <&vp1_out_edp>;
 	status = "okay";
 };
@@ -75,3 +77,8 @@
 	};
 };
 
+&sky_key{
+	dpi = "200";
+	vertical-dpi = "160";
+	status = "okay";
+};

@@ -153,6 +153,8 @@
 
 &route_dsi1 {
 	status = "okay";
+	logo,uboot = "logo.bmp";
+	logo,kernel = "logo.bmp";
 	connect = <&vp1_out_dsi1>;
 };
 
@@ -173,4 +175,10 @@
 		status = "okay";
 	    pinctrl-0 = <&rk628_irq &rk628_det &refclk_pins>;
 	};
+};
+
+&sky_key{
+	dpi = "100";
+	vertical-dpi = "160";
+	status = "okay";
 };
