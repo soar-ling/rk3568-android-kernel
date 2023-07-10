@@ -1,0 +1,84 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2020 Rockchip Electronics Co., Ltd.
+ *
+ */
+
+#include "rk3568-evb-lp4x-s1-v11.dtsi"
+#include "rk3568-android.dtsi"
+/{
+	model = "Rockchip RK3568 LP4X SKYSI IOT V11 Board";
+	compatible = "rockchip,rk3568-iot-lp4x-s1-v11-edp", "rockchip,rk3568";
+
+	vcc3v3_lcd0_n: vcc3v3-lcd0-n {
+		gpio = <&gpio0 RK_PC6 GPIO_ACTIVE_HIGH>;
+	};
+
+	edp-panel {
+		compatible = "simple-panel";
+		backlight = <&backlight>;
+		power-supply = <&vcc3v3_lcd0_n>;
+		prepare-delay-ms = <120>;
+		enable-delay-ms = <10>;
+		disable-delay-ms = <20>;
+		unprepare-delay-ms = <50>;
+		init-delay-ms = <10>;
+
+		port {
+			panel_in_edp: endpoint {
+				remote-endpoint = <&edp_out_panel>;
+			};
+		};
+	};
+};
+
+&backlight {
+	enable-gpios = <&gpio0 RK_PC1 GPIO_ACTIVE_HIGH>;
+};
+
+&edp {
+	force-hpd;
+	status = "okay";
+
+	ports {
+		port@1 {
+			reg = <1>;
+
+			edp_out_panel: endpoint {
+				remote-endpoint = <&panel_in_edp>;
+			};
+		};
+	};
+};
+
+&edp_phy {
+	status = "okay";
+};
+
+&edp_in_vp0 {
+	status = "disabled";
+};
+
+&edp_in_vp1 {
+	status = "okay";
+};
+
+&route_edp {
+	logo,uboot = "logo.bmp";
+	logo,kernel = "logo.bmp";
+	connect = <&vp1_out_edp>;
+	status = "okay";
+};
+
+&i2c3 {
+	rk628_csi_v4l2: rk628_csi_v4l2@50 {
+		status = "okay";
+	    pinctrl-0 = <&rk628_irq &rk628_det &refclk_pins>;
+	};
+};
+
+&sky_key{
+	dpi = "200";
+	vertical-dpi = "160";
+	status = "okay";
+};
