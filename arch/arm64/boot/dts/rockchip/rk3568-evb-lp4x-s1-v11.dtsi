@@ -1,0 +1,34 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2020 Rockchip Electronics Co., Ltd.
+ *
+ */
+
+/dts-v1/;
+
+#include "rk3568-evb-lp4x-s1-v10.dtsi"
+
+/ {
+	model = "Rockchip RK3568 EVB LP4X S1 Board";
+	compatible = "rockchip,rk3568-evb-lp4x-s1", "rockchip,rk3568";
+
+	/delete-node/ wifi-enable-regulator;
+
+	wireless_wlan: wireless-wlan {
+		wifi_chip_type = "rtl8821cs";
+		pinctrl-names = "default";
+		pinctrl-0 = <&wifi_vbat &wifi_host_wake_irq>;
+		WIFI,host_wake_irq = <&gpio2 RK_PB2 GPIO_ACTIVE_HIGH>;
+		WIFI,vbat_gpio = <&gpio0 RK_PB0 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&pinctrl {
+	wireless-wlan {
+		/delete-node/ wifi-pwr;
+
+		wifi_vbat: wifi-vbat {
+			rockchip,pins = <0 RK_PB0 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+};
