@@ -176,6 +176,10 @@
 		status = "okay";
 	};
 
+	xin32k: xin32k {
+		pinctrl-0 = <&clk32k_out1>;
+	};
+
 	sdio_pwrseq: sdio-pwrseq {
 		clocks = <&pmucru CLK_RTC_32K>;
 		clock-names = "ext_clock";
