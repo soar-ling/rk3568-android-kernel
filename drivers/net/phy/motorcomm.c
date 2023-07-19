@@ -51,7 +51,7 @@
 /* to enable system WOL feature of phy, please define this macro to 1
  * otherwise, define it to 0.
  */
-#define YTPHY_WOL_FEATURE_ENABLE        1
+#define YTPHY_WOL_FEATURE_ENABLE        0
 
 /* some GMAC need clock input from PHY, for eg., 125M,
  * please enable this macro
