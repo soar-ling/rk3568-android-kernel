@@ -18,28 +18,53 @@
 #include <linux/slab.h>
 #include <linux/timer.h>
 #include <linux/leds.h>
+#include <linux/string.h>
 
 #define LED_TIME_SLEEP 100
 
-static struct notifier_block nb;
-static struct led_classdev *led_dev;
-static struct timer_list led_timer;
+enum WORK_DEFUALT_STATE{
+	OFF = 0,
+	ON,
+	KEEP,
+}DEFUALT_STATE;
+
+struct notifier_block nb;
+struct led_classdev *led_dev;
+struct timer_list led_timer;
+
+static int get_led_default_state(struct led_classdev *led_cdev){
+	const char *default_state_value;
+	int ret = -1;
+	if (of_property_read_string(led_cdev->dev->of_node, "default-state", &default_state_value) == 0){
+		if(!strcmp(default_state_value,"off"))
+			DEFUALT_STATE = OFF;
+		else if(!strcmp(default_state_value,"on"))
+			DEFUALT_STATE = ON;
+		else if(!strcmp(default_state_value,"keep"))
+			DEFUALT_STATE = KEEP;
+		return 0;
+	}
+	else {
+		dev_info(led_cdev->dev,"Failed to read default-state property.\n");
+		return ret;
+	}
+}
 
 static void ir_blink_task(struct timer_list *t){
-    led_set_brightness(led_dev, LED_OFF);
+	(DEFUALT_STATE==OFF)?(led_set_brightness(led_dev, LED_OFF)) : led_set_brightness(led_dev, LED_ON);
 }
 
 static int ir_led_call_back(struct notifier_block *self, unsigned long event, void *ptr){
-	if (event) {
+	if (event && DEFUALT_STATE != KEEP) {
         if (!timer_pending(&led_timer)) {
-            led_set_brightness(led_dev, LED_ON);
+			(DEFUALT_STATE==OFF)?(led_set_brightness(led_dev, LED_ON)) : led_set_brightness(led_dev, LED_OFF);
             mod_timer(&led_timer, jiffies + msecs_to_jiffies(LED_TIME_SLEEP));
         }
 	}
 	return NOTIFY_DONE;
 }
 
-static int ir_trig_activate(struct led_classdev *led_cdev) {
+static int ir_trig_activate(struct led_classdev *led_cdev){
 	static int ret;
 	struct extcon_dev *edev;
 	led_dev = led_cdev;
@@ -48,7 +73,7 @@ static int ir_trig_activate(struct led_classdev *led_cdev) {
 		dev_err(led_cdev->dev, "nedo not find\n");
 		return -1;
 	}
-    if (of_property_read_bool(led_cdev->dev->of_node, "extcon")) {
+    if (of_property_read_bool(led_cdev->dev->of_node, "extcon")){
         edev = extcon_get_edev_by_phandle(led_cdev->dev, 0);
         if (IS_ERR(edev)) {
             dev_err(led_cdev->dev, "Invalid or missing extcon\n");
@@ -63,7 +88,13 @@ static int ir_trig_activate(struct led_classdev *led_cdev) {
 		}
 	}
 	timer_setup(&led_timer, ir_blink_task, 0);
-	led_set_brightness(led_cdev, LED_OFF);
+	ret = get_led_default_state(led_cdev);
+	if(ret < 0){
+		dev_info(led_cdev->dev, "read led defualt state fail !!\n");
+	}
+	dev_info(led_cdev->dev, "defualt state : %d !!\n",DEFUALT_STATE);
+	if(DEFUALT_STATE != KEEP )
+		(DEFUALT_STATE==OFF)?(led_set_brightness(led_dev, LED_OFF)) : led_set_brightness(led_dev, LED_ON);
 	return 0;
 }
 
