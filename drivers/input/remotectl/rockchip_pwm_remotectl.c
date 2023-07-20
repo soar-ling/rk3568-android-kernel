@@ -18,8 +18,9 @@
 #include <linux/slab.h>
 #include <linux/rockchip/rockchip_sip.h>
 #include "rockchip_pwm_remotectl.h"
-
-
+#include <linux/notifier.h>
+#include <linux/extcon.h>
+#include <linux/extcon-provider.h>
 
 /*
  * sys/module/rk_pwm_remotectl/parameters,
@@ -43,7 +44,6 @@ module_param_named(dbg_level, rk_remote_pwm_dbg_level, int, 0644);
 			pr_info(args); \
 		} \
 	} while (0)
-
 
 struct rkxx_remote_key_table {
 	int scancode;
@@ -82,8 +82,16 @@ struct rkxx_remotectl_drvdata {
 	struct tasklet_struct remote_tasklet;
 	struct wake_lock remotectl_wake_lock;
 };
-
 static struct rkxx_remotectl_button *remotectl_button;
+
+static const unsigned int ir_headset_cable[2] = {
+    EXTCON_IRINPUT,
+};
+
+struct IR_NOTIFY{
+	struct extcon_dev *edev;
+};
+static struct IR_NOTIFY *ir_notify;
 
 static int remotectl_keybd_num_lookup(struct rkxx_remotectl_drvdata *ddata)
 {
@@ -183,7 +191,6 @@ static int rk_remotectl_parse_ir_keys(struct platform_device *pdev)
 }
 
 
-
 static void rk_pwm_remotectl_do_something(unsigned long  data)
 {
 	struct rkxx_remotectl_drvdata *ddata;
@@ -240,9 +247,11 @@ static void rk_pwm_remotectl_do_something(unsigned long  data)
 		    ((~ddata->scandata >> 8) & 0x0ff)) {
 			if (remotectl_keycode_lookup(ddata)) {
 				ddata->press = 1;
+				extcon_set_state_sync(ir_notify->edev, EXTCON_IRINPUT, true);
 				input_event(ddata->input, EV_KEY,
-					    ddata->keycode, 1);
+                                           ddata->keycode, 1);
 				input_sync(ddata->input);
+				extcon_set_state_sync(ir_notify->edev, EXTCON_IRINPUT, false);
 				ddata->state = RMC_SEQUENCE;
 			} else {
 				ddata->state = RMC_PRELOAD;
@@ -570,6 +579,24 @@ static inline void rk_pwm_wakeup(struct input_dev *input)
 	input_sync(input);
 }
 
+static int ir_led_notify_init(struct platform_device *pdev){
+	int ret;
+	ir_notify->edev = devm_extcon_dev_allocate(&pdev->dev, ir_headset_cable);
+	if (IS_ERR(ir_notify->edev)) {
+		dev_err(&pdev->dev, "failed to allocate extcon device\n");
+		printk( "failed to allocate extcon device\n");
+		return -ENOMEM;
+	}
+	ret = devm_extcon_dev_register(&pdev->dev, ir_notify->edev);
+	if (ret < 0) {
+		dev_err(&pdev->dev, "extcon_dev_register() failed: %d\n", ret);
+		printk( "extcon_dev_register() failed\n");
+		return ret;
+	}
+	dev_err(&pdev->dev, "R notify init ok!!!");
+	return 0;
+}
+
 static int rk_pwm_probe(struct platform_device *pdev)
 {
 	struct rkxx_remotectl_drvdata *ddata;
@@ -587,7 +614,6 @@ static int rk_pwm_probe(struct platform_device *pdev)
 	int pwm_id;
 	int pwm_freq;
 	int count;
-
 	pr_err(".. rk pwm remotectl v2.0 init\n");
 	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!r) {
@@ -650,6 +676,12 @@ static int rk_pwm_probe(struct platform_device *pdev)
 		pr_err("failed to malloc remote button memory\n");
 		ret = -ENOMEM;
 		goto error_pclk;
+	}
+	ir_notify = devm_kzalloc(&pdev->dev, num *sizeof(*ir_notify), GFP_KERNEL);
+	if (!ir_notify) {
+		pr_err("failed to allocate driver data\n");
+		ret = -ENOMEM;
+		goto error_init_notify;
 	}
 	input = devm_input_allocate_device(&pdev->dev);
 	if (!input) {
@@ -718,6 +750,12 @@ static int rk_pwm_probe(struct platform_device *pdev)
 	ddata->pwm_freq_nstime = 1000000000 / pwm_freq;
 	rk_pwm_remotectl_hw_init(ddata->base, pwm_id);
 
+	ret = ir_led_notify_init(pdev);
+	if(!ret)
+		dev_info(&pdev->dev, "ir notify led init ok\n");
+	else
+		dev_info(&pdev->dev, "ir notify led init fail!!\n");
+
 	ret = rk_pwm_pwrkey_wakeup_init(pdev);
 	if (!ret) {
 		dev_info(&pdev->dev, "Controller support pwrkey capture\n");
@@ -739,6 +777,7 @@ error_pclk:
 	clk_unprepare(p_clk);
 error_clk:
 	clk_unprepare(clk);
+error_init_notify:
 	return ret;
 }
 

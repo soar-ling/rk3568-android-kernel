@@ -136,8 +136,11 @@
 		compatible = "gpio-leds";
 		status = "okay";
 		work_led: work {
+			extcon = <&pwm3>;
 			gpios = <&gpio0 RK_PB7 GPIO_ACTIVE_HIGH>;
-			linux,default-trigger = "heartbeat";
+			linux,default-trigger = "ir0";
+			default-state = "off";
+			retain-state-suspended;
 		};
 	};
 
@@ -256,7 +259,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c5m0_xfer>;
 
-	/delete-node/ mxc6655xa;
+	/delete-node/ mxc6655xa@15;
 
 	hym8563: hym8563@51 {
 		compatible = "haoyu,hym8563";

@@ -18,6 +18,11 @@ config LEDS_TRIGGER_TIMER
 
 	  If unsure, say Y.
 
+config LEDS_TRIGGER_IR
+	tristate "LED IR Trigger"
+	help
+	  The LED blinks and shrinks according to the infrared signal
+
 config LEDS_TRIGGER_ONESHOT
 	tristate "LED One-shot Trigger"
 	help
