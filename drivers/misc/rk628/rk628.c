@@ -478,7 +478,7 @@ static void rk628_display_work(struct work_struct *work)
 	u8 ret = 0;
 	struct rk628 *rk628 =
 		container_of(work, struct rk628, delay_work.work);
-	int delay = msecs_to_jiffies(1000);
+	int delay = msecs_to_jiffies(30);
 
 	if (rk628->input_mode == INPUT_MODE_HDMI) {
 		ret = rk628_hdmirx_detect(rk628);
