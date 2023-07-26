@@ -382,7 +382,7 @@
 			<0xe5	KEY_HOME>,
 			<0xb7	KEY_VOLUMEUP>,
 			<0xb6	KEY_VOLUMEDOWN>,
-			<0x8b	KEY_SEARCH>,
+			<0x8b	KEY_SETTINGS>,
 			<0xf4	KEY_POWER>,
 			<0xeb	KEY_MUTE>,
 			<0xe8	KEY_MENU>,
