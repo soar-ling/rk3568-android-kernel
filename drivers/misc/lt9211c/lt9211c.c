@@ -1649,7 +1649,7 @@ static int lt9211_pm_resume(struct device *dev)
 	}
 	msleep(20);
 
-	lt9211_init_config();
+	//lt9211_init_config();
 
 	return 0;
 }

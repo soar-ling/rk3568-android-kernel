@@ -111,6 +111,7 @@ struct panel_simple {
 	bool prepared;
 	bool enabled;
 	bool power_invert;
+	bool is_lt9211;
 
 	const struct panel_desc *desc;
 
@@ -146,6 +147,8 @@ enum rockchip_spi_cmd_type {
 	SPI_3LINE_9BIT_MODE_DATA,
 	SPI_4LINE_8BIT_MODE,
 };
+
+extern void lt9211_init_config(void);
 
 static void panel_simple_sleep(unsigned int msec)
 {
@@ -631,6 +634,9 @@ static int panel_simple_enable(struct drm_panel *panel)
 
 	p->enabled = true;
 
+	if(p->is_lt9211)
+		lt9211_init_config();
+
 	return 0;
 }
 
@@ -779,6 +785,9 @@ static int panel_simple_probe(struct device *dev, const struct panel_desc *desc)
 	}
 	panel->power_invert =
 			of_property_read_bool(dev->of_node, "power-invert");
+
+	panel->is_lt9211 =
+			of_property_read_bool(dev->of_node, "lt9211c");
 
 	backlight = of_parse_phandle(dev->of_node, "backlight", 0);
 	if (backlight) {

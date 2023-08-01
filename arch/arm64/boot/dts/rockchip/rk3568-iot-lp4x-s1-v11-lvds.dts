@@ -43,7 +43,7 @@
 	prepare-delay-ms = <2>;
 	reset-delay-ms = <5>;
 	init-delay-ms = <2>;
-
+	lt9211c;
 		panel-init-sequence = [
 		23 00 02 27 AA
 		23 00 02 48 02
