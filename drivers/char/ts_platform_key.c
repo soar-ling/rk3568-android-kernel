@@ -24,6 +24,7 @@
 #include <linux/uaccess.h>
 #include <linux/soc/rockchip/rk_vendor_storage.h>
 #include <linux/string.h>
+#include <linux/wakelock.h>
 
 static int dbg_enable;
 module_param_named(dbg_level, dbg_enable, int, 0644);
@@ -49,6 +50,8 @@ struct fdt_info_priv {
     const char	*secondscreen;
     const char	*firstbufsize;
     const char	*secondbufsize;
+    bool nosleep;
+    struct wake_lock wake_lock_always;
 };
 
 static int vendor_key_read(struct fdt_info_priv *priv, int id)
@@ -243,10 +246,20 @@ static int fdt_info_probe(struct platform_device *pdev)
         DBG("Invalid or missing persist.vendor.framebuffer.aux!\n");
     }
 
+    priv->nosleep = of_property_read_bool(np, "no-sleep");
+    if (priv->nosleep) {
+        DBG("system must not sleep!\n");
+    }
+
     ret = sysfs_create_group(&pdev->dev.kobj, &fdt_info_attr_group);
     if (ret) {
         dev_err(&pdev->dev, "failed to create sysfs group\n");
         return ret;
+    }
+
+    if(priv->nosleep) {
+		wake_lock_init(&priv->wake_lock_always, WAKE_LOCK_SUSPEND, "wake_lock_always");
+        wake_lock(&priv->wake_lock_always);
     }
 
     return 0;
@@ -257,7 +270,13 @@ err:
 
 static int fdt_info_remove(struct platform_device *pdev)
 {
+    struct fdt_info_priv *priv = platform_get_drvdata(pdev);
+
     sysfs_remove_group(&pdev->dev.kobj, &fdt_info_attr_group);
+
+    if (priv->nosleep) {
+        wake_unlock(&priv->wake_lock_always);
+    }
 
     return 0;
 }

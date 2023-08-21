@@ -49,6 +49,7 @@
 		compatible = "info,lcd";
 		dpi = "160";
 		orientation = "Z0";
+		no-sleep;
 		status = "disalbed";
 	};
 
