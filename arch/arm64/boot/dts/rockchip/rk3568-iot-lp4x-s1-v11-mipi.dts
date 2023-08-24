@@ -178,7 +178,7 @@
 };
 
 &sky_key{
-	dpi = "100";
+	dpi = "120";
 	vertical-dpi = "160";
 	status = "okay";
 };
