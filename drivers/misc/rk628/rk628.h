@@ -203,6 +203,7 @@
 #define DRM_MODE_FLAG_NHSYNC                    (1<<1)
 #define DRM_MODE_FLAG_PVSYNC                    (1<<2)
 #define DRM_MODE_FLAG_NVSYNC                    (1<<3)
+#define RK628_GVI_LANES_MAX		8
 
 enum {
 	COMBTXPHY_MODULEA_EN = BIT(0),
@@ -407,6 +408,7 @@ struct rk628_gvi {
 	bool division_mode;
 	bool frm_rst;
 	u8 byte_mode;
+	unsigned int *data_lanes;
 };
 
 struct rk628_combtxphy {

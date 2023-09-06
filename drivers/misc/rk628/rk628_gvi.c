@@ -15,7 +15,7 @@ int rk628_gvi_parse(struct rk628 *rk628, struct device_node *gvi_np)
 {
 	const char *string;
 	u32 val;
-	int ret;
+	int num, i, ret;
 
 	if (!of_device_is_available(gvi_np))
 		return -EINVAL;
@@ -24,6 +24,35 @@ int rk628_gvi_parse(struct rk628 *rk628, struct device_node *gvi_np)
 
 	if (!of_property_read_u32(gvi_np, "gvi,lanes", &val))
 		rk628->gvi.lanes = val;
+
+	if (of_find_property(gvi_np, "data-lanes", NULL)) {
+		ret = of_property_count_u32_elems(gvi_np, "data-lanes");
+		if (ret <= 0) {
+			dev_err(rk628->dev, "Wrong data!\n");
+			return ret ? : -EINVAL;
+		}
+
+		rk628->gvi.lanes = num = ret;
+		rk628->gvi.data_lanes = devm_kcalloc(rk628->dev, num, sizeof(u32),
+							   GFP_KERNEL);
+		if (!rk628->gvi.data_lanes)
+			return -ENOMEM;
+
+		ret = of_property_read_u32_array(gvi_np, "data-lanes",
+						 rk628->gvi.data_lanes, num);
+		if (ret) {
+			dev_err(rk628->dev, "Property 'data-lanes' cannot be read!\n");
+			return ret;
+		}
+
+		for (i = 0; i < num; i++) {
+			if (rk628->gvi.data_lanes[i] > RK628_GVI_LANES_MAX) {
+				dev_err(rk628->dev, "rk628 lane num[%d]:%d > %d\n", i,
+					rk628->gvi.data_lanes[i], RK628_GVI_LANES_MAX);
+				return -EINVAL;
+			}
+		}
+	}
 
 	if (of_property_read_bool(gvi_np, "rockchip,division-mode"))
 		rk628->gvi.division_mode = true;
@@ -114,6 +143,8 @@ static unsigned int rk628_gvi_get_lane_rate(struct rk628 *rk628)
 
 static void rk628_gvi_pre_enable(struct rk628 *rk628, struct rk628_gvi *gvi)
 {
+	int i;
+
 	/* gvi reset */
 	rk628_i2c_update_bits(rk628, GVI_SYS_RST, SYS_RST_SOFT_RST,
 			      SYS_RST_SOFT_RST);
@@ -136,6 +167,13 @@ static void rk628_gvi_pre_enable(struct rk628 *rk628, struct rk628_gvi *gvi)
 	rk628_i2c_update_bits(rk628, GVI_SYS_CTRL0, SYS_CTRL0_FRM_RST_EN,
 			      gvi->frm_rst ? SYS_CTRL0_FRM_RST_EN : 0);
 	rk628_i2c_update_bits(rk628, GVI_SYS_CTRL1, SYS_CTRL1_LANE_ALIGN_EN, 0);
+
+	if (rk628->gvi.data_lanes) {
+		for (i = 0; i < rk628->gvi.lanes; i++) {
+			rk628_i2c_update_bits(rk628, GVI_SYS_CTRL3, GENMASK((i * 4 + 2), (i * 4)), \
+				UPDATE(rk628->gvi.data_lanes[i], (i * 4 + 2), (i * 4)));
+		}
+	}
 }
 
 static void rk628_gvi_enable_color_bar(struct rk628 *rk628,
