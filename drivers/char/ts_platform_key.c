@@ -52,6 +52,8 @@ struct fdt_info_priv {
     const char	*secondbufsize;
     bool nosleep;
     struct wake_lock wake_lock_always;
+    u32 minbrightness;
+    u32 maxbrightness;
 };
 
 static int vendor_key_read(struct fdt_info_priv *priv, int id)
@@ -188,6 +190,30 @@ static ssize_t secondbufsize_show(struct device *dev,
 }
 static DEVICE_ATTR(secondbufsize, 0444, secondbufsize_show, NULL);
 
+static ssize_t minbrightness_show(struct device *dev,
+                                  struct device_attribute *attr, char *buf)
+{
+    struct fdt_info_priv * priv = dev_get_drvdata(dev);
+
+	if (!priv->minbrightness)
+		return sprintf(buf, "null");
+
+    return sprintf(buf, "%d", priv->minbrightness);
+}
+static DEVICE_ATTR(minbrightness, 0444, minbrightness_show, NULL);
+
+static ssize_t maxbrightness_show(struct device *dev,
+                                  struct device_attribute *attr, char *buf)
+{
+    struct fdt_info_priv * priv = dev_get_drvdata(dev);
+
+	if (!priv->maxbrightness)
+		return sprintf(buf, "null");
+
+    return sprintf(buf, "%d", priv->maxbrightness);
+}
+static DEVICE_ATTR(maxbrightness, 0444, maxbrightness_show, NULL);
+
 static struct attribute *fdt_info_sysfs_entries[] = {
     &dev_attr_key.attr,
     &dev_attr_orientation.attr,
@@ -196,6 +222,8 @@ static struct attribute *fdt_info_sysfs_entries[] = {
     &dev_attr_secondscreen.attr,
     &dev_attr_firstbufsize.attr,
     &dev_attr_secondbufsize.attr,
+    &dev_attr_minbrightness.attr,
+    &dev_attr_maxbrightness.attr,
     NULL,
 };
 
@@ -208,6 +236,7 @@ static int fdt_info_probe(struct platform_device *pdev)
     struct device *dev = &pdev->dev;
     struct device_node *np = dev->of_node;
     struct fdt_info_priv *priv;
+    u32 val;
     int ret = -1;
 
     priv = devm_kzalloc(&pdev->dev, sizeof(struct fdt_info_priv), GFP_KERNEL);
@@ -244,6 +273,20 @@ static int fdt_info_probe(struct platform_device *pdev)
 
     if (of_property_read_string(np, "persist.vendor.framebuffer.aux", &priv->secondbufsize)) {
         DBG("Invalid or missing persist.vendor.framebuffer.aux!\n");
+    }
+
+    if (!of_property_read_u32(np, "min-brightness", &val)) {
+        if (val > 0 && val <= 255)
+			priv->minbrightness = val;
+        else
+			priv->minbrightness = 0;
+    }
+
+    if (!of_property_read_u32(np, "max-brightness", &val)) {
+        if (val > 0 && val <= 255)
+			priv->maxbrightness = val;
+        else
+			priv->maxbrightness = 0;
     }
 
     priv->nosleep = of_property_read_bool(np, "no-sleep");
