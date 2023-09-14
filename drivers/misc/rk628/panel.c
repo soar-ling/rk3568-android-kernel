@@ -171,6 +171,13 @@ int panel_info_get(struct rk628 *rk628, struct device_node *np)
 
 	}
 
+	of_property_read_u32(dev->of_node, "panel-prepare-delay-ms", &panel->delay.prepare);
+	of_property_read_u32(dev->of_node, "panel-enable-delay-ms", &panel->delay.enable);
+	of_property_read_u32(dev->of_node, "panel-disable-delay-ms", &panel->delay.disable);
+	of_property_read_u32(dev->of_node, "panel-unprepare-delay-ms", &panel->delay.unprepare);
+	of_property_read_u32(dev->of_node, "panel-reset-delay-ms", &panel->delay.reset);
+	of_property_read_u32(dev->of_node, "panel-init-delay-ms", &panel->delay.init);
+
 	rk628->panel = panel;
 
 	if (rk628->output_mode == OUTPUT_MODE_DSI) {
@@ -194,45 +201,49 @@ void panel_prepare(struct rk628 *rk628)
 			printk("failed to enable panel power supply\n");
 	}
 
-	if (rk628->panel->enable_gpio) {
-		gpiod_set_value(rk628->panel->enable_gpio, 0);
-		mdelay(120);
+	if (rk628->panel->enable_gpio)
 		gpiod_set_value(rk628->panel->enable_gpio, 1);
-		mdelay(120);
-	}
 
-	if (rk628->panel->reset_gpio) {
-		gpiod_set_value(rk628->panel->reset_gpio, 0);
-		mdelay(120);
+	if (rk628->panel->delay.prepare)
+		mdelay(rk628->panel->delay.prepare);
+
+	if (rk628->panel->reset_gpio)
 		gpiod_set_value(rk628->panel->reset_gpio, 1);
-		mdelay(120);
+
+	if (rk628->panel->delay.reset)
+		mdelay(rk628->panel->delay.reset);
+
+	if (rk628->panel->reset_gpio)
 		gpiod_set_value(rk628->panel->reset_gpio, 0);
-		mdelay(120);
-	}
+
+	if (rk628->panel->delay.init)
+		mdelay(rk628->panel->delay.init);
 }
 
 void panel_enable(struct rk628 *rk628)
-{    
-	mdelay(500);
+{
+	if (rk628->panel->delay.enable)
+		mdelay(rk628->panel->delay.enable);
+	else
+		mdelay(500);
+
 	if (rk628->panel->backlight)
 		backlight_enable(rk628->panel->backlight);
 }
 
 void panel_unprepare(struct rk628 *rk628)
 {
-
-	if (rk628->panel->reset_gpio) {
+	if (rk628->panel->reset_gpio)
 		gpiod_set_value(rk628->panel->reset_gpio, 1);
-		mdelay(120);
-	}
 
-	if (rk628->panel->enable_gpio) {
+	if (rk628->panel->enable_gpio)
 		gpiod_set_value(rk628->panel->enable_gpio, 0);
-		mdelay(120);
-	}
 
 	if (rk628->panel->supply)
 		regulator_disable(rk628->panel->supply);
+
+	if (rk628->panel->delay.unprepare)
+		mdelay(rk628->panel->delay.unprepare);
 }
 
 void panel_disable(struct rk628 *rk628)
@@ -240,4 +251,6 @@ void panel_disable(struct rk628 *rk628)
 	if (rk628->panel->backlight)
 		backlight_disable(rk628->panel->backlight);
 
+	if (rk628->panel->delay.disable)
+		mdelay(rk628->panel->delay.disable);
 }

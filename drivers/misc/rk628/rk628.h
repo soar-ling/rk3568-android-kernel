@@ -382,6 +382,30 @@ struct panel_simple {
 	struct gpio_desc *reset_gpio;
 	struct panel_cmds *on_cmds;
 	struct panel_cmds *off_cmds;
+
+	/**
+	 * @prepare: the time (in milliseconds) that it takes for the panel to
+	 *           become ready and start receiving video data
+	 * @enable: the time (in milliseconds) that it takes for the panel to
+	 *          display the first valid frame after starting to receive
+	 *          video data
+	 * @disable: the time (in milliseconds) that it takes for the panel to
+	 *           turn the display off (no content is visible)
+	 * @unprepare: the time (in milliseconds) that it takes for the panel
+	 *             to power itself down completely
+	 * @reset: the time (in milliseconds) that it takes for the panel
+	 *         to reset itself completely
+	 * @init: the time (in milliseconds) that it takes for the panel to
+	 *	  send init command sequence after reset deassert
+	 */
+	struct {
+		unsigned int prepare;
+		unsigned int enable;
+		unsigned int disable;
+		unsigned int unprepare;
+		unsigned int reset;
+		unsigned int init;
+	} delay;
 };
 
 struct rk628_dsi {
