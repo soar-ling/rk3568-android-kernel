@@ -494,9 +494,11 @@ static void rk628_display_work(struct work_struct *work)
 
 	if (ret & HDMIRX_PLUGIN) {
 		/* if resolution or input format change, disable first */
-		rk628_display_disable(rk628);
+		//rk628_display_disable(rk628);
 		rk628_display_enable(rk628);
 	} else if (ret & HDMIRX_PLUGOUT) {
+		rk628_display_disable(rk628);
+	} else if (ret & HDMIRX_NOSIGNAL) {
 		rk628_display_disable(rk628);
 	}
 
@@ -1032,7 +1034,6 @@ static int rk628_debugfs_open(struct inode *inode, struct file *file)
     return single_open(file, rk628_debugfs_dump, rk628);
 }
 
-
 static const struct file_operations rk628_debugfs_summary_fops = {
 	.owner = THIS_MODULE,
 	.open = rk628_debugfs_open,
@@ -1041,6 +1042,22 @@ static const struct file_operations rk628_debugfs_summary_fops = {
 	.release = single_release,
 
 };
+
+static ssize_t rk628_dbg_store(struct device *dev,
+			       struct device_attribute *attr,
+			       const char *buf, size_t count)
+{
+	struct rk628 *rk628 = dev_get_drvdata(dev);
+
+	if(strstr(buf, "off")) {
+		rk628_display_disable(rk628);
+	}
+
+	return count;
+}
+
+static struct device_attribute rk628_attrs =
+		__ATTR(rk628_dbg, 0220, NULL, rk628_dbg_store);
 
 static int
 rk628_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
@@ -1053,7 +1070,6 @@ rk628_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	struct dentry *debug_dir;
 
 	dev_info(dev, "RK628 misc driver version: %s\n", DRIVER_VERSION);
-	printk("%s %d\n",__func__,__LINE__);
 	rk628 = devm_kzalloc(dev, sizeof(*rk628), GFP_KERNEL);
 	if (!rk628)
 		return -ENOMEM;
@@ -1062,7 +1078,7 @@ rk628_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	rk628->client = client;
 	i2c_set_clientdata(client, rk628);
 	rk628->hdmirx_irq = client->irq;
-printk("%s %d\n",__func__,__LINE__);
+
 	ret = rk628_display_route_info_parse(rk628);
 	if (ret) {
 		dev_err(dev, "display route err\n");
@@ -1207,6 +1223,10 @@ printk("%s %d\n",__func__,__LINE__);
 			return 0;
 
 	debugfs_create_file("summary", S_IRUSR, debug_dir, rk628, &rk628_debugfs_summary_fops);
+
+	ret = sysfs_create_file(&dev->kobj, &rk628_attrs.attr);
+	if (ret)
+		dev_err(&client->dev, "create rk628 sysfs error\n");
 
 	return 0;
 }
