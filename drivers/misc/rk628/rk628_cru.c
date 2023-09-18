@@ -441,6 +441,73 @@ unsigned long rk628_cru_clk_get_rate(struct rk628 *rk628, unsigned int id)
 	return rate;
 }
 
+struct rk628_rgu_data {
+	unsigned int id;
+	unsigned int reg;
+	unsigned int bit;
+};
+
+#define RSTGEN(_id, _reg, _bit)	\
+	{	\
+		.id = (_id),	\
+		.reg = (_reg),	\
+		.bit = (_bit),	\
+	}
+
+static const struct rk628_rgu_data rk628_rgu_data[] = {
+	RSTGEN(RGU_LOGIC,	CRU_SOFTRST_CON00,  0),
+	RSTGEN(RGU_CRU,		CRU_SOFTRST_CON00,  1),
+	RSTGEN(RGU_REGFILE,	CRU_SOFTRST_CON00,  2),
+	RSTGEN(RGU_I2C2APB,	CRU_SOFTRST_CON00,  3),
+	RSTGEN(RGU_EFUSE,	CRU_SOFTRST_CON00,  5),
+	RSTGEN(RGU_ADAPTER,	CRU_SOFTRST_CON00,  7),
+	RSTGEN(RGU_CLK_RX,	CRU_SOFTRST_CON00, 11),
+	RSTGEN(RGU_BT1120DEC,	CRU_SOFTRST_CON00, 12),
+	RSTGEN(RGU_VOP,		CRU_SOFTRST_CON00, 13),
+
+	RSTGEN(RGU_GPIO0,	CRU_SOFTRST_CON01,  0),
+	RSTGEN(RGU_GPIO1,	CRU_SOFTRST_CON01,  1),
+	RSTGEN(RGU_GPIO2,	CRU_SOFTRST_CON01,  2),
+	RSTGEN(RGU_GPIO3,	CRU_SOFTRST_CON01,  3),
+	RSTGEN(RGU_GPIO_DB0,	CRU_SOFTRST_CON01,  4),
+	RSTGEN(RGU_GPIO_DB1,	CRU_SOFTRST_CON01,  5),
+	RSTGEN(RGU_GPIO_DB2,	CRU_SOFTRST_CON01,  6),
+	RSTGEN(RGU_GPIO_DB3,	CRU_SOFTRST_CON01,  7),
+
+	RSTGEN(RGU_RXPHY,	CRU_SOFTRST_CON02,  0),
+	RSTGEN(RGU_HDMIRX,	CRU_SOFTRST_CON02,  2),
+	RSTGEN(RGU_TXPHY_CON,	CRU_SOFTRST_CON02,  3),
+	RSTGEN(RGU_HDMITX,	CRU_SOFTRST_CON02,  4),
+	RSTGEN(RGU_GVIHOST,	CRU_SOFTRST_CON02,  5),
+	RSTGEN(RGU_DSI0,	CRU_SOFTRST_CON02,  6),
+	RSTGEN(RGU_DSI1,	CRU_SOFTRST_CON02,  7),
+	RSTGEN(RGU_CSI,		CRU_SOFTRST_CON02,  8),
+	RSTGEN(RGU_TXDATA,	CRU_SOFTRST_CON02,  9),
+	RSTGEN(RGU_DECODER,	CRU_SOFTRST_CON02, 10),
+	RSTGEN(RGU_ENCODER,	CRU_SOFTRST_CON02, 11),
+	RSTGEN(RGU_HDMIRX_PON,	CRU_SOFTRST_CON02, 12),
+	RSTGEN(RGU_TXBYTEHS,	CRU_SOFTRST_CON02, 13),
+	RSTGEN(RGU_TXESC,	CRU_SOFTRST_CON02, 14),
+};
+
+static int rk628_rgu_update(struct rk628 *rk628, unsigned long id, int assert)
+{
+	const struct rk628_rgu_data *data = &rk628_rgu_data[id];
+
+	return rk628_i2c_write(rk628, data->reg,
+			    BIT(data->bit + 16) | (assert << data->bit));
+}
+
+int rk628_ctrl_assert(struct rk628 *rk628, unsigned long id)
+{
+	return rk628_rgu_update(rk628, id, 1);
+}
+
+int rk628_ctrl_deassert(struct rk628 *rk628, unsigned long id)
+{
+	return rk628_rgu_update(rk628, id, 0);
+}
+
 void rk628_cru_init(struct rk628 *rk628)
 {
 	u32 val;

@@ -6,6 +6,7 @@
 
 #include "rk628.h"
 #include "rk628_combrxphy.h"
+#include "rk628_cru.h"
 
 #define MAX_ROUND		6
 #define MAX_DATA_NUM		16
@@ -551,10 +552,19 @@ static int rk628_combrxphy_set_hdmi_mode_for_cable(struct rk628 *rk628, int f)
 
 int rk628_combrxphy_power_on(struct rk628 *rk628, int f)
 {
+	rk628_ctrl_assert(rk628, RGU_RXPHY);
+	udelay(10);
+	rk628_ctrl_deassert(rk628, RGU_RXPHY);
+	udelay(10);
+
 	return rk628_combrxphy_set_hdmi_mode_for_cable(rk628, f);
 }
 
 int rk628_combrxphy_power_off(struct rk628 *rk628)
 {
+	rk628_i2c_update_bits(rk628, COMBRX_REG(0x6630), BIT(0), BIT(0));
+	rk628_ctrl_assert(rk628, RGU_RXPHY);
+	udelay(10);
+
 	return 0;
 }
