@@ -307,7 +307,7 @@ static int rk628_hdmirx_set_edid(struct rk628 *rk628)
 
 static int rk628_hdmirx_phy_power_on(struct rk628 *rk628, int f)
 {
-	int ret;
+	int ret = 0;
 	static bool rxphy_pwron = false;
 
 	if (rxphy_pwron) {
@@ -461,6 +461,7 @@ static int rk628_hdmirx_phy_setup(struct rk628 *rk628)
 	struct rk628_hdmirx *hdmirx = rk628->hdmirx;
 	int f;
 	struct rk628_display_mode *dst_mode;
+	int ret;
 
 	/* Bit31 is used to distinguish HDMI cable mode and direct connection
 	* mode in the rk628_combrxphy driver.
@@ -480,7 +481,9 @@ static int rk628_hdmirx_phy_setup(struct rk628 *rk628)
 		f |= BIT(30);
 
 	for ( i = 0; i < RXPHY_CFG_MAX_TIMES; i++) {
-		rk628_hdmirx_phy_power_on(rk628, f);
+		ret = rk628_hdmirx_phy_power_on(rk628, f);
+		if (ret)
+			return ret;
 		cnt = 0;
 
 		do {
@@ -706,12 +709,12 @@ int rk628_hdmirx_enable(struct rk628 *rk628)
 		hdmirx->plugin = true;
 		rk628_hdmirx_enable_edid(rk628);
 		rk628_hdmirx_ctrl_enable(rk628);
-		rk628_hdmirx_phy_setup(rk628);
+		ret = rk628_hdmirx_phy_setup(rk628);
 		rk628_hdmirx_get_input_format(rk628);
 		rk628_set_input_bus_format(rk628, hdmirx->input_format);
 		printk("hdmirx plug in\n");
 		printk("input: %d, output: %d\n", hdmirx->input_format, rk628_get_output_bus_format(rk628));
-		if (!rk628_check_signal(rk628)) {
+		if (ret || !rk628_check_signal(rk628)) {
 			return HDMIRX_PLUGIN | HDMIRX_NOSIGNAL;
 		} else {
 			rk628_hdmirx_video_unmute(rk628, 1);
