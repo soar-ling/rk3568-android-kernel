@@ -48,18 +48,17 @@
 	logo,uboot = "logo_180.bmp";
 	logo,kernel = "logo_180.bmp";
 	connect = <&vp0_out_hdmi>;
-	force-bus-format = <0x2026>;
 	force-output;
 	force_timing{
-		clock-frequency = <594000000>;
-		hactive = <3840>;
-		vactive = <2160>;
-		hback-porch = <308>;
-		hfront-porch = <164>;
-		hsync-len = <88>;
-		vback-porch = <72>;
-		vfront-porch = <8>;
-		vsync-len = <10>;
+		clock-frequency = <148500000>;
+		hactive = <1920>;
+		vactive = <1080>;
+		hback-porch = <154>;
+		hfront-porch = <82>;
+		hsync-len = <44>;
+		vback-porch = <36>;
+		vfront-porch = <4>;
+		vsync-len = <5>;
 		hsync-active = <1>;
 		vsync-active = <1>;
 		de-active = <0>;
@@ -75,12 +74,10 @@
 		status = "okay";
 		compatible = "rockchip,rk628";
 		reg = <0x51>;
-		power-supply = <&vcc3v3_lcd1_n>;
 		interrupt-parent = <&gpio2>;
 		interrupts = <RK_PD2 IRQ_TYPE_LEVEL_HIGH>;
 		reset-gpios = <&gpio2 RK_PD1 GPIO_ACTIVE_LOW>;
 		enable-gpios = <&gpio0 RK_PD5 GPIO_ACTIVE_HIGH>;
-		panel-backlight = <&backlight1>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&refclk_pins>;
 		assigned-clocks = <&pmucru CLK_WIFI>;
@@ -88,8 +85,11 @@
 		clocks = <&pmucru CLK_WIFI>;
 		clock-names = "soc_24M";
 
+		power-supply = <&vcc3v3_lcd1_n>;
+		panel-backlight = <&backlight1>;
+
 		rk628,hdmi-in;
-		src-mode-4k-yuv420;
+		//src-mode-4k-yuv420;
 
 		rk628-gvi {
 			/* "rgb666"
@@ -101,21 +101,21 @@
 			bus-format = "rgb888";
 			gvi,lanes = <8>;
 			rockchip,division-mode;
-			//"rockchip, gvi-frm-rst";
+			//rockchip,gvi-frm-rst;
 			status = "okay";
 		};
 
 		display-timings {
 			src-timing {
-				clock-frequency = <594000000>;
-				hactive = <3840>;
-				vactive = <2160>;
-				hback-porch = <308>;
-				hfront-porch = <164>;
-				hsync-len = <88>;
-				vback-porch = <72>;
-				vfront-porch = <8>;
-				vsync-len = <10>;
+				clock-frequency = <148500000>;
+				hactive = <1920>;
+				vactive = <1080>;
+				hback-porch = <154>;
+				hfront-porch = <82>;
+				hsync-len = <44>;
+				vback-porch = <36>;
+				vfront-porch = <4>;
+				vsync-len = <5>;
 				hsync-active = <1>;
 				vsync-active = <1>;
 				de-active = <0>;
