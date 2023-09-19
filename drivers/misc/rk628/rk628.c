@@ -494,7 +494,7 @@ static void rk628_display_work(struct work_struct *work)
 
 	if (ret & HDMIRX_PLUGIN) {
 		/* if resolution or input format change, disable first */
-		//rk628_display_disable(rk628);
+		rk628_display_disable(rk628);
 		rk628_display_enable(rk628);
 	} else if (ret & HDMIRX_PLUGOUT) {
 		rk628_display_disable(rk628);
@@ -1048,8 +1048,11 @@ static ssize_t rk628_dbg_store(struct device *dev,
 			       const char *buf, size_t count)
 {
 	struct rk628 *rk628 = dev_get_drvdata(dev);
+	struct rk628_hdmirx *hdmirx = rk628->hdmirx;
 
 	if(strstr(buf, "off")) {
+		hdmirx->mode.hdisplay=0;
+		hdmirx->mode.vdisplay=0;
 		rk628_display_disable(rk628);
 	}
 
@@ -1236,6 +1239,7 @@ static int rk628_i2c_remove(struct i2c_client *client)
 	struct rk628 *rk628 = i2c_get_clientdata(client);
 	struct device *dev = &client->dev;
 
+	rk628_display_disable(rk628);
 	if (rk628->output_mode == OUTPUT_MODE_DSI) {
 		cancel_delayed_work_sync(&rk628->dsi_delay_work);
 		destroy_workqueue(rk628->dsi_wq);

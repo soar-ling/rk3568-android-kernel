@@ -55,31 +55,6 @@ static u8 edid_init_data[] = {
 
 };
 
-struct rk628_hdmi_mode {
-	u32 hdisplay;
-	u32 hstart;
-	u32 hend;
-	u32 htotal;
-	u32 vdisplay;
-	u32 vstart;
-	u32 vend;
-	u32 vtotal;
-	u32 clock;
-	unsigned int flags;
-};
-
-struct rk628_hdmirx {
-	bool plugin;
-	bool res_change;
-	struct rk628_hdmi_mode mode;
-	u32 input_format;
-	u32 fs_audio;
-	bool audio_present;
-	bool hpd_output_inverted;
-	bool src_mode_4K_yuv420;
-	bool phy_lock;
-};
-
 static void rk628_hdmirx_ctrl_enable(struct rk628 *rk628)
 {
 
@@ -462,6 +437,7 @@ static int rk628_hdmirx_phy_setup(struct rk628 *rk628)
 	int f;
 	struct rk628_display_mode *dst_mode;
 	int ret;
+	u32 tmdsclk_cnt;
 
 	/* Bit31 is used to distinguish HDMI cable mode and direct connection
 	* mode in the rk628_combrxphy driver.
@@ -499,6 +475,9 @@ static int rk628_hdmirx_phy_setup(struct rk628 *rk628)
 			rk628_i2c_read(rk628, HDMI_RX_MD_VTL, &val);
 			frame_height = val & 0xffff;
 
+			rk628_i2c_read(rk628, HDMI_RX_HDMI_CKM_RESULT, &val);
+			tmdsclk_cnt = val & 0xffff;
+
 			rk628_i2c_read(rk628, HDMI_RX_SCDC_REGS1, &val);
 			status = val;
 
@@ -507,14 +486,15 @@ static int rk628_hdmirx_phy_setup(struct rk628 *rk628)
 			       width, height, frame_width,
 			       frame_height, status, cnt);
 
+			printk("tmdsclk_cnt %d\n",tmdsclk_cnt);
 			if (hdmirx->src_mode_4K_yuv420 && dst_mode->clock == 594000)
 				width *= 2;
 
 			if (cnt >= 15)
 				break;
-		} while((status & 0xfff) != 0xf00);
+		} while(((status & 0xfff) != 0xf00 ) || (tmdsclk_cnt == 0));
 
-		if ((status & 0xfff) != 0xf00) {
+		if (((status & 0xfff) != 0xf00) || (tmdsclk_cnt == 0)) {
 			printk("%s hdmi rxphy lock failed, retry:%d\n",
 			       __func__, i);
 			continue;
@@ -744,6 +724,7 @@ void rk628_hdmirx_disable(struct rk628 *rk628)
 	if (!tx_5v_power_present(rk628)) {
 		hdmirx->plugin = false;
 		rk628_hdmirx_disable_edid(rk628);
+		rk628_combrxphy_power_off(rk628);
 		rk628_i2c_update_bits(rk628, GRF_SYSTEM_CON0, SW_I2S_DATA_OEN_MASK, SW_I2S_DATA_OEN(1));
 		printk("hdmirx plug out\n");
 	}

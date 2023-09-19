@@ -446,6 +446,31 @@ struct rk628_combtxphy {
 	bool division_mode;
 };
 
+struct rk628_hdmi_mode {
+        u32 hdisplay;
+        u32 hstart;
+        u32 hend;
+        u32 htotal;
+        u32 vdisplay;
+        u32 vstart;
+        u32 vend;
+        u32 vtotal;
+        u32 clock;
+        unsigned int flags;
+};
+
+struct rk628_hdmirx {
+        bool plugin;
+        bool res_change;
+        struct rk628_hdmi_mode mode;
+        u32 input_format;
+        u32 fs_audio;
+        bool audio_present;
+        bool hpd_output_inverted;
+        bool src_mode_4K_yuv420;
+        bool phy_lock;
+};
+
 struct rk628 {
 	struct device *dev;
 	struct i2c_client *client;

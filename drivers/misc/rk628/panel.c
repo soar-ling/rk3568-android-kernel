@@ -239,7 +239,7 @@ void panel_unprepare(struct rk628 *rk628)
 	if (rk628->panel->enable_gpio)
 		gpiod_set_value(rk628->panel->enable_gpio, 0);
 
-	if (rk628->panel->supply)
+	if (rk628->panel->supply && regulator_is_enabled(rk628->panel->supply))
 		regulator_disable(rk628->panel->supply);
 
 	if (rk628->panel->delay.unprepare)
