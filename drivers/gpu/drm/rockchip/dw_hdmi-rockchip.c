@@ -798,8 +798,6 @@ dw_hdmi_rockchip_select_output(struct drm_connector_state *conn_state,
 		break;
 	}
 
-	*color_format = DRM_HDMI_OUTPUT_YCBCR420;
-
 	if (*color_format == DRM_HDMI_OUTPUT_DEFAULT_RGB &&
 	    info->edid_hdmi_dc_modes & DRM_EDID_HDMI_DC_30)
 		support_dc = true;
@@ -885,6 +883,8 @@ dw_hdmi_rockchip_select_output(struct drm_connector_state *conn_state,
 				*color_format = DRM_HDMI_OUTPUT_YCBCR420;
 		}
 	}
+
+	*color_format = DRM_HDMI_OUTPUT_DEFAULT_RGB;
 
 	if (*color_format == DRM_HDMI_OUTPUT_YCBCR420) {
 		*output_mode = ROCKCHIP_OUT_MODE_YUV420;
