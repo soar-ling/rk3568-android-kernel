@@ -54,6 +54,7 @@
 	};
 
 	vcc3v3_lcd1_n: vcc3v3-lcd1-n {
+		/delete-property/ regulator-boot-on;
 		gpio = <&gpio2 RK_PD3 GPIO_ACTIVE_HIGH>;
 	};
 
