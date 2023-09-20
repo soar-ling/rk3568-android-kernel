@@ -87,6 +87,12 @@
 
 		power-supply = <&vcc3v3_lcd1_n>;
 		panel-backlight = <&backlight1>;
+		panel-prepare-delay-ms = <5>;
+		panel-enable-delay-ms = <500>;
+		panel-disable-delay-ms = <50>;
+		panel-unprepare-delay-ms = <50>;
+		panel-reset-delay-ms = <0>;
+		panel-init-delay-ms = <5>;
 
 		rk628,hdmi-in;
 		//src-mode-4k-yuv420;
