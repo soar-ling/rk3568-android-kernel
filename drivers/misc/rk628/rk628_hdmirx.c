@@ -299,14 +299,14 @@ static int rk628_hdmirx_phy_power_on(struct rk628 *rk628, int f)
 		ret = rk628_combrxphy_power_on(rk628, f);
 		if (ret) {
 			rxphy_pwron = false;
-			printk("hdmi rxphy power on failed\n");
+			//printk("hdmi rxphy power on failed\n");
 		} else {
 			rxphy_pwron = true;
 			printk("hdmi rxphy power on success\n");
 		}
 	}
 
-	pr_info("%s:rxphy_pwron=%d\n", __func__, rxphy_pwron);
+	//pr_info("%s:rxphy_pwron=%d\n", __func__, rxphy_pwron);
 	return ret;
 }
 
@@ -606,8 +606,8 @@ static bool rk628_hdmirx_status_change(struct rk628 *rk628)
 		return true;
 
 	if (hact != hdmirx->mode.hdisplay || vact != hdmirx->mode.vdisplay) {
-		printk("new: hdisplay=%d, vdisplay=%d\n", hact, vact);
-		printk("old: hdisplay=%d, vdisplay=%d\n", hdmirx->mode.hdisplay, hdmirx->mode.vdisplay);
+		//printk("new: hdisplay=%d, vdisplay=%d\n", hact, vact);
+		//printk("old: hdisplay=%d, vdisplay=%d\n", hdmirx->mode.hdisplay, hdmirx->mode.vdisplay);
 		return true;
 	}
 
@@ -692,8 +692,8 @@ int rk628_hdmirx_enable(struct rk628 *rk628)
 		ret = rk628_hdmirx_phy_setup(rk628);
 		rk628_hdmirx_get_input_format(rk628);
 		rk628_set_input_bus_format(rk628, hdmirx->input_format);
-		printk("hdmirx plug in\n");
-		printk("input: %d, output: %d\n", hdmirx->input_format, rk628_get_output_bus_format(rk628));
+		//printk("hdmirx plug in\n");
+		//printk("input: %d, output: %d\n", hdmirx->input_format, rk628_get_output_bus_format(rk628));
 		if (ret || !rk628_check_signal(rk628)) {
 			return HDMIRX_PLUGIN | HDMIRX_NOSIGNAL;
 		} else {
