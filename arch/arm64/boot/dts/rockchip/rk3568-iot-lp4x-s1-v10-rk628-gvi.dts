@@ -47,6 +47,7 @@
 	logo,uboot = "logo.bmp";
 	logo,kernel = "logo.bmp";
 	connect = <&vp0_out_hdmi>;
+	force-bus-format = <0x101e>;
 	force-output;
 	force_timing{
 		clock-frequency = <148500000>;
