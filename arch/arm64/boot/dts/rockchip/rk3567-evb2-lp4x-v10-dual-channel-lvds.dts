@@ -156,6 +156,17 @@
 	status = "disabled";
 };
 
+&route_lvds {
+	status = "okay";
+};
+
+&route_dsi0 {
+	status = "disabled";
+};
+
+&route_edp {
+	status = "disabled";
+};
 
 &vcc3v3_lcd0_n {
 	gpio = <&gpio0 RK_PC7 GPIO_ACTIVE_HIGH>;
