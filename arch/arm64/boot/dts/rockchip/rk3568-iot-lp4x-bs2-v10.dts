@@ -1,0 +1,164 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2020 Rockchip Electronics Co., Ltd.
+ *
+ */
+
+#include "rk3568-evb-lp4x-s1-v11.dtsi"
+#include "rk3568-android.dtsi"
+/{
+	model = "Rockchip RK3568 LP4X SKYSI IOT BS2 V10 Board";
+	compatible = "rockchip,rk3568-iot-lp4x-bs2-v10", "rockchip,rk3568";
+
+	vcc5v0_host: vcc5v0-host-regulator {
+		gpio = <&gpio2 RK_PB1 GPIO_ACTIVE_HIGH>;
+	};
+
+	vcc3v3_lcd0_n: vcc3v3-lcd0-n {
+		/delete-property/ gpio;
+	};
+
+	vcc3v3_lcd1_n: vcc3v3-lcd1-n {
+		/delete-property/ gpio;
+	};
+
+	rk628_dc: rk628-dc {
+		status = "disabled";
+	};
+
+	hdmiin-sound {
+		status = "disabled";
+	};
+
+	/delete-node/ simple-audio-card,codec;
+
+	sdio_pwrseq: sdio-pwrseq {
+		/delete-property/ reset-gpios;
+	};
+
+	wireless_wlan: wireless-wlan {
+		wifi_chip_type = "rtl8733bs";
+	};
+};
+
+&sky_key{
+	dpi = "200";
+	vertical-dpi = "160";
+	status = "okay";
+};
+
+&i2s3_2ch{
+	status = "disabled";
+};
+
+&backlight {
+	status = "disabled";
+};
+
+&backlight1 {
+	status = "disabled";
+};
+
+&hdmi_sound {
+	status = "okay";
+};
+
+&hdmi {
+	status = "okay";
+};
+
+&hdmi_in_vp0 {
+	status = "okay";
+};
+
+&hdmi_in_vp1 {
+	status = "disabled";
+};
+
+&route_hdmi {
+	logo,uboot = "logo.bmp";
+	logo,kernel = "logo.bmp";
+	connect = <&vp0_out_hdmi>;
+	//force-bus-format = <0x101e>;
+	status = "okay";
+
+	force-output;
+	force_timing{
+		clock-frequency = <148500000>;
+		hactive = <1920>;
+		vactive = <1080>;
+		hback-porch = <154>;
+		hfront-porch = <82>;
+		hsync-len = <44>;
+		vback-porch = <36>;
+		vfront-porch = <4>;
+		vsync-len = <5>;
+		hsync-active = <1>;
+		vsync-active = <1>;
+		de-active = <0>;
+		pixelclk-active = <0>;
+	};
+};
+
+&rk628_csi_v4l2 {
+	status = "disabled";
+};
+
+&mipi_csi2 {
+	status = "disabled";
+};
+
+&rkcif_mipi_lvds {
+	status = "disabled";
+};
+
+&rkcif_mmu {
+	status = "disabled";
+};
+
+&rkcif {
+	status = "disabled";
+};
+
+&csi2_dphy_hw {
+	status = "disabled";
+};
+
+&csi2_dphy0 {
+	status = "disabled";
+};
+
+&rkisp_vir0 {
+	port {
+		/delete-node/ endpoint@0;
+	};
+};
+
+&pmu_io_domains {
+	vccio4-supply = <&vcc_3v3>;
+};
+
+&uart9 {
+	rs485-enable = <1>;
+	rs485-gpio = <&gpio3 RK_PC3 GPIO_ACTIVE_LOW>;
+};
+
+&pinctrl {
+	sdio-pwrseq {
+		wifi_enable_h: wifi-enable-h {
+			rockchip,pins = <2 RK_PB1 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
+	wireless-wlan {
+		wifi_host_wake_irq: wifi-host-wake-irq {
+			rockchip,pins = <0 RK_PD4 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	usb {
+		vcc5v0_host_en: vcc5v0-host-en {
+			rockchip,pins = <1 RK_PB1 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+};
