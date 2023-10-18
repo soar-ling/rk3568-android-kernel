@@ -32,6 +32,10 @@
 
 	/delete-node/ simple-audio-card,codec;
 
+	rk_headset: rk-headset {
+		headset_gpio = <&gpio3 RK_PC2 GPIO_ACTIVE_LOW>;
+	};
+
 	sdio_pwrseq: sdio-pwrseq {
 		/delete-property/ reset-gpios;
 	};
