@@ -54,7 +54,6 @@
 	};
 
 	vcc3v3_lcd1_n: vcc3v3-lcd1-n {
-		/delete-property/ regulator-boot-on;
 		gpio = <&gpio2 RK_PD3 GPIO_ACTIVE_HIGH>;
 	};
 
@@ -547,7 +546,7 @@
 
 &rkcif_mipi_lvds {
 	status = "okay";
-
+	rockchip,cif-monitor = <2 2 5 1000 5>;
 	port {
 		cif_mipi_in: endpoint {
 			remote-endpoint = <&mipi_csi2_output>;
