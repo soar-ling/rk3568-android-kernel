@@ -567,14 +567,14 @@ void rk628_csi_isr_ctsn(HAUDINFO info, u32 pdec_ints)
 	struct rk628_audioinfo *aif = (struct rk628_audioinfo *)info;
 	u32 ctsn_mask = ACR_N_CHG_ICLR | ACR_CTS_CHG_ICLR;
 
-	dev_dbg(aif->dev, "%s: pdec_ints:%#x\n", __func__, pdec_ints);
+	//dev_dbg(aif->dev, "%s: pdec_ints:%#x\n", __func__, pdec_ints);
 	/* cts & n both need update but maybe come diff int */
 	if (pdec_ints & ACR_N_CHG_ICLR)
 		aif->audio_state.ctsn_flag |= ACR_N_CHG_ICLR;
 	if (pdec_ints & ACR_CTS_CHG_ICLR)
 		aif->audio_state.ctsn_flag |= ACR_CTS_CHG_ICLR;
 	if (aif->audio_state.ctsn_flag == ctsn_mask) {
-		dev_dbg(aif->dev, "%s: ctsn updated, disable ctsn int\n", __func__);
+		//dev_dbg(aif->dev, "%s: ctsn updated, disable ctsn int\n", __func__);
 		rk628_i2c_write(aif->rk628, HDMI_RX_PDEC_IEN_CLR, ctsn_mask);
 		aif->ctsn_ints_en = false;
 		schedule_delayed_work(&aif->delayed_work_audio_rate_change, 0);
@@ -590,11 +590,11 @@ void rk628_csi_isr_fifoints(HAUDINFO info, u32 fifo_ints)
 	dev_dbg(aif->dev, "%s: fifo_ints:%#x\n", __func__, fifo_ints);
 	/* cts & n both need update but maybe come diff int */
 	if (fifo_ints & AFIF_OVERFL_ISTS) {
-		dev_dbg(aif->dev, "%s: Audio FIFO overflow\n", __func__);
+		//dev_dbg(aif->dev, "%s: Audio FIFO overflow\n", __func__);
 		aif->audio_state.fifo_flag |= AFIF_OVERFL_ISTS;
 	}
 	if (fifo_ints & AFIF_UNDERFL_ISTS) {
-		dev_dbg(aif->dev, "%s: Audio FIFO underflow\n", __func__);
+		//dev_dbg(aif->dev, "%s: Audio FIFO underflow\n", __func__);
 		aif->audio_state.fifo_flag |= AFIF_UNDERFL_ISTS;
 	}
 	if (aif->audio_state.fifo_flag == fifo_mask) {
@@ -616,10 +616,9 @@ int rk628_is_avi_ready(struct rk628 *rk628, bool avi_rcv_rdy)
 	if ((val & HDCP_ENABLE_MASK))
 		max_cnt = 5;
 
-	for (i = 0; i < 30; i++) {
+	for (i = 0; i < 100; i++) {
 		rk628_i2c_read(rk628, HDMI_RX_PDEC_AVI_PB, &val);
-		dev_info(rk628->dev, "%s PDEC_AVI_PB:%#x, avi_rcv_rdy:%d\n",
-			 __func__, val, avi_rcv_rdy);
+		//dev_info(rk628->dev, "%s PDEC_AVI_PB:%#x, avi_rcv_rdy:%d\n",__func__, val, avi_rcv_rdy);
 		if (i > 30 && !(hdcp_ctrl_val & 0x400)) {
 			rk628_i2c_read(rk628, HDMI_RX_HDCP_CTRL, &hdcp_ctrl_val);
 			/* force hdcp avmute */
@@ -636,7 +635,6 @@ int rk628_is_avi_ready(struct rk628 *rk628, bool avi_rcv_rdy)
 		}
 		msleep(30);
 	}
-
 	if (cnt < max_cnt)
 		return 0;
 
