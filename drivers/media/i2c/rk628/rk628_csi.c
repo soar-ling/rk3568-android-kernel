@@ -27,6 +27,7 @@
 #include <media/v4l2-dv-timings.h>
 #include <video/videomode.h>
 #include <linux/debugfs.h>
+#include <linux/rk_hdmirx_class.h>
 
 #include "rk628_csi.h"
 #include "rk628.h"
@@ -234,6 +235,7 @@ static void rk628_hdmirx_hpd_ctrl(struct rk628_csi *csi, bool en);
 static bool tx_5v_power_present(struct rk628_csi *csi);
 static void rk628_hdmirx_controller_reset(struct rk628_csi *csi);
 static struct rk628_csi *g_csi;
+struct device *classdev;
 
 #ifndef KERNEL_VERSION_4_19
 static ssize_t rk628_resolution_read(struct class *class,
@@ -246,7 +248,7 @@ static ssize_t rk628_resolution_read(struct class *class,
 	if (csi->nosignal && tx_5v_power_present(csi)) {
 		if (cnt++ >= 60) {
 			cnt = 0;
-		//	dev_info(csi->dev, "no signal but 5v_det, recfg hdmirx!\n");
+			//	dev_info(csi->dev, "no signal but 5v_det, recfg hdmirx!\n");
 			schedule_delayed_work(&csi->delayed_work_enable_hotplug,
 					HZ / 20);
 		}
@@ -452,7 +454,7 @@ __retry:
 	dev_dbg(csi->dev, "cnt_num:%d, tmds_cnt:%d, hs_cnt:%d, vs_cnt:%d, hofs:%d\n",
 			MODETCLK_CNT_NUM, tmdsclk_cnt, modetclk_cnt_hs,
 			modetclk_cnt_vs, hofs_pix);
-			*/
+*/
 
 	bt->width = hact;
 	bt->height = vact;
@@ -470,7 +472,7 @@ __retry:
 		bt->il_vsync = bt->vsync + 1;
 		bt->pixelclock /= 2;
 	}
-    /*
+/*
 	dev_info(csi->dev,
 		"SCDC_REGS1:%#x, act:%dx%d, total:%dx%d, fps:%d, pixclk:%llu\n",
 		status, hact, vact, htotal, vtotal, fps, bt->pixelclock);
@@ -1432,7 +1434,7 @@ static int rk628_csi_probe(struct i2c_client *client,
 	u32 val;
 	struct rk628 *rk628;
 	unsigned long irq_flags;
-    /*
+/*
 	dev_info(dev, "RK628 I2C driver version: %02x.%02x.%02x",
 		DRIVER_VERSION >> 16,
 		(DRIVER_VERSION & 0xff00) >> 8,
@@ -1543,10 +1545,12 @@ static int rk628_csi_probe(struct i2c_client *client,
 			goto err_work_queues;
 		}
 	}
-	/*
+/*
 	dev_info(csi->dev, "%s found @ 0x%x (%s)\n", client->name,
 		  client->addr << 1, client->adapter->name);*/
 
+	dev_info(csi->dev, "%s found @ 0x%x (%s)\n", client->name,
+		  client->addr << 1, client->adapter->name);
 	g_csi = csi;
 
 	return 0;

@@ -186,7 +186,7 @@ static int rk628_combrxphy_chose_round_for_ch(struct rk628 *rk628,
             rd = i;
         }
     }
-  //  dev_info(rk628->dev, "%s channel:%d, rd:%d\n", __func__, ch, rd);
+    //  dev_info(rk628->dev, "%s channel:%d, rd:%d\n", __func__, ch, rd);
 
     return rd;
 }
@@ -406,7 +406,7 @@ static int rk628_combrxphy_set_hdmi_mode_for_cable(struct rk628 *rk628, int f)
 		//dev_info(rk628->dev, "Clock detection anomaly\n");
 	} else if (state == 4) {
 		channel_st = (val >> 21) & 0x7f;
-	/*	dev_info(rk628->dev, "%s%s%s%s%s%s%s%s level detection anomaly\n",
+		/*	dev_info(rk628->dev, "%s%s%s%s%s%s%s%s level detection anomaly\n",
 			 channel_st & 0x40 ? "|clk_p|" : "",
 			 channel_st & 0x20 ? "|clk_n|" : "",
 			 channel_st & 0x10 ? "|d0_p|" : "",
@@ -423,7 +423,7 @@ static int rk628_combrxphy_set_hdmi_mode_for_cable(struct rk628 *rk628, int f)
             ((val & 0x007f0000) == 0) ||
             ((val & 0x00007f00) == 0) ||
             ((val & 0x0000007f) == 0)) {
-	      //  dev_info(rk628->dev, "clock detected failed, cfg resistance manual!\n");
+	        //  dev_info(rk628->dev, "clock detected failed, cfg resistance manual!\n");
 	        rk628_i2c_write(rk628, COMBRX_REG(0x6620), 0x66666666);
 	        rk628_i2c_update_bits(rk628, COMBRX_REG(0x6604), BIT(31), BIT(31));
 	        mdelay(1);
@@ -460,8 +460,8 @@ static int rk628_combrxphy_set_hdmi_mode_for_cable(struct rk628 *rk628, int f)
 		/* bypass level detection anomaly */
 		if (state == 4)
 			rk628_i2c_update_bits(rk628, COMBRX_REG(0x6628), BIT(31), BIT(31));
-		else
-			return -EINVAL;
+		//else
+			//return -EINVAL;
 	}
 
 	rk628_i2c_read(rk628, COMBRX_REG(0x6654), &val);
@@ -472,7 +472,7 @@ static int rk628_combrxphy_set_hdmi_mode_for_cable(struct rk628 *rk628, int f)
 			"clock error: 0x1f, reg_0x6630:%#x, reg_0x6608:%#x",
 			val_a, val_b);
 
-		return -EINVAL;
+		//return -EINVAL;
 	}
 
 	cdr_mode = (val >> 16) & 0x1f;

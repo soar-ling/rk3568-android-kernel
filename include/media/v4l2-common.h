@@ -82,7 +82,7 @@
 #define v4l2_dbg(level, debug, dev, fmt, arg...)			\
 	do {								\
 		if (debug >= (level))					\
-			v4l2_printk(KERN_DEBUG, dev, fmt , ## arg);	\
+			v4l2_printk(KERN_INFO, dev, fmt , ## arg);	\
 	} while (0)
 
 /**
