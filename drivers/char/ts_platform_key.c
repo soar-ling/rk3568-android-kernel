@@ -55,6 +55,7 @@ struct fdt_info_priv {
     struct wake_lock wake_lock_always;
     u32 minbrightness;
     u32 maxbrightness;
+    u32 defbrightness;
 };
 
 static int vendor_key_read(struct fdt_info_priv *priv, int id)
@@ -227,6 +228,19 @@ static ssize_t maxbrightness_show(struct device *dev,
 }
 static DEVICE_ATTR(maxbrightness, 0444, maxbrightness_show, NULL);
 
+static ssize_t defbrightness_show(struct device *dev,
+                                  struct device_attribute *attr, char *buf)
+{
+    struct fdt_info_priv * priv = dev_get_drvdata(dev);
+
+	if (!priv->defbrightness)
+		return sprintf(buf, "null");
+
+    return sprintf(buf, "%d", priv->defbrightness);
+}
+static DEVICE_ATTR(defbrightness, 0444, defbrightness_show, NULL);
+
+
 static struct attribute *fdt_info_sysfs_entries[] = {
     &dev_attr_key.attr,
     &dev_attr_orientation.attr,
@@ -238,6 +252,7 @@ static struct attribute *fdt_info_sysfs_entries[] = {
     &dev_attr_secondbufsize.attr,
     &dev_attr_minbrightness.attr,
     &dev_attr_maxbrightness.attr,
+    &dev_attr_defbrightness.attr,
     NULL,
 };
 
@@ -305,6 +320,13 @@ static int fdt_info_probe(struct platform_device *pdev)
 			priv->maxbrightness = val;
         else
 			priv->maxbrightness = 0;
+    }
+
+    if (!of_property_read_u32(np, "def-brightness", &val)) {
+        if (val > 0 && val <= 255)
+			priv->defbrightness = val;
+        else
+			priv->defbrightness = 0;
     }
 
     priv->nosleep = of_property_read_bool(np, "no-sleep");
