@@ -50,6 +50,7 @@ struct fdt_info_priv {
     const char	*secondscreen;
     const char	*firstbufsize;
     const char	*secondbufsize;
+    const char	*touch_orientation;
     bool nosleep;
     struct wake_lock wake_lock_always;
     u32 minbrightness;
@@ -134,6 +135,18 @@ static ssize_t orientation_show(struct device *dev,
 }
 static DEVICE_ATTR(orientation, 0444, orientation_show, NULL);
 
+static ssize_t touch_orientation_show(struct device *dev,
+                                  struct device_attribute *attr, char *buf)
+{
+    struct fdt_info_priv * priv = dev_get_drvdata(dev);
+
+	if (!priv->touch_orientation)
+		return sprintf(buf, "null");
+
+    return sprintf(buf, "%s", priv->touch_orientation);
+}
+static DEVICE_ATTR(touchorientation, 0444, touch_orientation_show, NULL);
+
 static ssize_t dpi_show(struct device *dev,
                         struct device_attribute *attr, char *buf)
 {
@@ -217,6 +230,7 @@ static DEVICE_ATTR(maxbrightness, 0444, maxbrightness_show, NULL);
 static struct attribute *fdt_info_sysfs_entries[] = {
     &dev_attr_key.attr,
     &dev_attr_orientation.attr,
+    &dev_attr_touchorientation.attr,
     &dev_attr_dpi.attr,
     &dev_attr_firstscreen.attr,
     &dev_attr_secondscreen.attr,
@@ -257,6 +271,10 @@ static int fdt_info_probe(struct platform_device *pdev)
 
     if (of_property_read_string(np, "orientation", &priv->default_orientation)) {
         DBG("Invalid or missing orientation!\n");
+    }
+
+    if (of_property_read_string(np, "touch,orientation", &priv->touch_orientation)) {
+        DBG("Invalid or missing touch orientation!\n");
     }
 
     if (of_property_read_string(np, "vendor.hwc.device.primary", &priv->firstscreen)) {
