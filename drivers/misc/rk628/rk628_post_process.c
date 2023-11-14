@@ -127,6 +127,7 @@ static void rk628_post_process_scaler_init(struct rk628 *rk628,
 	printk("dsp_frame_vst:%d  dsp_frame_hst:%d\n",
 	       dsp_frame_vst, dsp_frame_hst);
 
+	dsp_frame_vst = 4;
 	if (src_hactive > dst_hactive) {
 		scl_hor_mode = 2;
 
