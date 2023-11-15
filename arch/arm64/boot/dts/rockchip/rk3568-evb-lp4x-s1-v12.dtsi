@@ -1,0 +1,92 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2020 Rockchip Electronics Co., Ltd.
+ *
+ */
+
+/dts-v1/;
+
+#include "rk3568-evb-lp4x-s1-v10.dtsi"
+
+/ {
+	model = "Rockchip RK3568 EVB LP4X S1 Board";
+	compatible = "rockchip,rk3568-evb-lp4x-s1", "rockchip,rk3568";
+
+	vcc5v0_host: vcc5v0-host-regulator {
+		gpio = <&gpio0 RK_PA5 GPIO_ACTIVE_HIGH>;
+	};
+
+	vcc5v0_host3: vcc5v0-host2-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc5v0_host3";
+		regulator-boot-on;
+		regulator-always-on;
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		enable-active-high;
+		gpio = <&gpio1 RK_PB1 GPIO_ACTIVE_HIGH>;
+		vin-supply = <&vcc5v0_usb>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&vcc5v0_host3_en>;
+	};
+
+	/delete-node/ wifi-enable-regulator;
+
+	vcc3v3_lcd0_n: vcc3v3-lcd0-n {
+		gpio = <&gpio3 RK_PD2 GPIO_ACTIVE_HIGH>;
+	};
+
+	wireless_wlan: wireless-wlan {
+		wifi_chip_type = "rtl8821cs";
+		pinctrl-names = "default";
+		pinctrl-0 = <&wifi_vbat &wifi_host_wake_irq>;
+		WIFI,host_wake_irq = <&gpio0 RK_PD4 GPIO_ACTIVE_HIGH>;
+		WIFI,vbat_gpio = <&gpio0 RK_PB0 GPIO_ACTIVE_LOW>;
+		wakeup-source;
+	};
+
+	wireless_bluetooth: wireless-bluetooth {
+		BT,wake_host_irq = <&gpio0 RK_PD5 GPIO_ACTIVE_HIGH>;
+		wakeup-source;
+	};
+};
+
+&i2c3 {
+	rk628_csi_v4l2: rk628_csi_v4l2@50 {
+	    status = "okay";
+	    pinctrl-0 = <&rk628_irq &rk628_det &refclk_pins>;
+	};
+};
+
+&gmac1 {
+	snps,reset-gpio = <&gpio0 RK_PA6 GPIO_ACTIVE_LOW>;
+	pinctrl-1 = <&gmac1_int>;
+	wolirq-gpio = <&gpio0 RK_PC6 GPIO_ACTIVE_LOW>;
+	wakeup-source;
+};
+
+&pinctrl {
+	wireless-wlan {
+		/delete-node/ wifi-pwr;
+
+		wifi_vbat: wifi-vbat {
+			rockchip,pins = <0 RK_PB0 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
+	usb {
+		vcc5v0_host_en: vcc5v0-host-en {
+			rockchip,pins = <0 RK_PA6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		vcc5v0_host3_en: vcc5v0-host3-en {
+			rockchip,pins = <1 RK_PB1 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	gmac_int {
+		gmac1_int: gmac1_int {
+			rockchip,pins = <0 RK_PC6 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+};

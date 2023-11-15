@@ -29,7 +29,10 @@ DTBS['RK3308-EVB'] = OrderedDict([('rk3308-evb-dmic-i2s-v10', '#_saradc_ch3=288'
 DTBS['RK3568-S0'] = OrderedDict([('rk3568-iot-lp4x-s1-v10-lvds-rk628-gvi', '#_saradc_ch1=1023#_saradc_ch3=1023'),
 				  ('rk3568-iot-lp4x-s1-v11-lvds-rk628-gvi', '#_saradc_ch3=1023')])
 
-DTBS['RK3568-S1'] = OrderedDict([('rk3568-iot-lp4x-s1-v11-rk628-gvi', '#_saradc_ch3=1023'),
+DTBS['RK3568-S1'] = OrderedDict([('rk3568-iot-lp4x-bs2-v10', '#_saradc_ch1=690'),
+				  ('rk3568-iot-lp4x-s1-v12-rk628-gvi', '#_saradc_ch1=780#_saradc_ch3=1023'),
+				  ('rk3568-iot-lp4x-s1-v12-lvds', '#_saradc_ch1=780#_saradc_ch3=860'),
+				  ('rk3568-iot-lp4x-s1-v11-rk628-gvi', '#_saradc_ch3=1023'),
 				  ('rk3568-iot-lp4x-s1-v11-lvds', '#_saradc_ch3=860')])
 
 def main():
