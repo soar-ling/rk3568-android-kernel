@@ -16,7 +16,7 @@
 		gpio = <&gpio0 RK_PA5 GPIO_ACTIVE_HIGH>;
 	};
 
-	vcc5v0_host3: vcc5v0-host2-regulator {
+	vcc5v0_host3: vcc5v0-host3-regulator {
 		compatible = "regulator-fixed";
 		regulator-name = "vcc5v0_host3";
 		regulator-boot-on;
