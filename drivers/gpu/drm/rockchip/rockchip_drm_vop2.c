@@ -2340,11 +2340,12 @@ static void vop2_crtc_load_lut(struct drm_crtc *crtc)
 	for (i = 0; i < vop2->data->nr_vps; i++) {
 		struct vop2_video_port *vp = &vop2->vps[i];
 
-		if (vp->gamma_lut_active)
+		if (VOP_MODULE_GET(vop2, vp, dsp_lut_en))
 			vp_enable_gamma_nr++;
 	}
 
-	if (vop2->data->nr_gammas && vp_enable_gamma_nr >= vop2->data->nr_gammas) {
+	if (vop2->data->nr_gammas && vp_enable_gamma_nr >= vop2->data->nr_gammas &&
+		VOP_MODULE_GET(vop2, vp, dsp_lut_en) == 0) {
 		DRM_INFO("only support %d gamma\n", vop2->data->nr_gammas);
 		return;
 	}
