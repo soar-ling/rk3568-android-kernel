@@ -7,8 +7,8 @@
 #include "rk3568-evb-lp4x-s1-v12.dtsi"
 #include "rk3568-android.dtsi"
 /{
-	model = "Rockchip RK3568 LP4X SKYSI IOT BS2 V10 Board";
-	compatible = "rockchip,rk3568-iot-lp4x-bs2-v10", "rockchip,rk3568";
+	model = "Rockchip RK3568 LP4X SKYSI IOT BS2 V11 Board";
+	compatible = "rockchip,rk3568-iot-lp4x-bs2-v11", "rockchip,rk3568";
 
 	vcc3v3_lcd0_n: vcc3v3-lcd0-n {
 		/delete-property/ gpio;
