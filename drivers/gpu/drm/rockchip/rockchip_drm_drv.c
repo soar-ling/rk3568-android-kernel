@@ -1721,7 +1721,7 @@ static int rockchip_drm_bind(struct device *dev)
 			break;
 
 		s = to_rockchip_crtc_state(crtc->state);
-		if (is_support_hotplug(s->output_type) && helper->fb)
+		if (is_support_hotplug(s->output_type))
 			drm_framebuffer_get(helper->fb);
 	}
 
