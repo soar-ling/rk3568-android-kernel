@@ -1363,13 +1363,6 @@ static int yt8531_config_init(struct phy_device *phydev)
 	return yt8531_config_out_125m(phydev->mdio.bus, phydev->mdio.addr);
 }
 
-static int yt8531_resume(struct phy_device *phydev)
-{
-	yt8531_led_init(phydev);
-
-	return phy_clear_bits(phydev, MII_BMCR, BMCR_PDOWN);
-}
-
 #if (KERNEL_VERSION(4, 0, 0) > LINUX_VERSION_CODE)
 #else
 int yt8618_soft_reset(struct phy_device *phydev)
@@ -2466,7 +2459,7 @@ static struct phy_driver ytphy_drvs[] = {
 		.config_init   = yt8531_config_init,
 		.read_status   = genphy_read_status,
 		.suspend       = genphy_suspend,
-		.resume        = yt8531_resume,
+		.resume        = genphy_resume,
 #if (YTPHY_WOL_FEATURE_ENABLE)
 		.get_wol       = &ytphy_wol_feature_get,
 		.set_wol       = &ytphy_wol_feature_set,
