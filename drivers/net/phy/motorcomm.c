@@ -77,6 +77,47 @@
 #define YT8521_PHY_MODE_UTP		2 /* utp mode only */
 #define YT8521_PHY_MODE_POLL		3 /* fiber and utp, poll mode */
 
+#define YT8531_LED_GENERAL_CFG	0xA00B
+#define YT8531_EXTREG_LED0		0xA00C
+#define YT8531_EXTREG_LED1		0xA00D
+#define YT8531_EXTREG_LED2		0xA00E
+#define YT8531_EXTREG_LED_CFG	0xA00F
+
+#define YT8531_LED_FORCE_EN (1<<2)
+#define YT8531_LED_FORCE_MODE_BLINK_MODE2 (3)
+#define YT8531_LED_FORCE_MODE_BLINK_MODE1 (2)
+#define YT8531_LED_FORCE_MODE_ON (1)
+#define YT8531_LED_FORCE_MODE_OFF (0)
+
+#define YT8531_CFG_LED2		(6)
+#define YT8531_CFG_LED1		(3)
+#define YT8531_CFG_LED0		(0)
+
+#define YT8531_LED_ACT_BLK_IND		(1<<13)
+#define YT8531_LED_FDX_ON_EN		(1<<12)
+#define YT8531_LED_HDX_ON_EN		(1<<11)
+#define YT8531_LED_TXACT_BLK_EN		(1<<10)
+#define YT8531_LED_RXACT_BLK_EN		(1<<9)
+#define YT8531_LED_TXACT_ON_EN		(1<<8)
+#define YT8531_LED_RXACT_ON_EN		(1<<7)
+#define YT8531_LED_GT_ON_EN			(1<<6)
+#define YT8531_LED_HT_ON_EN			(1<<5)
+#define YT8531_LED_BT_ON_EN			(1<<4)
+#define YT8531_LED_COL_BLK_EN		(1<<3)
+#define YT8531_LED_GT_BLK_EN		(1<<2)
+#define YT8531_LED_HT_BLK_EN		(1<<1)
+#define YT8531_LED_BT_BLK_EN		(1<<0)
+
+#define YT8531_LED_BLINK_MODE1		(3<<2)
+#define YT8531_LED_BLINK_MODE2		(3<<0)
+
+enum BLINK_MODE {
+	_2Hz = 0,
+	_4Hz,
+	_8Hz,
+	_16Hz,
+};
+
 static int yt8521_hw_strap_polling(struct phy_device *phydev);
 #define YT8521_PHY_MODE_CURR		yt8521_hw_strap_polling(phydev)
 
@@ -571,6 +612,77 @@ static int yt8531S_config_init(struct phy_device *phydev)
 	return yt8521_config_init(phydev);
 }
 
+static int yt8531_led_init(struct phy_device *phydev)
+{
+	int ret;
+	int val;
+	int mask;
+
+	/*val = ytphy_read_ext(phydev, YT8531_LED_GENERAL_CFG);
+	if (val < 0)
+		return val;
+
+	val |= (YT8531_LED_FORCE_EN | YT8531_LED_FORCE_MODE_ON) << YT8531_CFG_LED2;
+
+	ret = ytphy_write_ext(phydev, YT8531_LED_GENERAL_CFG, val);
+	if (ret < 0)
+		return ret;*/
+
+	val = ytphy_read_ext(phydev, YT8531_EXTREG_LED0);
+	if (val < 0)
+		return val;
+
+	val |= YT8531_LED_HT_ON_EN | YT8531_LED_GT_ON_EN |
+		YT8531_LED_ACT_BLK_IND | YT8531_LED_RXACT_BLK_EN |
+		YT8531_LED_TXACT_BLK_EN;
+	mask = YT8531_LED_FDX_ON_EN | YT8531_LED_HDX_ON_EN;
+	val &= ~mask;
+
+	ret = ytphy_write_ext(phydev, YT8531_EXTREG_LED0, val);
+	if (ret < 0)
+		return ret;
+
+	val = ytphy_read_ext(phydev, YT8531_EXTREG_LED1);
+	if (val < 0)
+		return val;
+
+	val |= YT8531_LED_BT_ON_EN | YT8531_LED_HT_ON_EN |
+		YT8531_LED_GT_ON_EN;
+	mask = YT8531_LED_RXACT_BLK_EN | YT8531_LED_TXACT_BLK_EN |
+		YT8531_LED_BT_BLK_EN | YT8531_LED_HT_BLK_EN |
+		YT8531_LED_GT_BLK_EN | YT8531_LED_COL_BLK_EN;
+	val &= ~mask;
+
+	ret = ytphy_write_ext(phydev, YT8531_EXTREG_LED1, val);
+	if (val < 0)
+		return val;
+
+	val = ytphy_read_ext(phydev, YT8531_EXTREG_LED2);
+	if (val < 0)
+		return val;
+
+	val |= YT8531_LED_TXACT_BLK_EN | YT8531_LED_RXACT_BLK_EN |
+		YT8531_LED_RXACT_ON_EN | YT8531_LED_TXACT_ON_EN;
+	mask = YT8531_LED_FDX_ON_EN | YT8531_LED_HDX_ON_EN |
+		YT8531_LED_ACT_BLK_IND;
+	val &= ~mask;
+
+	ret = ytphy_write_ext(phydev, YT8531_EXTREG_LED2, val);
+	if (val < 0)
+		return val;
+
+	val = ytphy_read_ext(phydev, YT8531_EXTREG_LED_CFG);
+	if (val < 0)
+		return val;
+
+	val |= _2Hz | (_2Hz<<2) ;
+	mask = (_8Hz & YT8531_LED_BLINK_MODE1) | ((_8Hz<<2) & YT8531_LED_BLINK_MODE2);
+	val &= ~mask;
+	ret = ytphy_write_ext(phydev, YT8531_EXTREG_LED_CFG, val);
+
+	return ret;
+}
+
 static int yt8531_config_init(struct phy_device *phydev)
 {
 	int ret = 0;
@@ -580,6 +692,10 @@ static int yt8531_config_init(struct phy_device *phydev)
 	if (ret < 0)
 		return ret;
 #endif
+
+	ret = yt8531_led_init(phydev);
+	if (ret < 0)
+		return ret;
 
 	/* PHY_CLK_OUT 125M enabled (default) */
 	ret = ytphy_write_ext(phydev, 0xa012, 0xd0);
@@ -599,6 +715,13 @@ static int yt8531_config_init(struct phy_device *phydev)
 		return ret;
 
 	return ret;
+}
+
+static int yt8531_resume(struct phy_device *phydev)
+{
+	yt8531_led_init(phydev);
+
+	return phy_clear_bits(phydev, MII_BMCR, BMCR_PDOWN);
 }
 
 static struct phy_driver motorcomm_phy_drvs[] = {
@@ -632,7 +755,7 @@ static struct phy_driver motorcomm_phy_drvs[] = {
 		.features      = PHY_GBIT_FEATURES,
 		.config_init   = yt8531_config_init,
 		.suspend       = genphy_suspend,
-		.resume        = genphy_resume,
+		.resume        = yt8531_resume,
 #if (YTPHY_WOL_FEATURE_ENABLE)
 		.get_wol       = &ytphy_wol_feature_get,
 		.set_wol       = &ytphy_wol_feature_set,
