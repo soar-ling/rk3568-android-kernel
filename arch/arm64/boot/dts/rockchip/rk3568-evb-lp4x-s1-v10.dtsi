@@ -523,8 +523,8 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			mipi_csi2_input: endpoint@1 {
-				reg = <1>;
+			mipi_csi2_input: endpoint@0 {
+				reg = <0>;
 				remote-endpoint = <&csidphy_out>;
 				data-lanes = <1 2 3 4>;
 			};
@@ -555,14 +555,8 @@
 	};
 };
 
-
-
 &rkcif_mmu {
 	status = "okay";
-};
-
-&rkcif_dvp_sditf {
-	status = "disabled";
 };
 
 &rkcif {
@@ -585,7 +579,7 @@
 			#size-cells = <0>;
 
 			hdmi2mipi_in: endpoint@0 {
-				reg = <1>;
+				reg = <0>;
 				remote-endpoint = <&rk628_out>;
 				data-lanes = <1 2 3 4>;
 			};
@@ -600,28 +594,6 @@
 				reg = <0>;
 				remote-endpoint = <&mipi_csi2_input>;
 			};
-		};
-	};
-};
-
-&rkisp {
-	status = "disabled";
-};
-
-&rkisp_mmu {
-	status = "disabled";
-};
-
-&rkisp_vir0 {
-	status = "disabled";
-
-	port {
-		#address-cells = <1>;
-		#size-cells = <0>;
-
-		isp0_in: endpoint@0 {
-			reg = <0>;
-			remote-endpoint = <&csidphy_out>;
 		};
 	};
 };
