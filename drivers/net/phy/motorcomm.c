@@ -601,15 +601,33 @@ static int yt8531_rxclk_duty_init(struct phy_device *phydev)
 
 static int yt8531S_config_init(struct phy_device *phydev)
 {
-#if (YTPHY8531A_XTAL_INIT)
 	int ret = 0;
-
+#if (YTPHY8531A_XTAL_INIT)
 	ret = yt8531a_xtal_init(phydev);
 	if (ret < 0)
 		return ret;
 #endif
+	ret = ytphy_write_ext(phydev, 0x52, 0x231d);
+	if (ret < 0)
+		return ret;
 
-	return yt8521_config_init(phydev);
+	ret = ytphy_write_ext(phydev, 0xa071, 0x9007);
+	if (ret < 0)
+		return ret;
+
+	ret = ytphy_write_ext(phydev, 0x51, 0x04a9);
+	if (ret < 0)
+		return ret;
+
+	ret = ytphy_write_ext(phydev, 0x57, 0x274c);
+	if (ret < 0)
+		return ret;
+
+	ytphy_soft_reset(phydev);
+
+	ret = yt8521_config_init(phydev);
+
+	return ret;
 }
 
 static int yt8531_led_init(struct phy_device *phydev)
@@ -710,9 +728,28 @@ static int yt8531_config_init(struct phy_device *phydev)
 	 * Drive strength of RXC = 4, PHY_CLK_OUT = 3, RXD0 = 4 (default)
 	 * If the io voltage is 3.3v, PHY_CLK_OUT = 2, set 0xa010 = 0x9acf
 	 */
+
 	ret = ytphy_write_ext(phydev, 0xa010, 0x9bcf);
 	if (ret < 0)
 		return ret;
+
+	ret = ytphy_write_ext(phydev, 0x52, 0x231d);
+	if (ret < 0)
+		return ret;
+
+	ret = ytphy_write_ext(phydev, 0xa071, 0x9007);
+	if (ret < 0)
+		return ret;
+
+	ret = ytphy_write_ext(phydev, 0x51, 0x04a9);
+	if (ret < 0)
+		return ret;
+
+	ret = ytphy_write_ext(phydev, 0x57, 0x274c);
+	if (ret < 0)
+		return ret;
+
+	ytphy_soft_reset(phydev);
 
 	return ret;
 }
