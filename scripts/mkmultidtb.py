@@ -35,6 +35,7 @@ DTBS['RK3568-S1'] = OrderedDict([('rk3568-iot-lp4x-bs2-v10', '#_saradc_ch1=690#_
 				  ('rk3568-iot-lp4x-s1-v12-lvds', '#_saradc_ch1=780#_saradc_ch3=860'),
 				  ('rk3568-iot-lp4x-s1-v13-lvds', '#_saradc_ch1=610#_saradc_ch3=860'),
 				  ('rk3568-iot-lp4x-s1-v11-rk628-gvi', '#_saradc_ch3=1023'),
+				  ('rk3568-iot-lp4x-s1-v11-rk628f-gvi', '#_saradc_ch3=520'),
 				  ('rk3568-iot-lp4x-s1-v11-lvds', '#_saradc_ch3=860'),
 				  ('rk3568-iot-lp4x-s1-v11-edp', '#_saradc_ch3=690')])
 
