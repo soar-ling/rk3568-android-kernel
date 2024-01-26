@@ -6,7 +6,6 @@
 
 #include "rk628.h"
 #include "rk628_combrxphy.h"
-#include "rk628_cru.h"
 
 #define MAX_ROUND		6
 #define MAX_DATA_NUM		16
@@ -124,7 +123,7 @@ static void rk628_combrxphy_set_data_of_round(u32 *data, u32 *data_in)
 	}
 }
 
-static int
+static void
 rk628_combrxphy_max_zero_of_round(struct rk628 *rk628,
 				  u32 *data_in, u32 *max_zero,
                                   u32 *max_val, int n, int ch)
@@ -151,11 +150,6 @@ rk628_combrxphy_max_zero_of_round(struct rk628 *rk628,
 	max_val[n] = max_v;
 	dev_info(rk628->dev, "channel:%d, round:%d, max_zero_cnt:%d, max_val:%#x\n",
 		 ch, n, max_zero[n], max_val[n]);
-
-	if(max_zero[n] == 0 || max_val[n] == 0)
-		return -EINVAL;
-
-	return 0;
 }
 
 static int rk628_combrxphy_chose_round_for_ch(struct rk628 *rk628,
@@ -236,7 +230,7 @@ static void rk628_combrxphy_cfg_6730(struct rk628 *rk628)
 	rk628_i2c_write(rk628, COMBRX_REG(0x6730), val);
 }
 
-static int rk628_combrxphy_sample_edge_procedure_for_cable(struct rk628 *rk628,
+static void rk628_combrxphy_sample_edge_procedure_for_cable(struct rk628 *rk628,
 							    u32 cdr_mode)
 {
 	u32 n, ch;
@@ -247,7 +241,6 @@ static int rk628_combrxphy_sample_edge_procedure_for_cable(struct rk628 *rk628,
 	u32 ch_round[MAX_CHANNEL];
 	u32 edge, dc_gain;
 	u32 rd_offset;
-	u32 ret = 0;
 
 	/* Step1: set sample edge mode for channel 0~2 */
 	for (ch = 0; ch < MAX_CHANNEL; ch++)
@@ -316,12 +309,9 @@ static int rk628_combrxphy_sample_edge_procedure_for_cable(struct rk628 *rk628,
 			rk628_combrxphy_get_data_of_round(rk628, data);
 			rk628_combrxphy_set_data_of_round(data, data_in);
 			/* step8: get the max constant value of round n */
-			ret = rk628_combrxphy_max_zero_of_round(rk628, data_in,
+			rk628_combrxphy_max_zero_of_round(rk628, data_in,
 				round_max_zero[ch], round_max_value[ch],
 				n - rd_offset, ch);
-
-			if(ret)
-				return ret;
 		}
 	}
 
@@ -343,8 +333,6 @@ static int rk628_combrxphy_sample_edge_procedure_for_cable(struct rk628 *rk628,
 	rk628_combrxphy_start_sample_edge(rk628);
 	/* step6:waiting more than one frame time */
 	mdelay(41);
-
-	return 0;
 }
 
 static int rk628_combrxphy_set_hdmi_mode_for_cable(struct rk628 *rk628, int f)
@@ -395,12 +383,11 @@ static int rk628_combrxphy_set_hdmi_mode_for_cable(struct rk628 *rk628, int f)
 		mdelay(1);
 	}
 	rk628_i2c_read(rk628, COMBRX_REG(0x6654), &val);
-	//dev_info(rk628->dev, "clk det over cnt:%d, reg_0x6654:%#x\n", i, val);
+	dev_info(rk628->dev, "clk det over cnt:%d, reg_0x6654:%#x\n", i, val);
 	state = (val >> 28) & 0xf;
-	/*if (state == 5) {
+	if (state == 5) {
 		dev_info(rk628->dev, "Clock detection anomaly\n");
-	} else */
-	if (state == 4) {
+	} else if (state == 4) {
 		channel_st = (val >> 21) & 0x7f;
 		dev_info(rk628->dev, "%s%s%s%s%s%s%s%s level detection anomaly\n",
 			 channel_st & 0x40 ? "|clk_p|" : "",
@@ -419,7 +406,7 @@ static int rk628_combrxphy_set_hdmi_mode_for_cable(struct rk628 *rk628, int f)
             ((val & 0x007f0000) == 0) ||
             ((val & 0x00007f00) == 0) ||
             ((val & 0x0000007f) == 0)) {
-	        //dev_info(rk628->dev, "clock detected failed, cfg resistance manual!\n");
+	        dev_info(rk628->dev, "clock detected failed, cfg resistance manual!\n");
 	        rk628_i2c_write(rk628, COMBRX_REG(0x6620), 0x66666666);
 	        rk628_i2c_update_bits(rk628, COMBRX_REG(0x6604), BIT(31), BIT(31));
 	        mdelay(1);
@@ -450,9 +437,9 @@ static int rk628_combrxphy_set_hdmi_mode_for_cable(struct rk628 *rk628, int f)
 	if (j == CLK_STABLE_LOOP_CNT) {
 		rk628_i2c_read(rk628, COMBRX_REG(0x6630), &val_a);
 		rk628_i2c_read(rk628, COMBRX_REG(0x6608), &val_b);
-		/*dev_err(rk628->dev,
+		dev_err(rk628->dev,
 			"clk not stable, reg_0x6630:%#x, reg_0x6608:%#x",
-			val_a, val_b);*/
+			val_a, val_b);
 		/* bypass level detection anomaly */
 		if (state == 4)
 			rk628_i2c_update_bits(rk628, COMBRX_REG(0x6628), BIT(31), BIT(31));
@@ -518,9 +505,8 @@ static int rk628_combrxphy_set_hdmi_mode_for_cable(struct rk628 *rk628, int f)
 	rk628_i2c_write(rk628, COMBRX_REG(0x6630), pll_man);
 
 	/* step6: EQ and SAMPLE cfg */
-	ret = rk628_combrxphy_sample_edge_procedure_for_cable(rk628, cdr_mode);
-	if(ret)
-		return ret;
+	rk628_combrxphy_sample_edge_procedure_for_cable(rk628, cdr_mode);
+
 	/* step7: Deassert fifo reset,enable fifo write and read */
 	/* reset rx_infifo */
 	rk628_i2c_write(rk628, COMBRX_REG(0x66a0), 0x00000003);
@@ -565,19 +551,10 @@ static int rk628_combrxphy_set_hdmi_mode_for_cable(struct rk628 *rk628, int f)
 
 int rk628_combrxphy_power_on(struct rk628 *rk628, int f)
 {
-	rk628_ctrl_assert(rk628, RGU_RXPHY);
-	udelay(10);
-	rk628_ctrl_deassert(rk628, RGU_RXPHY);
-	udelay(10);
-
 	return rk628_combrxphy_set_hdmi_mode_for_cable(rk628, f);
 }
 
 int rk628_combrxphy_power_off(struct rk628 *rk628)
 {
-	rk628_i2c_update_bits(rk628, COMBRX_REG(0x6630), BIT(0), BIT(0));
-	rk628_ctrl_assert(rk628, RGU_RXPHY);
-	udelay(10);
-
 	return 0;
 }

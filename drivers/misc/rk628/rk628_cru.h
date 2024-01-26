@@ -46,7 +46,16 @@
 #define CRU_GPLL_CON2		CRU_REG(0x0028)
 #define CRU_GPLL_CON3		CRU_REG(0x002c)
 #define CRU_GPLL_CON4		CRU_REG(0x0030)
+#define CRU_APLL_CON0		CRU_REG(0x0040)
+#define CRU_APLL_CON1		CRU_REG(0x0044)
+#define CRU_APLL_CON2		CRU_REG(0x0048)
+#define CRU_APLL_CON3		CRU_REG(0x004c)
+#define CRU_APLL_CON4		CRU_REG(0x0050)
 #define CRU_MODE_CON00		CRU_REG(0x0060)
+#define CLK_APLL_MODE_MASK	BIT(4)
+#define CLK_APLL_MODE_SHIFT	4
+#define CLK_APLL_MODE_GPLL	1
+#define CLK_APLL_MODE_OSC	0
 #define CLK_GPLL_MODE_MASK	BIT(2)
 #define CLK_GPLL_MODE_SHIFT	2
 #define CLK_GPLL_MODE_GPLL	1
@@ -56,6 +65,9 @@
 #define CLK_CPLL_MODE_CPLL	1
 #define CLK_CPLL_MODE_OSC	0
 #define CRU_CLKSEL_CON00	CRU_REG(0x0080)
+#define PCLK_LOGIC_SEL_MASK	BIT(7)
+#define PCLK_LOGIC_SEL_GPLL	1
+#define PCLK_LOGIC_SEL_CPLL	0
 #define CRU_CLKSEL_CON01	CRU_REG(0x0084)
 #define CRU_CLKSEL_CON02	CRU_REG(0x0088)
 #define SCLK_VOP_SEL_MASK	BIT(9)
@@ -73,7 +85,19 @@
 #define CLK_BT1120DEC_DIV(x)	HIWORD_UPDATE(x, 4, 0)
 #define CRU_CLKSEL_CON03	CRU_REG(0x008c)
 #define CRU_CLKSEL_CON04	CRU_REG(0x0090)
+#define CLK_HDMIRX_AUD_DIV_MASK	GENMASK(13, 6)
+#define CLK_HDMIRX_AUD_DIV(x)	HIWORD_UPDATE(x, 13, 6)
+#define CLK_HDMIRX_AUD_SEL_MASK	GENMASK(15, 14)
+#define CLK_HDMIRX_AUD_SEL(x)	HIWORD_UPDATE(x, 15, 14)
 #define CRU_CLKSEL_CON05	CRU_REG(0x0094)
+#define CLK_HDMIRX_AUD_DIV_MASK	GENMASK(13, 6)
+#define CLK_HDMIRX_AUD_DIV(x)	HIWORD_UPDATE(x, 13, 6)
+#define CLK_HDMIRX_AUD_SEL_V1(x)	HIWORD_UPDATE(x, 15, 15)
+#define CLK_HDMIRX_AUD_SEL_MASK_V1	GENMASK(15, 15)
+#define CLK_HDMIRX_AUD_SEL_V2(x)	HIWORD_UPDATE(x, 15, 14)
+#define CLK_HDMIRX_AUD_SEL_MASK_V2	GENMASK(15, 14)
+#define CLK_IMODET_SEL_MASK	BIT(5)
+#define CLK_IMODET_SEL_SHIFT	5
 #define CRU_CLKSEL_CON06	CRU_REG(0x0098)
 #define SCLK_UART_SEL(x)	HIWORD_UPDATE(x, 15, 14)
 #define SCLK_UART_SEL_MASK	GENMASK(15, 14)
@@ -150,44 +174,11 @@
 #define CGU_I2S_MCLKOUT		36
 #define CGU_BT1120DEC		37
 #define CGU_SCLK_UART		38
-
-#define RGU_LOGIC		0
-#define RGU_CRU			1
-#define RGU_REGFILE		2
-#define RGU_I2C2APB		3
-#define RGU_EFUSE		4
-#define RGU_ADAPTER		5
-#define RGU_CLK_RX		6
-#define RGU_BT1120DEC		7
-#define RGU_VOP			8
-#define RGU_GPIO0		9
-#define RGU_GPIO1		10
-#define RGU_GPIO2		11
-#define RGU_GPIO3		12
-#define RGU_GPIO_DB0		13
-#define RGU_GPIO_DB1		14
-#define RGU_GPIO_DB2		15
-#define RGU_GPIO_DB3		16
-#define RGU_RXPHY		17
-#define RGU_HDMIRX		18
-#define RGU_TXPHY_CON		19
-#define RGU_HDMITX		20
-#define RGU_GVIHOST		21
-#define RGU_DSI0		22
-#define RGU_DSI1		23
-#define RGU_CSI			24
-#define RGU_TXDATA		25
-#define RGU_DECODER		26
-#define RGU_ENCODER		27
-#define RGU_HDMIRX_PON		28
-#define RGU_TXBYTEHS		29
-#define RGU_TXESC		30
+#define CGU_CLK_APLL		39
 
 unsigned long rk628_cru_clk_get_rate(struct rk628 *rk628, unsigned int id);
 int rk628_cru_clk_set_rate(struct rk628 *rk628, unsigned int id,
 			   unsigned long rate);
 void rk628_cru_init(struct rk628 *rk628);
-int rk628_ctrl_assert(struct rk628 *rk628, unsigned long id);
-int rk628_ctrl_deassert(struct rk628 *rk628, unsigned long id);
 
 #endif

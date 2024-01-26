@@ -9,10 +9,10 @@
 
 #include "rk628.h"
 
-int panel_info_get(struct rk628 *rk628, struct device_node *np);
-void panel_prepare(struct rk628 *rk628);
-void panel_enable(struct rk628 *rk628);
-void panel_unprepare(struct rk628 *rk628);
-void panel_disable(struct rk628 *rk628);
+int rk628_panel_info_get(struct rk628 *rk628, struct device_node *np);
+void rk628_panel_prepare(struct rk628 *rk628);
+void rk628_panel_enable(struct rk628 *rk628);
+void rk628_panel_unprepare(struct rk628 *rk628);
+void rk628_panel_disable(struct rk628 *rk628);
 #endif
 
